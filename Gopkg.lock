@@ -149,6 +149,14 @@
   revision = "9935e8e0588d26307d1d4a07bed7bd47271b6bbd"
 
 [[projects]]
+  digest = "1:2e76a73cb51f42d63a2a1a85b3dc5731fd4faf6821b434bd0ef2c099186031d6"
+  name = "github.com/rs/xid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "15d26544def341f036c5f8dca987a4cbe575032c"
+  version = "v1.2.1"
+
+[[projects]]
   branch = "master"
   digest = "1:578bee88e5f40ad0615cc45687c92975f253267cbb613af0f20edab4628047d4"
   name = "github.com/smacker/opentracing-gorm"
@@ -217,6 +225,7 @@
     "github.com/jinzhu/gorm",
     "github.com/jinzhu/gorm/dialects/postgres",
     "github.com/opentracing/opentracing-go",
+    "github.com/rs/xid",
     "github.com/smacker/opentracing-gorm",
     "github.com/stretchr/testify/assert",
     "github.com/uber/jaeger-client-go",

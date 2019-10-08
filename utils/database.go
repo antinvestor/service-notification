@@ -24,12 +24,12 @@ func ConfigureDatabase(log *logrus.Entry, replica bool) (*gorm.DB, error) {
 		}
 
 
-		dbName := GetEnv("DATABASE_NAME", "service-file")
-		dbUserName := GetEnv("DATABASE_USER_NAME", "file")
-		dbSecret := GetEnv("DATABASE_SECRET", "files")
+		dbName := GetEnv("DATABASE_NAME", "service_notification")
+		dbUserName := GetEnv("DATABASE_USER_NAME", "ant")
+		dbSecret := GetEnv("DATABASE_SECRET", "ant-secret")
 		dbPort := GetEnv("DATABASE_PORT", "5432")
 
-		dbDatasource = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s  sslmode=require", dbHost, dbPort, dbUserName, dbSecret, dbName)
+		dbDatasource = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s  sslmode=disable", dbHost, dbPort, dbUserName, dbSecret, dbName)
 	}
 
 	log.Debugf("Connecting using driver %v and source %v ", dbDriver, dbDatasource)

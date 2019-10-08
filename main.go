@@ -1,17 +1,17 @@
 package main
 
 import (
-	"bitbucket.org/antinvestor/service-boilerplate/service"
+	"bitbucket.org/antinvestor/service-notification/service"
 	"log"
 	"os"
 	"time"
 
-	"bitbucket.org/antinvestor/service-boilerplate/utils"
+	"bitbucket.org/antinvestor/service-notification/utils"
 )
 
 func main() {
 
-	serviceName := "BoilerPlate"
+	serviceName := "Notification"
 
 	logger, err := utils.ConfigureLogging(serviceName)
 	if err != nil {
