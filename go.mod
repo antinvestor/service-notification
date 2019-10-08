@@ -1,4 +1,4 @@
-module antinvestor.com/service/notification
+module bitbucket.org/antinvestor/service-notification
 
 go 1.13
 

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 	otgorm "github.com/smacker/opentracing-gorm"
 	"time"
