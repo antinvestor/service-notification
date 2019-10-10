@@ -1,15 +1,20 @@
 package service
 
 import (
+	"net"
 	"github.com/sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 	otgorm "github.com/smacker/opentracing-gorm"
 	"time"
-	"net/http"
+	//"net/http"
 	"os"
 	"os/signal"
 	"context"
 	"fmt"
+
+	"bitbucket.org/antinvestor/service-notification/notification"
+	"google.golang.org/grpc"
+	"log"
 )
 
 // Error represents a handler error. It provides methods for a HTTP status
@@ -66,26 +71,30 @@ func (env *Env) GetRDb(ctx context.Context) *gorm.DB{
 //RunServer Starts a server and waits on it
 func RunServer(env *Env) {
 
-	waitDuration := time.Second * 15
+	//waitDuration := time.Second * 15
 	//router := NewRouterV1(env)
+	im := &notificationserver{Env:env}
+	//instantiate grpc server not http server for api proccessing and registers
+	srv := grpc.NewServer()
+	notification.RegisterNotificationServiceServer(srv,im)
 
-	srv := &http.Server{
-		Addr: fmt.Sprintf("0.0.0.0:%s", env.ServerPort ),
-		// Good practice to set timeouts to avoid Slowloris attacks.
-		WriteTimeout: time.Second * 15,
-		ReadTimeout:  time.Second * 15,
-		IdleTimeout:  time.Second * 60,
-		//Handler:      handlers.RecoveryHandler()(router), // Pass our instance of gorilla/mux in.
-	}
+	//this comes in second telling server to listen on tcp address and on serverport as defined in os enviroment
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", env.ServerPort))
+	
+	if err != nil {
+	env.Logger.Fatalf("Could not start on supplied port %v %v ", env.ServerPort, err)
+}
 
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {
 
 		env.Logger.Infof("Service running on port : %v", env.ServerPort)
 
-		if err := srv.ListenAndServe(); err != nil {
-			env.Logger.Fatalf("Service stopping due to error : %v", err)
+		// start the server continuously to be listening client request any tym in goroutine otherwise will exit with 1 soon it is starteds
+		if err := srv.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %s", err)
 		}
+
 	}()
 
 	c := make(chan os.Signal, 1)
@@ -98,11 +107,11 @@ func RunServer(env *Env) {
 
 
 	// Create a deadline to wait for.
-	env2, cancel := context.WithTimeout(context.Background(), waitDuration)
-	defer cancel()
+	//env2, cancel := context.WithTimeout(context.Background(), waitDuration)
+	//defer cancel()
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
-	srv.Shutdown(env2)
+	srv.Stop()
 	// Optionally, you could run srv.Shutdown in a goroutine and block on
 	// <-env.Done() if your application should wait for other services
 	// to finalize based on context cancellation.
