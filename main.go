@@ -38,6 +38,14 @@ func main() {
 
 
 	stdArgs := os.Args[1:]
+
+	if len(stdArgs) > 0 && stdArgs[0] == "client" {
+
+		logger.Infof("Initiating the client at %v", time.Now())
+		service.Runclient(database)
+
+	}else{
+
 	if len(stdArgs) > 0 && stdArgs[0] == "migrate" {
 		logger.Info("Initiating migrations")
 
@@ -55,6 +63,7 @@ func main() {
 
 		service.RunServer(&env)
 	}
-
+	
+	}
 
 }
