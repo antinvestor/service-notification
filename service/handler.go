@@ -16,9 +16,7 @@ import (
 type notificationserver struct {
 	Env *Env
 	stream *notification.NotificationService_SearchServer
-	id string
-	error chan error
-
+	
 }
 
 //out method act after income request let out notification
@@ -80,7 +78,7 @@ func (server *notificationserver) Release(ctxt context.Context, req *notificatio
 }
 
 
-//In method callfor incaome rquest of any notification
+//In method call for income rquest of any notification
 func (server *notificationserver) In(ctxt context.Context, req *notification.IncomeRequest) (*notification.StatusResponse, error){
 	
 	uProfile, _ := json.Marshal(req.GetProfileID())
@@ -90,7 +88,7 @@ func (server *notificationserver) In(ctxt context.Context, req *notification.Inc
 			ProfileID : 	string(uProfile),
 			Status:			req.RequestStatus,
 			Language:		req.Language,
-			Product:		req.ProductID,
+			ProductID:		req.ProductID,
 			Messagetype:	req.MessageType,
 			}
 
@@ -103,10 +101,7 @@ func (server *notificationserver) In(ctxt context.Context, req *notification.Inc
 func (server *notificationserver) Search(req *notification.SearchRequest, stream notification.NotificationService_SearchServer) error{
 	
 		
-	// in := &Notification{
-	// 		NotificationID: xid.New().String(),
-			
-	// 		}
+	
 	var cxt context.Context
 	var serch [] string
 	
