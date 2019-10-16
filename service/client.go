@@ -29,9 +29,9 @@ func Runclient(db *gorm.DB) {
 
 	//client methods called on particular occasion/functionality
 
-	search(c)
+	//search(c)
 	//status(c)
-	//dosend(c)
+	dosend(c)
 	//income(c)
 
 }
@@ -45,6 +45,11 @@ func income(c notification.NotificationServiceClient) {
 		ProductID:     "Funds",    //req.Product,
 		MessageType:   "Recieved", //req.Massagetype,
 		ProfileID:     "001isaac",
+		PayLoad: map[string]string{
+			"id":         "1",
+			"name":        "test entity 1",
+			"description": "a test entity for some guy's blog",
+		},
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -65,7 +70,7 @@ func dosend(c notification.NotificationServiceClient) {
 		Channel:         "Email",
 		MessageTemplete: "Receveid_templete",
 		Autosend:        "false",
-		ProfileID:       "001isaac",
+		ProfileID:       "Funds",
 		MessageVariables: map[string]string{
 			"name":    "isa",
 			"Account": "AC100000",
