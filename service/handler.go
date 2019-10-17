@@ -8,7 +8,7 @@ import (
 	"bitbucket.org/antinvestor/service-notification/notification"
 	//"fmt"
 	//"github.com/jinzhu/gorm"
-	//"log"
+	"log"
 	"github.com/rs/xid"
 )
 
@@ -22,27 +22,47 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Qu
 
 	Massagevariables, _ := json.Marshal(req.GetMessageVariables())
 
-	in := &Notification{
-		NotificationID:   xid.New().String(),
-		ProfileID:        req.GetProfileID(),
-		Messagevariables: string(Massagevariables),
-		Language:         req.Language,
-		Channel:          req.Channel,
-		Messagetype:      req.MessageTemplete,
-		Autosend:         req.Autosend,
-	}
-
+	
 	var cxt context.Context
 	var id []string
+	var ProfileDetails []string
+	var ProductDetails []string
 
 	//checks if profileID is valid
 	server.Env.GeWtDb(cxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
 	
 	for _, d := range id {
 		if d == req.GetProfileID() {
-			server.Env.GeWtDb(ctxt).Create(in)
-			//send notification
+			//query the profile service to get the profile data like name, contacts and any set of communication preferences
+			server.Env.GeWtDb(cxt).Raw("select name,contact from profiles where profile_id = ?", req.GetProfileID()).Pluck("name",&ProfileDetails)
+				
+			for _, profiledetails := range ProfileDetails {
+					if profiledetails != "" {
+						//service queries the product service to also get preferred communication preferences
+						server.Env.GeWtDb(cxt).Raw("select name,contact from product where product_id = ?", req.GetProfileID()).Pluck("name",&ProductDetails)
+						
+						for _, productdetails := range ProductDetails {
+							if productdetails != "" {
+								//send notification
 
+								in := &Notification{
+									NotificationID:   xid.New().String(),
+									ProfileID:        req.GetProfileID(),
+									Messagevariables: string(Massagevariables),
+									Language:         req.Language,
+									//channel will be determined by product preferences or profile client request
+									//if the user has multiple phone numbers attached to their profile prefer the phone number that was last added and verified or last known to work
+									Channel:          req.Channel,
+									Messagetype:      req.MessageTemplete,
+									Autosend:         req.Autosend,
+								}
+							
+								server.Env.GeWtDb(ctxt).Create(in)
+					
+							}
+						}
+					}
+				}
 		}
 	}
 
@@ -87,19 +107,44 @@ func (server *notificationserver) Release(ctxt context.Context, req *notificatio
 //In method call for income rquest of any notification
 func (server *notificationserver) In(ctxt context.Context, req *notification.IncomeRequest) (*notification.StatusResponse, error) {
 
-	uPayload, _ := json.Marshal(req.GetPayLoad())
-	in := &Notification{
-		NotificationID: xid.New().String(),
-		ProfileID:      req.GetProfileID(),
-		Status:         req.RequestStatus,
-		Language:       req.Language,
-		ProductID:      req.ProductID,
-		Messagetype:    req.MessageType,
-		Payload:        string(uPayload),
+	var Contact []string
+	var Channel []string
+
+	//checks if profileID  contact field is not null in table
+	server.Env.GeWtDb(ctxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("contact", &Contact)
+	for _, contact := range Contact {
+		if contact == "" {
+			result := server.Env.GeWtDb(ctxt).Raw("insert into profiles (contact) values (?) where profile_id = ?",contact, req.GetProfileID())
+				if result.RowsAffected == 1{
+					log.Printf("seccessfully add contact to profile %s",req.GetProfileID())
+				}else{
+					log.Printf("failed add contact to profile %s",req.GetProfileID())
+
+				}
+		}else{
+
+			uPayload, _ := json.Marshal(req.GetPayLoad())
+			in := &Notification{
+				NotificationID: xid.New().String(),
+				ProfileID:      req.GetProfileID(),		
+				ProductID:      req.ProductID,
+				Status:         req.RequestStatus,
+				Language:       req.Language,
+				Messagetype:    req.MessageType,
+				Payload:        string(uPayload),
+			}
+
+			//checki if income notification channel route are mapped to particular product
+			server.Env.GeWtDb(ctxt).Raw("select channel from product where channel = ?", req.GetProfileID()).Pluck("channel",&Channel)
+			for _, channel := range Channel {
+				if channel != "" {
+					server.Env.GeWtDb(ctxt).Create(in)
+				}
+			}
+		}
 	}
 
-	server.Env.GeWtDb(ctxt).Create(in)
-
+	
 	return &notification.StatusResponse{NotificationID: xid.New().String()}, nil
 
 }
