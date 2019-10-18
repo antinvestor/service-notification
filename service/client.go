@@ -107,8 +107,8 @@ func status(c notification.NotificationServiceClient) {
 
 func search(c notification.NotificationServiceClient) {
 
-	req := &notification.SearchRequest{
-
+	req := &notification.SearchRequest{ 
+		
 		NotificationID: "bmg4apdq29bieu2s9640",
 	}
 
