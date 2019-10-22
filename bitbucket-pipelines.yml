@@ -7,11 +7,11 @@ pipelines:
         name: Service testing and build
         image: golang:1.12
         script:
-          - go get -u github.com/golang/dep/cmd/dep
+          - go mod
           - mkdir -p /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
           - cp -r ./*  /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}/
           - cd /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
-          - dep ensure --vendor-only
+          - go mod download
           - go test ./...
 
   branches:
@@ -21,11 +21,11 @@ pipelines:
           name: Service testing and build
           image: golang:1.12
           script:
-            - go get -u github.com/golang/dep/cmd/dep
+            - go mod
             - mkdir -p /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
             - cp -r ./*  /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}/
             - cd /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
-            - dep ensure --vendor-only
+            - go mod download
             - go test ./...
 
 
@@ -53,11 +53,11 @@ pipelines:
           name: Service testing and build
           image: golang:1.12
           script:
-            - go get -u github.com/golang/dep/cmd/dep
+            - go mod
             - mkdir -p /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
             - cp -r ./*  /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}/
             - cd /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
-            - dep ensure --vendor-only
+            - go mod download
             - go test ./...
 
       - step:

@@ -9,6 +9,7 @@ require (
 	github.com/jinzhu/gorm v1.9.8
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lib/pq v1.1.1 // indirect
+	github.com/nats-io/stan.go v0.5.0
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
