@@ -5,9 +5,9 @@ pipelines:
   default:
     - step:
         name: Service testing and build
-        image: golang:1.12
+        image: golang:1.13
         script:
-          - go mod ./
+          - go mod 
           - mkdir -p /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
           - cp -r ./*  /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}/
           - cd /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
@@ -19,9 +19,9 @@ pipelines:
 
       - step:
           name: Service testing and build
-          image: golang:1.12
+          image: golang:1.13
           script:
-            - go mod ./
+            - go mod 
             - mkdir -p /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
             - cp -r ./*  /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}/
             - cd /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
@@ -51,9 +51,9 @@ pipelines:
 
       - step:
           name: Service testing and build
-          image: golang:1.12
+          image: golang:1.13
           script:
-            - go mod ./
+            - go mod 
             - mkdir -p /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
             - cp -r ./*  /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}/
             - cd /go/src/bitbucket.org/antinvestor/${BITBUCKET_REPO_SLUG}
