@@ -39,6 +39,7 @@ pipelines:
             - docker build -t ${IMAGE_NAME}:${BITBUCKET_COMMIT} -t ${IMAGE_NAME}:latest .
             - docker push $IMAGE_NAME
 
+
       - step:
           name: Deploy to Staging
           image: atlassian/pipelines-kubectl
