@@ -53,7 +53,7 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Qu
 		
 		//nats stream subscribation
 		go subscribetion()
-		//go QueueSubscribeGroup()
+		go QueueSubscribeGroup()
 		go QueueSubscribeGroup2()
 
 		
@@ -121,7 +121,7 @@ func (server *notificationserver) In(ctxt context.Context, req *notification.Inc
 			
 			return nil, errors.New("ProfileID or ProductID is invalid")
 
-	} else {
+	} 
 
 		uPayload, _ := json.Marshal(req.GetPayLoad())
 		
@@ -137,11 +137,11 @@ func (server *notificationserver) In(ctxt context.Context, req *notification.Inc
 		}
 			//create notification
 			server.Env.GeWtDb(ctxt).Create(in)
-for i:=0;i<=5;i++{
-			go publishEvent(in)
-		}
 
-	}
+			go publishEvent(in)
+		 
+
+	 
 
 	return &notification.StatusResponse{NotificationID: NOTID}, nil
 
@@ -192,7 +192,9 @@ func publishEvent(model *Notification) error {
 	channel := model.Channel
 	eventMsg := []byte(model.Payload)
 	// Publish message on subject (channel)
+	//for i:=0;i<=5;i++{
 	sc.Publish(channel, eventMsg)
+	//}
 	log.Println("Published message on channel: " + channel)
 
 	return nil
@@ -237,7 +239,7 @@ func subscribetion() {
 		stan.AckWait(aw),
 	)
 }
-
+//QueueSubscribeGroup duarable queue subscription with same durable Name
 func QueueSubscribeGroup() {
 
 	const (
@@ -263,7 +265,7 @@ func QueueSubscribeGroup() {
 		err := json.Unmarshal(msg.Data, &order)
 		if err == nil {
 			// Handle the message
-			log.Printf("QueueSubscribed message from clientID - %s: %+v\n", clientID, order)
+			log.Printf("QueueSubscribed message from clientID - %s: %+v\n", clientID, string(msg.Data))
 			
 		}
 	}, stan.DurableName(durableID),
@@ -271,7 +273,7 @@ func QueueSubscribeGroup() {
 	//runtime.Goexit()
 }
 
-
+//QueueSubscribeGroup2 duarable queue subscription with same durable Name
 func QueueSubscribeGroup2() {
 
 	const (
@@ -297,7 +299,7 @@ func QueueSubscribeGroup2() {
 		err := json.Unmarshal(msg.Data, &order)
 		if err == nil {
 			// Handle the message
-			log.Printf("2QueueSubscribed message from clientID - %s: %+v\n", clientID, order)
+			log.Printf("2QueueSubscribed message from clientID - %s: %+v\n", clientID, string(msg.Data))
 			
 		}
 	}, stan.DurableName(durableID),

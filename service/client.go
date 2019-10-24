@@ -74,7 +74,7 @@ func dosend(c notification.NotificationServiceClient) {
 		Channel:         "Email",
 		MessageTemplete: "Receveid_templete",
 		Autosend:        "false",
-		ProfileID:       "Funds",
+		ProfileID:       "001isaac",
 		MessageVariables: map[string]string{
 			"name":    "isa",
 			"Account": "AC100000",
