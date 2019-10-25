@@ -14,6 +14,8 @@ import (
 	stan "github.com/nats-io/stan.go"
 
 	"net/smtp"
+
+	"github.com/subosito/twilio"
 )
 
 
@@ -54,9 +56,9 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Qu
 		server.Env.GeWtDb(ctxt).Create(in)
 		
 		//nats stream subscribation
-		go subscribetion()
-		go QueueSubscribeGroup()
-		go QueueSubscribeGroup2()
+		 go subscribetion()
+		// go QueueSubscribeGroup()
+		// go QueueSubscribeGroup2()
 
 		
 	} else {
@@ -235,7 +237,11 @@ func subscribetion() {
 		//Handle the message
 		log.Printf("Subscribed message from clientID - %s for Order: %+v\n", clientID,string(msg.Data))
 		
-		HandleEmail(msg.Data)
+		//send Email
+		//HandleEmail(msg.Data)
+
+		//send sms
+		SmsHandler(msg.Data)
 
 	}, stan.DurableName(durableID),
 		stan.MaxInflight(25),
@@ -271,7 +277,8 @@ func QueueSubscribeGroup() {
 			// Handle the message
 			log.Printf("QueueSubscribed message from clientID - %s: %+v\n", clientID, string(msg.Data))
 			 
-			HandleEmail(msg.Data)
+			//HandleEmail(msg.Data)
+			
 		}
 	}, stan.DurableName(durableID),
 	)
@@ -327,7 +334,7 @@ type smtpServer struct {
 func HandleEmail( msg []byte) {
     // Sender data.
     from := "ochomisaac356@gmail.com"
-    password := "jaydeth1"
+    password := "#########"
     // Receiver email address.
     to := []string{
         "info@antinvestor.com",
@@ -349,4 +356,26 @@ func HandleEmail( msg []byte) {
         return
     }
     log.Println("Email Sent!")
+}
+
+//SmsHandler SmsHandler
+func SmsHandler(msg []byte) {
+	var (
+		AccountSid = "AC6322d5e60c2aadd30700b124b06e6dde"
+		AuthToken  = "7411ae9453892d1a5ba10c1903376294"
+		From       = "+15005550006"
+		 To         = "+256783486428"
+	)
+
+    // Initialize twilio Client
+    c := twilio.NewTwilio(AccountSid, AuthToken)
+
+    // Send Message
+    Body :=  msg
+
+	 resp, err := c.SimpleSendSMS(From , To, string(Body))
+	
+	log.Println("Response:", resp.Body)
+	log.Println("Response:", resp.Status)
+    log.Println("Err:", err)
 }

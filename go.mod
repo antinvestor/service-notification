@@ -18,6 +18,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/smacker/opentracing-gorm v0.0.0-20181207094635-cd4974441042
 	github.com/stretchr/testify v1.3.0
+	github.com/subosito/twilio v0.0.1
 	github.com/uber-go/atomic v1.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.16.0+incompatible
 	github.com/uber/jaeger-lib v2.0.0+incompatible
