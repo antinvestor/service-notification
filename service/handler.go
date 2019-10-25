@@ -374,8 +374,12 @@ func SmsHandler(msg []byte) {
     Body :=  msg
 
 	 resp, err := c.SimpleSendSMS(From , To, string(Body))
+	 
+	 if err != nil{
+		log.Println("Err:", err)
+	 }
 	
 	log.Println("Response:", resp.Body)
 	log.Println("Response:", resp.Status)
-    log.Println("Err:", err)
+    
 }
