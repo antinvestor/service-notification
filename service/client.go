@@ -104,7 +104,7 @@ func search(c notification.NotificationServiceClient) {
 
 	req := &notification.SearchRequest{
 
-		NotificationID: "bmg4apdq29bieu2s9640",
+		NotificationID: "bmnh675q29bhgm38theg",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
