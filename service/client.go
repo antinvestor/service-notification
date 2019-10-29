@@ -33,7 +33,7 @@ func Runclient(db *gorm.DB) {
 	//status(c)
 	dosend(c)
 	//income(c)
-
+	//Release(c)
 }
 
 // income notification requests
@@ -98,6 +98,24 @@ func status(c notification.NotificationServiceClient) {
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 	res, err := c.Status(env2, req)
+
+	if err != nil {
+		log.Fatalf("error while call send RPC %v", err)
+	}
+	log.Printf("Response from sender: %s", res.GetMessageStatus())
+}
+
+//Release looks for notification status with notification id
+func Release(c notification.NotificationServiceClient) {
+
+	req := &notification.ReleaseRequest{
+
+		NotificationID: "bmnh675q29bhgm38theg",
+	}
+
+	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+	res, err := c.Release(env2, req)
 
 	if err != nil {
 		log.Fatalf("error while call send RPC %v", err)
