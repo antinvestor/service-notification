@@ -66,15 +66,15 @@ func (server *notificationserver) Release(ctxt context.Context, req *notificatio
 	var Notificationid [] string
 	var notifications string
 
-	server.Env.GetRDb(ctxt).Table("notifications").Select("notification_id").Where("status = ?", req.GetReleaseMessage()).Pluck("notification_id", &Notificationid)
+	server.Env.GetRDb(ctxt).Table("notifications").Select("status").Where("statusnotification_id = ?", req.GetNotificationID()).Pluck("notification_id", &Notificationid)
 
 	for _,notifications := range Notificationid {
 	
-	return &notification.StatusResponse{NotificationID: notifications,}, nil
+	return &notification.StatusResponse{MessageStatus: notifications,}, nil
 }
 
 
-	return &notification.StatusResponse{NotificationID: notifications,}, nil
+	return &notification.StatusResponse{MessageStatus: notifications,}, nil
 }
 
 
