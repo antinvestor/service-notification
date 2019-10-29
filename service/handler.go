@@ -34,7 +34,7 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 	var id []string
 
 	//checks if profileID is valid
-	server.Env.GeWtDb(ctxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
+	server.Env.GetRDb(ctxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
 	if len(id) != 0 {
 
 		
@@ -77,7 +77,7 @@ func (server *notificationserver) Status(ctxt context.Context, req *notification
 	var status string
 
 	//server.Env.GeWtDb(ctxt).Debug().Raw("select status from notifications where notification_id = ?", req.GetNotificationID()).Pluck("status", &StatusInfos)
-	server.Env.GeWtDb(ctxt).Debug().Table("notifications").Select("status").Where("notification_id = ?", req.GetNotificationID()).Pluck("status", &StatusInfos)
+	server.Env.GetRDb(ctxt).Table("notifications").Select("status").Where("notification_id = ?", req.GetNotificationID()).Pluck("status", &StatusInfos)
 	if len(StatusInfos) != 0 {
 
 		for _, status := range StatusInfos {
@@ -100,7 +100,7 @@ func (server *notificationserver) Release(ctxt context.Context, req *notificatio
 	var Notificationid []string
 	var notifications string
 
-	server.Env.GeWtDb(ctxt).Debug().Table("notifications").Select("notification_id").Where("status = ?", req.GetReleaseMessage()).Pluck("notification_id", &Notificationid)
+	server.Env.GetRDb(ctxt).Table("notifications").Select("notification_id").Where("status = ?", req.GetReleaseMessage()).Pluck("notification_id", &Notificationid)
 	if len(Notificationid) != 0 {
 
 		for _, notifications := range Notificationid {
@@ -156,7 +156,7 @@ func (server *notificationserver) Search(req *notification.SearchRequest, stream
 	var cxt context.Context
 	var serch []string
 
-	server.Env.GeWtDb(cxt).Where("notification_id = ?", req.GetNotificationID()).Find(&Notification{}).Pluck("status", &serch)
+	server.Env.GetRDb(cxt).Where("notification_id = ?", req.GetNotificationID()).Find(&Notification{}).Pluck("status", &serch)
 	//check if request input exist in database
 	if len(serch) != 0 {
 
