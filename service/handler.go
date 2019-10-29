@@ -26,7 +26,7 @@ type notificationserver struct {
 }
 
 //out method act after income request let out notification
-func (server *notificationserver) Out(ctxt context.Context, req *notification.QueueRequest) (*notification.StatusResponse, error) {
+func (server *notificationserver) Out(ctxt context.Context, req *notification.MessageOut) (*notification.StatusResponse, error) {
 
 	Massagevariables, _ := json.Marshal(req.GetMessageVariables())
 
@@ -116,7 +116,7 @@ func (server *notificationserver) Release(ctxt context.Context, req *notificatio
 }
 
 //In method call for income rquest of any notification
-func (server *notificationserver) In(ctxt context.Context, req *notification.IncomeRequest) (*notification.StatusResponse, error) {
+func (server *notificationserver) In(ctxt context.Context, req *notification.MessageIn) (*notification.StatusResponse, error) {
 	NOTID := xid.New().String()
 
 	//checks if profileID  contact field is not null in table
