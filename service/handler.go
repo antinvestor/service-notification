@@ -63,18 +63,18 @@ return &notification.StatusResponse{MessageStatus: status,}, nil
 //Release method that is called for messages queued for release
 func (server *notificationserver) Release(ctxt context.Context, req *notification.ReleaseRequest) (*notification.StatusResponse, error){
 
-	var Notificationid [] string
-	var notifications string
+	var Status [] string
+	var status string
 
-	server.Env.GetRDb(ctxt).Table("notifications").Select("status").Where("notification_id = ?", req.GetNotificationID()).Pluck("status", &Notificationid)
+	server.Env.GetRDb(ctxt).Table("notifications").Select("status").Where("notification_id = ?", req.GetNotificationID()).Pluck("status", &Status)
 
-	for _,notifications := range Notificationid {
+	for _,status := range Status {
 	
-	return &notification.StatusResponse{MessageStatus: notifications,}, nil
+	return &notification.StatusResponse{MessageStatus: status,}, nil
 }
 
 
-	return &notification.StatusResponse{MessageStatus: notifications,}, nil
+	return &notification.StatusResponse{MessageStatus: status,}, nil
 }
 
 
