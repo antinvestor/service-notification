@@ -39,7 +39,7 @@ func Runclient(db *gorm.DB) {
 // income notification requests
 func income(c notification.NotificationServiceClient) {
 
-	req := &notification.IncomeRequest{
+	req := &notification.MessageIn{
 		RequestStatus: "send",     //req.Requeststatus,
 		Language:      "English",  //req.Language,
 		ProductID:     "Funds",    //req.Product,
@@ -59,7 +59,7 @@ func income(c notification.NotificationServiceClient) {
 //dosend creates notification for outgoing
 func dosend(c notification.NotificationServiceClient) {
 
-	req := &notification.QueueRequest{
+	req := &notification.MessageOut{
 
 		Language:        "English",
 		Channel:         "Email",
