@@ -241,7 +241,7 @@ func subscribetion() {
 		//HandleEmail(msg.Data)
 
 		//send sms
-		SmsHandler(msg.Data)
+		//SmsHandler(msg.Data)
 
 	}, stan.DurableName(durableID),
 		stan.MaxInflight(25),
