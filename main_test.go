@@ -37,7 +37,7 @@ var serverCmd *exec.Cmd
 func TestMain(m *testing.M) {
 	log.Printf("TestMain()")
 	//startServer()
-	startServer2()
+	startServer()
 	client, conn = startClient()
 	returnCode := m.Run()
 	stopClient()
@@ -46,23 +46,9 @@ func TestMain(m *testing.M) {
 	os.Exit(returnCode)
 }
 
+
+
 func startServer() {
-	log.Printf("startServer()")
-	cmdStr := "server/server"
-	serverCmd = exec.Command(cmdStr)
-	serverCmd.Dir = ".."
-	err := serverCmd.Start()
-	if err != nil {
-		log.Fatal("Server failed to start: ", err)
-	}
-
-	if !serverUp() {
-		log.Fatal("Server failed to open port")
-	}
-
-}
-
-func startServer2() {
 	go main()
 	if !serverUp() {
 		log.Fatal("Server failed to open port")
@@ -106,9 +92,7 @@ func checkServerUp() bool {
 
 func stopServer() {
 	log.Printf("stopServer()")
-	// if err := serverCmd.Process.Kill(); err != nil {
-	// 	grpclog.Fatal("failed to kill: ", err)
-	// }
+	
 	con := grpc.NewServer()
 
 	con.Stop()
@@ -245,6 +229,4 @@ func TestMessageIn(t *testing.T) {
 	log.Printf("Response from sender: %s", res.GetNotificationID())
 		
 	
-	//dosend creates notification for outgoing
-	TestMessageOut(t)
 }
