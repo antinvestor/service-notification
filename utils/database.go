@@ -1,10 +1,9 @@
 package utils
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
 
-	"fmt"
 	// Gorm relies on this dialect for initialization
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/smacker/opentracing-gorm"
@@ -13,28 +12,16 @@ import (
 // ConfigureDatabase Database Access for environment is configured here
 func ConfigureDatabase(log *logrus.Entry, replica bool) (*gorm.DB, error) {
 
-	dbDriver := GetEnv("DATABASE_DRIVER","postgres")
+	driver := GetEnv(ConfigDatabaseDriver, "postgres")
 
-	dbDatasource := GetEnv("DATABASE_URL", "")
-	if dbDatasource == "" {
+	datasource := GetEnv(ConfigDatabaseUrl, "postgres://ant:ant-secret@127.0.0.1:5432/service_notification?sslmode=disable")
 
-		dbHost := GetEnv("DATABASE_HOST", "127.0.0.1")
-		if replica{
-			dbHost = GetEnv("REPLICA_DATABASE_HOST", dbHost)
-		}
-
-
-		dbName := GetEnv("DATABASE_NAME", "service_notification")
-		dbUserName := GetEnv("DATABASE_USER_NAME", "ant")
-		dbSecret := GetEnv("DATABASE_SECRET", "ant-secret")
-		dbPort := GetEnv("DATABASE_PORT", "5432")
-
-		dbDatasource = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s  sslmode=disable", dbHost, dbPort, dbUserName, dbSecret, dbName)
+	if replica {
+		datasource = GetEnv(ConfigReplicaDatabaseUrl, datasource)
 	}
+	log.Debugf("Connecting using driver %v and source %v ", driver, datasource)
 
-	log.Debugf("Connecting using driver %v and source %v ", dbDriver, dbDatasource)
-
-	db, err := gorm.Open(dbDriver, dbDatasource)
+	db, err := gorm.Open(driver, datasource)
 
 	if db != nil {
 		otgorm.AddGormCallbacks(db)

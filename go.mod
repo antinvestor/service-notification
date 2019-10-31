@@ -3,6 +3,8 @@ module bitbucket.org/antinvestor/service-notification
 go 1.13
 
 require (
+	github.com/InVisionApp/go-health/v2 v2.1.2
+	github.com/InVisionApp/go-logger v1.0.1
 	github.com/beorn7/perks v1.0.0 // indirect
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/golang/protobuf v1.3.2
@@ -17,7 +19,7 @@ require (
 	github.com/rs/xid v1.2.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/smacker/opentracing-gorm v0.0.0-20181207094635-cd4974441042
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	github.com/subosito/twilio v0.0.1
 	github.com/uber-go/atomic v1.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.16.0+incompatible

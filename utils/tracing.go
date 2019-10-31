@@ -6,7 +6,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
 
-	"github.com/uber/jaeger-client-go"
+	jaeger "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
 )

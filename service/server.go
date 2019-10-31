@@ -2,6 +2,7 @@ package service
 
 import (
 	"net"
+	"github.com/InVisionApp/go-health/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 	otgorm "github.com/smacker/opentracing-gorm"
@@ -46,6 +47,7 @@ type Env struct {
 	wDb              *gorm.DB
 	rDb              *gorm.DB
 	Logger          *logrus.Entry
+	Health   		*health.Health
 	ServerPort	string
 
 }
