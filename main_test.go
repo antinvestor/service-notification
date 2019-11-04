@@ -4,10 +4,12 @@ import (
 	"log"
 	"testing"
 
+	"github.com/rs/xid"
 	"github.com/stretchr/testify/assert"
 
 	"context"
 	"io"
+
 	//"math/rand"
 	"net"
 	"os"
@@ -41,12 +43,9 @@ func TestMain(m *testing.M) {
 	client, conn = startClient()
 	returnCode := m.Run()
 	stopClient()
-	stopServer()
-	log.Printf("%v", returnCode)
+	stopServer() 
 	os.Exit(returnCode)
 }
-
-
 
 func startServer() {
 	go main()
@@ -92,7 +91,7 @@ func checkServerUp() bool {
 
 func stopServer() {
 	log.Printf("stopServer()")
-	
+
 	con := grpc.NewServer()
 
 	con.Stop()
@@ -115,13 +114,14 @@ func startClient() (pb.NotificationServiceClient, *grpc.ClientConn) {
 func stopClient() {
 	conn.Close()
 }
+
 ///////////////////////////////////////
 
 func TestSearch(t *testing.T) {
 
 	req := &pb.SearchRequest{
 
-		NotificationID: "bmnh675q29bhgm38theg",
+		NotificationID: "req.GetNotificationID()",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -166,7 +166,7 @@ func TestStatus(t *testing.T) {
 
 	req := &pb.StatusRequest{
 
-		NotificationID: "bmnh4n5q29bi7e65g07g",
+		NotificationID: "req.GetNotificationID()",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -182,7 +182,7 @@ func TestStatus(t *testing.T) {
 func TestMessageOut(t *testing.T) {
 
 	req := &pb.MessageOut{
-
+		NotificationID:  xid.New().String(),
 		Language:        "English",
 		Channel:         "Email",
 		MessageTemplete: "Receveid_templete",
@@ -193,7 +193,6 @@ func TestMessageOut(t *testing.T) {
 			"Account": "AC100000",
 			"Amount":  "100000",
 		},
-		
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -208,13 +207,14 @@ func TestMessageOut(t *testing.T) {
 func TestMessageIn(t *testing.T) {
 
 	req := &pb.MessageIn{
-		RequestStatus: "send",     //req.Requeststatus,
-		Language:      "English",  //req.Language,
-		ProductID:     "Funds",    //req.Product,
-		MessageType:   "Recieved", //req.Massagetype,
-		ProfileID:     "001isaac",
+		NotificationID: xid.New().String(),
+		RequestStatus:  "send",     //req.Requeststatus,
+		Language:       "English",  //req.Language,
+		ProductID:      "Funds",    //req.Product,
+		MessageType:    "Recieved", //req.Massagetype,
+		ProfileID:      "001isaac",
 		PayLoad: map[string]string{
-			"id":         "1",
+			"id":          "1",
 			"name":        "test entity 1",
 			"description": "Testing email service on the notification service part",
 		},
@@ -227,6 +227,5 @@ func TestMessageIn(t *testing.T) {
 		log.Fatalf("error while call send RPC %v", err)
 	}
 	log.Printf("Response from sender: %s", res.GetNotificationID())
-		
-	
+
 }

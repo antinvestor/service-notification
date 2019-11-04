@@ -9,16 +9,12 @@ import (
 
 	"bitbucket.org/antinvestor/service-notification/notification"
 
-	"github.com/rs/xid"
-
 	stan "github.com/nats-io/stan.go"
 
 	"net/smtp"
 
 	"github.com/subosito/twilio"
 )
-
-
 
 type notificationserver struct {
 	Env    *Env
@@ -30,17 +26,15 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 
 	Massagevariables, _ := json.Marshal(req.GetMessageVariables())
 
-	NOTID := xid.New().String()
 	var id []string
 
 	//checks if profileID is valid
 	server.Env.GetRDb(ctxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
 	if len(id) != 0 {
 
-		
 		//send notification
-		in := &Notification{
-			NotificationID:   NOTID,
+		out := &Notification{
+			NotificationID:   req.GetNotificationID(),
 			ProfileID:        req.GetProfileID(),
 			Messagevariables: string(Massagevariables),
 			Language:         req.Language,
@@ -49,24 +43,23 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 			Channel:     req.Channel,
 			Messagetype: req.MessageTemplete,
 			Autosend:    req.Autosend,
-			ProductID:"3900Rent",
-			Payload: string(Massagevariables),
+			ProductID:   "3900Rent",
+			Payload:     string(Massagevariables),
 		}
 
-		server.Env.GeWtDb(ctxt).Create(in)
-		
+		server.Env.GeWtDb(ctxt).Create(out)
+
 		//nats stream subscribation
-		 go subscribetion()
+		go subscribetion()
 		// go QueueSubscribeGroup()
 		// go QueueSubscribeGroup2()
 
-		
 	} else {
 		return nil, errors.New("ProfileID doesnot exit/match any value")
 
 	}
 
-	return &notification.StatusResponse{NotificationID: NOTID}, nil
+	return &notification.StatusResponse{NotificationID: req.GetNotificationID()}, nil
 
 }
 
@@ -117,37 +110,49 @@ func (server *notificationserver) Release(ctxt context.Context, req *notificatio
 
 //In method call for income rquest of any notification
 func (server *notificationserver) In(ctxt context.Context, req *notification.MessageIn) (*notification.StatusResponse, error) {
-	NOTID := xid.New().String()
 
 	//checks if profileID  contact field is not null in table
-	if len(req.GetProfileID()) == 0 || req.ProductID == ""{
+	if len(req.GetProfileID()) == 0 || req.ProductID == "" {
 
-			
-			return nil, errors.New("ProfileID or ProductID is invalid")
+		return nil, errors.New("ProfileID or ProductID is invalid")
 
-	} 
+	}
 
-		uPayload, _ := json.Marshal(req.GetPayLoad())
-		
-		in := &Notification{
-			NotificationID: NOTID,
-			ProfileID:      req.GetProfileID(),
-			ProductID:      req.ProductID,
-			Status:         req.RequestStatus,
-			Language:       req.Language,
-			Messagetype:    req.MessageType,
-			Payload:        string(uPayload),
-			Channel:		"Email",
-		}
-			//create notification
-			server.Env.GeWtDb(ctxt).Create(in)
+	uPayload, _ := json.Marshal(req.GetPayLoad())
 
-			go publishEvent(in)
-		 
+	in := &Notification{
+		NotificationID: req.GetNotificationID(),
+		ProfileID:      req.GetProfileID(),
+		ProductID:      req.ProductID,
+		Status:         req.RequestStatus,
+		Language:       req.Language,
+		Messagetype:    req.MessageType,
+		Payload:        string(uPayload),
+		Channel:        "Email",
+	}
+	//create notification
+	server.Env.GeWtDb(ctxt).Create(in)
 
-	 
+	//go publishEvent(in)
 
-	return &notification.StatusResponse{NotificationID: NOTID}, nil
+	var Notificationid []string
+	var id string
+
+	//retrieve new inserted transaction id
+	rows := server.Env.GetRDb(ctxt).Find(&Notification{}, "notification_id = ? AND profile_id = ?", req.GetNotificationID(), req.GetProfileID()).Pluck("notification_id", &Notificationid)
+	//defer rows.Close()
+
+	if rows.RecordNotFound() {
+
+		return nil, errors.New("Record not found")
+
+	}
+
+	for _, d := range Notificationid {
+		id = d
+	}
+
+	return &notification.StatusResponse{NotificationID: id}, nil
 
 }
 
@@ -231,12 +236,12 @@ func subscribetion() {
 		//Unmarshal JSON that represents the Order data
 		err := json.Unmarshal(msg.Data, &order)
 		if err != nil {
-			log.Print("ll",err)
+			log.Print("ll", err)
 			return
 		}
 		//Handle the message
-		log.Printf("Subscribed message from clientID - %s for Order: %+v\n", clientID,string(msg.Data))
-		
+		log.Printf("Subscribed message from clientID - %s for Order: %+v\n", clientID, string(msg.Data))
+
 		//send Email
 		//HandleEmail(msg.Data)
 
@@ -249,6 +254,7 @@ func subscribetion() {
 		stan.AckWait(aw),
 	)
 }
+
 //QueueSubscribeGroup duarable queue subscription with same durable Name
 func QueueSubscribeGroup() {
 
@@ -276,9 +282,9 @@ func QueueSubscribeGroup() {
 		if err == nil {
 			// Handle the message
 			log.Printf("QueueSubscribed message from clientID - %s: %+v\n", clientID, string(msg.Data))
-			 
+
 			//HandleEmail(msg.Data)
-			
+
 		}
 	}, stan.DurableName(durableID),
 	)
@@ -312,7 +318,7 @@ func QueueSubscribeGroup2() {
 		if err == nil {
 			// Handle the message
 			log.Printf("2QueueSubscribed message from clientID - %s: %+v\n", clientID, string(msg.Data))
-			
+
 		}
 	}, stan.DurableName(durableID),
 	)
@@ -323,39 +329,38 @@ func QueueSubscribeGroup2() {
 type smtpServer struct {
 	host string
 	port string
-   }
-   // serverName URI to smtp server
-   func (s *smtpServer) serverName() string {
-	return s.host + ":" + s.port
-   }
+}
 
+// serverName URI to smtp server
+func (s *smtpServer) serverName() string {
+	return s.host + ":" + s.port
+}
 
 //HandleEmail Handle Email
-func HandleEmail( msg []byte) {
-    // Sender data.
-    from := "ochomisaac356@gmail.com"
-    password := "#########"
-    // Receiver email address.
-    to := []string{
-        "info@antinvestor.com",
-        
-    }
-    // smtp server configuration.
-    smtpServer := smtpServer{host: "smtp.gmail.com", port: "587"}
-    // Message.
+func HandleEmail(msg []byte) {
+	// Sender data.
+	from := "ochomisaac356@gmail.com"
+	password := "#########"
+	// Receiver email address.
+	to := []string{
+		"info@antinvestor.com",
+	}
+	// smtp server configuration.
+	smtpServer := smtpServer{host: "smtp.gmail.com", port: "587"}
+	// Message.
 	message := []byte("To: info@antinvestor.com \r\n" +
-	"Subject: Notification service \r\n " + 
-	"\r\n" + 
-	 "Welcome\r\n" + string(msg) )
-    // Authentication.
-    auth := smtp.PlainAuth("", from, password, smtpServer.host)
-    // Sending email.
-    err := smtp.SendMail(smtpServer.serverName(), auth, from, to, message)
-    if err != nil {
-        log.Println(err)
-        return
-    }
-    log.Println("Email Sent!")
+		"Subject: Notification service \r\n " +
+		"\r\n" +
+		"Welcome\r\n" + string(msg))
+	// Authentication.
+	auth := smtp.PlainAuth("", from, password, smtpServer.host)
+	// Sending email.
+	err := smtp.SendMail(smtpServer.serverName(), auth, from, to, message)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println("Email Sent!")
 }
 
 //SmsHandler SmsHandler
@@ -364,22 +369,22 @@ func SmsHandler(msg []byte) {
 		AccountSid = "AC6322d5e60c2aadd30700b124b06e6dde"
 		AuthToken  = "7411ae9453892d1a5ba10c1903376294"
 		From       = "+15005550006"
-		 To         = "+256783486428"
+		To         = "+256783486428"
 	)
 
-    // Initialize twilio Client
-    c := twilio.NewTwilio(AccountSid, AuthToken)
+	// Initialize twilio Client
+	c := twilio.NewTwilio(AccountSid, AuthToken)
 
-    // Send Message
-    Body :=  msg
+	// Send Message
+	Body := msg
 
-	 resp, err := c.SimpleSendSMS(From , To, string(Body))
-	 
-	 if err != nil{
+	resp, err := c.SimpleSendSMS(From, To, string(Body))
+
+	if err != nil {
 		log.Println("Err:", err)
-	 }
-	
+	}
+
 	log.Println("Response:", resp.Body)
 	log.Println("Response:", resp.Status)
-    
+
 }

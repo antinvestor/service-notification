@@ -129,7 +129,7 @@ type Notification struct {
 
 // BeforeCreate Ensures we update a migrations time stamps
 func (model *Notification) BeforeCreate(scope *gorm.Scope) error {
-	scope.SetColumn("NotificationID", xid.New().String())
+	//scope.SetColumn("NotificationID", xid.New().String())
 	scope.SetColumn("CreatedAt", time.Now())
 	return scope.SetColumn("ModifiedAt", time.Now())
 }

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/rs/xid"
 )
 
 //Runclient runs client server
@@ -37,17 +38,18 @@ func Runclient(db *gorm.DB) {
 
 }
 
-// income notification requests
+// MessageIn notification requests
 func MessageIn(c notification.NotificationServiceClient) {
 
 	req := &notification.MessageIn{
-		RequestStatus: "send",     //req.Requeststatus,
-		Language:      "English",  //req.Language,
-		ProductID:     "Funds",    //req.Product,
-		MessageType:   "Recieved", //req.Massagetype,
-		ProfileID:     "001isaac",
+		NotificationID: xid.New().String(),
+		RequestStatus:  "send",     //req.Requeststatus,
+		Language:       "English",  //req.Language,
+		ProductID:      "Funds",    //req.Product,
+		MessageType:    "Recieved", //req.Massagetype,
+		ProfileID:      "001isaac",
 		PayLoad: map[string]string{
-			"id":         "1",
+			"id":          "1",
 			"name":        "test entity 1",
 			"description": "Testing email service on the notification service part",
 		},
@@ -57,20 +59,19 @@ func MessageIn(c notification.NotificationServiceClient) {
 	res, err := c.In(env2, req)
 
 	if err != nil {
-		log.Fatalf("error while call send RPC %v", err)
+		log.Fatalf("error while call messageIn RPC %v", err)
 	}
 	log.Printf("Response from sender: %s", res.GetNotificationID())
-		
-	
+
 	//dosend creates notification for outgoing
 	//MessageOut(c)
 }
 
-//dosend creates notification for outgoing
+//MessageOut creates notification for outgoing
 func MessageOut(c notification.NotificationServiceClient) {
 
 	req := &notification.MessageOut{
-
+		NotificationID:	xid.New().String(),
 		Language:        "English",
 		Channel:         "Email",
 		MessageTemplete: "Receveid_templete",
@@ -81,7 +82,6 @@ func MessageOut(c notification.NotificationServiceClient) {
 			"Account": "AC100000",
 			"Amount":  "100000",
 		},
-		
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -156,4 +156,3 @@ func search(c notification.NotificationServiceClient) {
 	}
 
 }
-
