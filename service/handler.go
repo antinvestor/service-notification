@@ -132,8 +132,11 @@ func (server *notificationserver) In(ctxt context.Context, req *notification.Mes
 	}
 	//create notification
 	server.Env.GeWtDb(ctxt).Create(in)
-
-	//go publishEvent(in)
+	
+	//publishing notification
+	if err:= publishEvent(in);err != nil{
+		return nil, err 
+	}
 
 	var Notificationid []string
 	var id string
@@ -161,7 +164,7 @@ func (server *notificationserver) Search(req *notification.SearchRequest, stream
 	var cxt context.Context
 	var serch []string
 
-	server.Env.GetRDb(cxt).Where("notification_id = ?", req.GetNotificationID()).Find(&Notification{}).Pluck("status", &serch)
+	server.Env.GetRDb(cxt).Where("notification_id = ? And messagetype = ? ", req.GetNotificationID(),req.GetMessage()).Find(&Notification{}).Pluck("status", &serch)
 	//check if request input exist in database
 	if len(serch) != 0 {
 
@@ -201,9 +204,9 @@ func publishEvent(model *Notification) error {
 	channel := model.Channel
 	eventMsg := []byte(model.Payload)
 	// Publish message on subject (channel)
-	//for i:=0;i<=5;i++{
+	 
 	sc.Publish(channel, eventMsg)
-	//}
+	 
 	log.Println("Published message on channel: " + channel)
 
 	return nil
@@ -243,9 +246,7 @@ func subscribetion() {
 		log.Printf("Subscribed message from clientID - %s for Order: %+v\n", clientID, string(msg.Data))
 
 		//send Email
-		//HandleEmail(msg.Data)
-
-		//send sms
+		 
 		//SmsHandler(msg.Data)
 
 	}, stan.DurableName(durableID),
@@ -322,7 +323,7 @@ func QueueSubscribeGroup2() {
 		}
 	}, stan.DurableName(durableID),
 	)
-	//runtime.Goexit()
+	 
 }
 
 // smtpServer data to smtp server

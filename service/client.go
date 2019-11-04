@@ -29,11 +29,17 @@ func Runclient(db *gorm.DB) {
 	c := notification.NewNotificationServiceClient(cc)
 
 	//client methods called on particular occasion/functionality
+ 
+	req := &notification.SearchRequest{
 
-	//search(c)
+		NotificationID: "req.GetNotificationID()",
+		Message: "Recieved",
+	}
+
+	search(c,req)
 	//status(c)
 	//dosend(c)
-	MessageIn(c)
+	//MessageIn(c)
 	//Release
 
 }
@@ -129,12 +135,9 @@ func Release(c notification.NotificationServiceClient) {
 	log.Printf("Response from sender: %s", res.GetNotificationID())
 }
 
-func search(c notification.NotificationServiceClient) {
+func search(c notification.NotificationServiceClient, req *notification.SearchRequest ) {
 
-	req := &notification.SearchRequest{
-
-		NotificationID: "bmg4apdq29bieu2s9640",
-	}
+	
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()

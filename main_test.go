@@ -122,6 +122,7 @@ func TestSearch(t *testing.T) {
 	req := &pb.SearchRequest{
 
 		NotificationID: "req.GetNotificationID()",
+		Message: "Recieved",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
