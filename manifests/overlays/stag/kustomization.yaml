@@ -1,0 +1,11 @@
+bases:
+  - ../../base
+namespace: staging
+commonLabels:
+  env: stag
+patchesStrategicMerge:
+  - externdns.yaml 
+  - certificates.yaml
+  - service-notification.yaml
+  - api-ingreses.yaml
+  - traefik.yaml

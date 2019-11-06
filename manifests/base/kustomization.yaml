@@ -1,0 +1,7 @@
+
+resources:
+- externdns.yaml
+- traefik.yaml
+- certificates.yaml
+- service-notificaton.yaml
+- api-ingreses.yaml

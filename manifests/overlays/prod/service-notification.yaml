@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: service-notification
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-notification
+  template:
+    metadata:
+      labels:
+        app: service-notification
+    spec:
+      containers:
+      - name: service-notification-container
+        image: eu.gcr.io/antinvestor/service-notification-stag:latest
+        env:
+        - name: LOG_LEVEL
+          value: INFO
+        - name: SERVER_PORT
+          value: "7000"
+        - name: DATABASE_HOST
+          value: default-postgres.staging.svc.cluster.local
+        - name: DATABASE_PORT
+          value: "5432"
+        - name: DATABASE_NAME
+          value: servicenotification
+        - name: DATABASE_USER_NAME
+          value: filemanager
+        - name: DATABASE_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: app_pass_files
+              name: default-postgres
+              
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-notification
+  namespace: production
+spec:
+  ports:
+  - name: http
+    targetPort: 7513
+    port: 80
+  selector:
+    app: service-notification

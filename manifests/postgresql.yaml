@@ -1,0 +1,301 @@
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zalando-postgres-operator
+  namespace: dataplane
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: zalando-postgres-operator
+  namespace: dataplane
+rules:
+- apiGroups:
+  - acid.zalan.do
+  resources:
+  - postgresqls
+  - operatorconfigurations
+  verbs:
+  - "*"
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch # needed if zalando-postgres-operator account is used for pods as well
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - update
+  - delete
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - delete
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - update # only for resizing AWS volumes
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - delete
+  - get
+  - list
+  - watch
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - create
+  - delete
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - get
+  - create
+- apiGroups:
+  - "rbac.authorization.k8s.io"
+  resources:
+  - rolebindings
+  verbs:
+  - get
+  - create
+- apiGroups:
+  - "rbac.authorization.k8s.io"
+  resources:
+  - clusterroles
+  verbs:
+  - bind
+  resourceNames: 
+  - zalando-postgres-operator
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs # enables logical backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: zalando-postgres-operator
+  namespace: dataplane
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: zalando-postgres-operator
+subjects:
+- kind: ServiceAccount
+# note: the cluster role binding needs to be defined
+# for every namespace the operator service account lives in.
+  name: zalando-postgres-operator
+  namespace: dataplane
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pg-pod-configmap
+  namespace: dataplane 
+data: 
+  BACKUP_SCHEDULE: "00 01 */3 * *"
+  BACKUP_NUM_TO_RETAIN: "15"
+  WALE_BACKUP_THRESHOLD_MEGABYTES: '1024'
+  WALE_BACKUP_THRESHOLD_PERCENTAGE: '30'
+
+  WALG_S3_PREFIX: "s3://dataplane/postgresql"
+
+  AWS_ACCESS_KEY_ID: "RYMTWXQJIC31R65MG7YC"
+  AWS_SECRET_ACCESS_KEY: "oR8MCucjEbnJcVlJ0Sbfpp6UaJeQoef7Mz96JRrm"
+  AWS_REGION: "eu-central-1"
+  AWS_ENDPOINT: "s3.eu-central-1.wasabisys.com"
+
+  USE_WALG_BACKUP: "true"
+  USE_WALG_RESTORE: "true"
+  WALG_DOWNLOAD_CONCURRENCY: "10"
+  WALG_UPLOAD_CONCURRENCY: "10"
+
+---
+
+apiVersion: "acid.zalan.do/v1"
+kind: OperatorConfiguration
+metadata:
+  name: pg-operator-config
+  namespace: dataplane
+configuration:
+  etcd_host: ""
+  docker_image: registry.opensource.zalan.do/acid/spilo-11:1.5-p7
+  #sidecar_docker_images:
+  #  pg-exporter: "caricah/postgres_exporter:v0.4.7"
+  workers: 4
+  min_instances: -1
+  max_instances: -1
+  resync_period: 30m
+  repair_period: 5m
+
+  users:
+    super_username: postgres
+    replication_username: standby
+  kubernetes:
+    pod_service_account_name: operator
+    pod_terminate_grace_period: 5m
+    pdb_name_format: "postgres-{cluster}-pdb"
+    secret_name_template: "{username}.{cluster}.credentials.{tprkind}.{tprgroup}"
+    oauth_token_secret_name: pg-operator
+    pod_role_label: spilo-role
+    cluster_labels:
+        application: spilo
+    cluster_name_label: cluster-name
+    watched_namespace: dataplane
+    # node_readiness_label: ""
+    # toleration: {}
+    # infrastructure_roles_secret_name: ""
+    pod_environment_configmap: pg-pod-configmap
+    
+  postgres_pod_resources:
+    default_cpu_request: 100m
+    default_memory_request: 100Mi
+    default_cpu_limit: "1"
+    default_memory_limit: 1Gi
+  timeouts:
+    resource_check_interval: 3s
+    resource_check_timeout: 10m
+    pod_label_wait_timeout: 10m
+    pod_deletion_wait_timeout: 10m
+    ready_wait_interval: 4s
+    ready_wait_timeout: 30s
+  load_balancer:
+    enable_master_load_balancer: false
+    enable_replica_load_balancer: false
+    master_dns_name_format: "{cluster}.{team}.{hostedzone}"
+    replica_dns_name_format: "{cluster}-repl.{team}.{hostedzone}"
+  debug:
+    debug_logging: false
+    enable_database_access: true
+  teams_api:
+    enable_teams_api: false
+
+  logging_rest_api:
+    api_port: 8008
+    ring_log_lines: 100
+    cluster_history_entries: 1000
+
+  scalyr:
+    scalyr_cpu_request: 100m
+    scalyr_memory_request: 50Mi
+    scalyr_cpu_limit: "1"
+    scalyr_memory_limit: 200Mi
+
+---
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: postgres-operator
+  namespace: dataplane
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: postgres-operator
+    spec:
+      serviceAccountName: zalando-postgres-operator
+      containers:
+      - name: postgres-operator
+        image: registry.opensource.zalan.do/acid/postgres-operator:v1.1.0-9-g5f6abfb
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 500m
+            memory: 250Mi
+          limits:
+            cpu: 2000m
+            memory: 500Mi
+        env:
+        - name: POSTGRES_OPERATOR_CONFIGURATION_OBJECT
+          value: pg-operator-config
+
