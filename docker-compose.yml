@@ -6,7 +6,7 @@ services:
       container_name: db
       hostname: db
       environment:
-        POSTGRES_DB: service_payment
+        POSTGRES_DB: service_notification
         POSTGRES_USER: ant
         POSTGRES_PASSWORD: ant-secret
       ports:
