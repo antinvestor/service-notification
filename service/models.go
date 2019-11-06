@@ -8,7 +8,7 @@ import (
 	"github.com/rs/xid"
 )
 
-// AntMigration Our simple table holding all the migration data
+// AntBaseModel Our simple table holding all the migration data
 type AntBaseModel struct {
 	CreatedAt  time.Time
 	ModifiedAt time.Time
