@@ -30,25 +30,28 @@ func Runclient(db *gorm.DB) {
 
 	//client methods called on particular occasion/functionality
  
-	req := &notification.SearchRequest{
+	// req := &notification.SearchRequest{
 
-		NotificationID: "req.GetNotificationID()",
-		Message: "Recieved",
-	}
+	// 	NotificationID: "req.GetNotificationID()",
+	// 	Message: "Recieved",
+	// }
 
-	search(c,req)
+	//search(c,req)
 	//status(c)
 	//dosend(c)
-	//MessageIn(c)
+	MessageIn(c)
 	//Release
 
 }
-
+//IDGen genereate unigue id format
+func  IDGen(uniqueCode string) string {
+	return fmt.Sprintf("%s_%s", uniqueCode, xid.New().String())
+}
 // MessageIn notification requests
 func MessageIn(c notification.NotificationServiceClient) {
-
+	 
 	req := &notification.MessageIn{
-		NotificationID: xid.New().String(),
+		NotificationID: IDGen("ntf"),
 		RequestStatus:  "send",     //req.Requeststatus,
 		Language:       "English",  //req.Language,
 		ProductID:      "Funds",    //req.Product,

@@ -37,10 +37,10 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 			NotificationID:   req.GetNotificationID(),
 			ProfileID:        req.GetProfileID(),
 			Messagevariables: string(Massagevariables),
-			Language:         req.Language,
+			LanguageID:         req.Language,
 			//channel will be determined by product preferences or profile client request
 			//if the user has multiple phone numbers attached to their profile prefer the phone number that was last added and verified or last known to work
-			Channel:     req.Channel,
+			ChannelsID:     req.Channel,
 			Messagetype: req.MessageTemplete,
 			Autosend:    req.Autosend,
 			ProductID:   "3900Rent",
@@ -125,10 +125,10 @@ func (server *notificationserver) In(ctxt context.Context, req *notification.Mes
 		ProfileID:      req.GetProfileID(),
 		ProductID:      req.ProductID,
 		Status:         req.RequestStatus,
-		Language:       req.Language,
+		LanguageID:       req.Language,
 		Messagetype:    req.MessageType,
 		Payload:        string(uPayload),
-		Channel:        "Email",
+		ChannelsID:        "Email",
 	}
 	//create notification
 	server.Env.GeWtDb(ctxt).Create(in)
@@ -141,7 +141,7 @@ func (server *notificationserver) In(ctxt context.Context, req *notification.Mes
 	var Notificationid []string
 	var id string
 
-	//retrieve new inserted transaction id
+	//retrieve new inserted notification id
 	rows := server.Env.GetRDb(ctxt).Find(&Notification{}, "notification_id = ? AND profile_id = ?", req.GetNotificationID(), req.GetProfileID()).Pluck("notification_id", &Notificationid)
 	//defer rows.Close()
 
@@ -201,7 +201,7 @@ func publishEvent(model *Notification) error {
 		return err
 	}
 	defer sc.Close()
-	channel := model.Channel
+	channel := model.ChannelsID
 	eventMsg := []byte(model.Payload)
 	// Publish message on subject (channel)
 	 

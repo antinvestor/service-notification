@@ -4,7 +4,6 @@ import (
 	"log"
 	"testing"
 
-	"github.com/rs/xid"
 	"github.com/stretchr/testify/assert"
 
 	"context"
@@ -22,6 +21,7 @@ import (
 	//"google.golang.org/grpc/grpclog"
 
 	pb "bitbucket.org/antinvestor/service-notification/notification"
+	serv "bitbucket.org/antinvestor/service-notification/service"
 )
 
 // Test started when the test binary is started. Only calls main.
@@ -43,7 +43,7 @@ func TestMain(m *testing.M) {
 	client, conn = startClient()
 	returnCode := m.Run()
 	stopClient()
-	stopServer() 
+	stopServer()
 	os.Exit(returnCode)
 }
 
@@ -121,8 +121,8 @@ func TestSearch(t *testing.T) {
 
 	req := &pb.SearchRequest{
 
-		NotificationID: "req.GetNotificationID()",
-		Message: "Recieved",
+		NotificationID: "ntf_bn1ucplq29bhp57ik8kg",
+		Message:        "Recieved",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -167,7 +167,7 @@ func TestStatus(t *testing.T) {
 
 	req := &pb.StatusRequest{
 
-		NotificationID: "req.GetNotificationID()",
+		NotificationID: "ntf_bn1ucplq29bhp57ik8kg",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -183,7 +183,7 @@ func TestStatus(t *testing.T) {
 func TestMessageOut(t *testing.T) {
 
 	req := &pb.MessageOut{
-		NotificationID:  xid.New().String(),
+		NotificationID:  serv.IDGen("ntf"),
 		Language:        "English",
 		Channel:         "Email",
 		MessageTemplete: "Receveid_templete",
@@ -208,7 +208,7 @@ func TestMessageOut(t *testing.T) {
 func TestMessageIn(t *testing.T) {
 
 	req := &pb.MessageIn{
-		NotificationID: xid.New().String(),
+		NotificationID: serv.IDGen("ntf"),
 		RequestStatus:  "send",     //req.Requeststatus,
 		Language:       "English",  //req.Language,
 		ProductID:      "Funds",    //req.Product,
