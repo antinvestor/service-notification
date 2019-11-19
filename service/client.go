@@ -40,6 +40,7 @@ func Runclient(db *gorm.DB) {
 	//status(c)
 	//dosend(c)
 	MessageIn(c)
+	MessageOut(c)
 	//Release
 
 }
@@ -80,7 +81,7 @@ func MessageIn(c notification.NotificationServiceClient) {
 func MessageOut(c notification.NotificationServiceClient) {
 
 	req := &notification.MessageOut{
-		NotificationID:	xid.New().String(),
+		NotificationID:	IDGen("ntf"),
 		Language:        "English",
 		Channel:         "Email",
 		MessageTemplete: "Receveid_templete",

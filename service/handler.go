@@ -183,6 +183,7 @@ func (server *notificationserver) Search(req *notification.SearchRequest, stream
 
 }
 
+
 // publishEvent publish an event via NATS Streaming server
 func publishEvent(model *Notification) error {
 
@@ -191,6 +192,7 @@ func publishEvent(model *Notification) error {
 		clientID  = "event-store"
 	)
 
+	
 	// Connect to NATS Streaming server
 	sc, err := stan.Connect(
 		clusterID,
@@ -202,12 +204,15 @@ func publishEvent(model *Notification) error {
 	}
 	defer sc.Close()
 	channel := model.ChannelsID
-	eventMsg := []byte(model.Payload)
+	eventMsg,err := json.Marshal(model.NotificationID )
 	// Publish message on subject (channel)
-	 
+	if err != nil {
+		log.Print("pub", err)
+		return err
+	}
 	sc.Publish(channel, eventMsg)
 	 
-	log.Println("Published message on channel: " + channel)
+	log.Println("Published message on channel: " , channel)
 
 	return nil
 }
@@ -235,15 +240,16 @@ func subscribetion() {
 	aw, _ := time.ParseDuration("60s")
 	sc.Subscribe(channel, func(msg *stan.Msg) {
 		msg.Ack() // Manual ACK
-		order := &Notification{}
+
+		id := &Notification{}
 		//Unmarshal JSON that represents the Order data
-		err := json.Unmarshal(msg.Data, &order)
+		err := json.Unmarshal(msg.Data, &id.NotificationID)
 		if err != nil {
 			log.Print("ll", err)
 			return
 		}
 		//Handle the message
-		log.Printf("Subscribed message from clientID - %s for Order: %+v\n", clientID, string(msg.Data))
+		log.Printf("Subscribed message from clientID - %s for ID: %+v\n", clientID, string(msg.Data))
 
 		//send Email
 		 
