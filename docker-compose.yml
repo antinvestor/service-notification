@@ -1,10 +1,8 @@
 version: '3'
 services:
   
-    db:
+    db1:
       image: postgres:alpine
-      container_name: db
-      hostname: db
       environment:
         POSTGRES_DB: service_notification
         POSTGRES_USER: ant
@@ -21,9 +19,11 @@ services:
       ports:
         - "7000:7000"
       depends_on: 
-        - db
+        - db1
+        - nats
       links: 
-        - db       
+        - db1
+        - nats
 
     nats:
         image: nats-streaming:latest
