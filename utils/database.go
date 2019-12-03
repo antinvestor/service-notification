@@ -14,7 +14,7 @@ func ConfigureDatabase(log *logrus.Entry, replica bool) (*gorm.DB, error) {
 
 	driver := GetEnv(ConfigDatabaseDriver, "postgres")
 
-	datasource := GetEnv(ConfigDatabaseUrl, "postgres://ant:ant-secret@127.0.0.1:5432/service_notification?sslmode=disable")
+	datasource := GetEnv(ConfigDatabaseUrl, "postgres://ant:ant-secret@host.docker.internal:5432/service_notification?sslmode=disable")
 
 	if replica {
 		datasource = GetEnv(ConfigReplicaDatabaseUrl, datasource)
