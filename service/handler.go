@@ -197,7 +197,7 @@ func publishEvent(model *Notification) error {
 	sc, err := stan.Connect(
 		clusterID,
 		clientID,
-		stan.NatsURL(stan.DefaultNatsURL),
+		stan.NatsURL("nats://nats:4222"),
 	)
 	if err != nil {
 		return err
@@ -230,7 +230,7 @@ func subscribetion() {
 	sc, err := stan.Connect(
 		clusterID,
 		clientID,
-		stan.NatsURL(stan.DefaultNatsURL),
+		stan.NatsURL("nats://nats:4222"),
 	)
 
 	if err != nil {
