@@ -163,3 +163,4 @@ func search(c notification.NotificationServiceClient, req *notification.SearchRe
 	}
 
 }
+
