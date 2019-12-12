@@ -302,40 +302,6 @@ func QueueSubscribeGroup() {
 	//runtime.Goexit()
 }
 
-//QueueSubscribeGroup2 duarable queue subscription with same durable Name
-func QueueSubscribeGroup2() {
-
-	const (
-		clusterID  = "test-cluster"
-		clientID   = "notification-service-query2"
-		channel    = "Email"
-		durableID  = "notification-durable"
-		queueGroup = "notification-service-group"
-	)
-
-	// Connect to NATS Streaming server
-	sc, err := stan.Connect(
-		clusterID,
-		clientID,
-		stan.NatsURL(stan.DefaultNatsURL),
-	)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	sc.QueueSubscribe(channel, queueGroup, func(msg *stan.Msg) {
-		order := &Notification{}
-		err := json.Unmarshal(msg.Data, &order)
-		if err == nil {
-			// Handle the message
-			log.Printf("2QueueSubscribed message from clientID - %s: %+v\n", clientID, string(msg.Data))
-
-		}
-	}, stan.DurableName(durableID),
-	)
-	 
-}
-
 // smtpServer data to smtp server
 type smtpServer struct {
 	host string
