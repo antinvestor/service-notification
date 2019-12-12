@@ -90,9 +90,10 @@ type Notification struct {
 	Status    			string `gorm:"type:text"`
 	Channel        		string `gorm:"type:text"`
 	Language			string `gorm:"type:text"`
-	Product				string `gorm:"type:text"`
+	ProductID			string `gorm:"type:text"`
 	Messagetype			string `gorm:"type:text"`
 	Messagevariables    string `gorm:"type:text"`
+	Payload				map[string]string	`sql:"type:jsonb"`
 	AppliedAt       	*time.Time
 	CreatedAt       	time.Time
 	ModifiedAt     		time.Time

@@ -25,11 +25,11 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 //QueueRequest for Queue Request with these defined requirements
-type QueueRequest struct {
-	ProfileID            map[string]string `protobuf:"bytes,1,rep,name=profileID,proto3" json:"profileID,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Massagetemplete      string            `protobuf:"bytes,2,opt,name=massagetemplete,proto3" json:"massagetemplete,omitempty"`
+type MessageOut struct {
+	ProfileID            string            `protobuf:"bytes,1,opt,name=profileID,proto3" json:"profileID,omitempty"`
+	MessageTemplete      string            `protobuf:"bytes,2,opt,name=messageTemplete,proto3" json:"messageTemplete,omitempty"`
 	Language             string            `protobuf:"bytes,3,opt,name=language,proto3" json:"language,omitempty"`
-	Massagevariables     map[string]string `protobuf:"bytes,4,rep,name=massagevariables,proto3" json:"massagevariables,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	MessageVariables     map[string]string `protobuf:"bytes,4,rep,name=messageVariables,proto3" json:"messageVariables,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	Channel              string            `protobuf:"bytes,5,opt,name=channel,proto3" json:"channel,omitempty"`
 	Autosend             string            `protobuf:"bytes,6,opt,name=autosend,proto3" json:"autosend,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
@@ -37,116 +37,69 @@ type QueueRequest struct {
 	XXX_sizecache        int32             `json:"-"`
 }
 
-func (m *QueueRequest) Reset()         { *m = QueueRequest{} }
-func (m *QueueRequest) String() string { return proto.CompactTextString(m) }
-func (*QueueRequest) ProtoMessage()    {}
-func (*QueueRequest) Descriptor() ([]byte, []int) {
+func (m *MessageOut) Reset()         { *m = MessageOut{} }
+func (m *MessageOut) String() string { return proto.CompactTextString(m) }
+func (*MessageOut) ProtoMessage()    {}
+func (*MessageOut) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ff76f27cb6af8e56, []int{0}
 }
 
-func (m *QueueRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueueRequest.Unmarshal(m, b)
+func (m *MessageOut) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MessageOut.Unmarshal(m, b)
 }
-func (m *QueueRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueueRequest.Marshal(b, m, deterministic)
+func (m *MessageOut) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MessageOut.Marshal(b, m, deterministic)
 }
-func (m *QueueRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueueRequest.Merge(m, src)
+func (m *MessageOut) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MessageOut.Merge(m, src)
 }
-func (m *QueueRequest) XXX_Size() int {
-	return xxx_messageInfo_QueueRequest.Size(m)
+func (m *MessageOut) XXX_Size() int {
+	return xxx_messageInfo_MessageOut.Size(m)
 }
-func (m *QueueRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueueRequest.DiscardUnknown(m)
+func (m *MessageOut) XXX_DiscardUnknown() {
+	xxx_messageInfo_MessageOut.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueueRequest proto.InternalMessageInfo
+var xxx_messageInfo_MessageOut proto.InternalMessageInfo
 
-func (m *QueueRequest) GetProfileID() map[string]string {
+func (m *MessageOut) GetProfileID() string {
 	if m != nil {
 		return m.ProfileID
-	}
-	return nil
-}
-
-func (m *QueueRequest) GetMassagetemplete() string {
-	if m != nil {
-		return m.Massagetemplete
 	}
 	return ""
 }
 
-func (m *QueueRequest) GetLanguage() string {
+func (m *MessageOut) GetMessageTemplete() string {
+	if m != nil {
+		return m.MessageTemplete
+	}
+	return ""
+}
+
+func (m *MessageOut) GetLanguage() string {
 	if m != nil {
 		return m.Language
 	}
 	return ""
 }
 
-func (m *QueueRequest) GetMassagevariables() map[string]string {
+func (m *MessageOut) GetMessageVariables() map[string]string {
 	if m != nil {
-		return m.Massagevariables
+		return m.MessageVariables
 	}
 	return nil
 }
 
-func (m *QueueRequest) GetChannel() string {
+func (m *MessageOut) GetChannel() string {
 	if m != nil {
 		return m.Channel
 	}
 	return ""
 }
 
-func (m *QueueRequest) GetAutosend() string {
+func (m *MessageOut) GetAutosend() string {
 	if m != nil {
 		return m.Autosend
-	}
-	return ""
-}
-
-type QueueResponse struct {
-	NotificationID       string   `protobuf:"bytes,1,opt,name=notificationID,proto3" json:"notificationID,omitempty"`
-	Messagestatus        string   `protobuf:"bytes,2,opt,name=messagestatus,proto3" json:"messagestatus,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *QueueResponse) Reset()         { *m = QueueResponse{} }
-func (m *QueueResponse) String() string { return proto.CompactTextString(m) }
-func (*QueueResponse) ProtoMessage()    {}
-func (*QueueResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ff76f27cb6af8e56, []int{1}
-}
-
-func (m *QueueResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueueResponse.Unmarshal(m, b)
-}
-func (m *QueueResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueueResponse.Marshal(b, m, deterministic)
-}
-func (m *QueueResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueueResponse.Merge(m, src)
-}
-func (m *QueueResponse) XXX_Size() int {
-	return xxx_messageInfo_QueueResponse.Size(m)
-}
-func (m *QueueResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueueResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueueResponse proto.InternalMessageInfo
-
-func (m *QueueResponse) GetNotificationID() string {
-	if m != nil {
-		return m.NotificationID
-	}
-	return ""
-}
-
-func (m *QueueResponse) GetMessagestatus() string {
-	if m != nil {
-		return m.Messagestatus
 	}
 	return ""
 }
@@ -162,7 +115,7 @@ func (m *StatusRequest) Reset()         { *m = StatusRequest{} }
 func (m *StatusRequest) String() string { return proto.CompactTextString(m) }
 func (*StatusRequest) ProtoMessage()    {}
 func (*StatusRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ff76f27cb6af8e56, []int{2}
+	return fileDescriptor_ff76f27cb6af8e56, []int{1}
 }
 
 func (m *StatusRequest) XXX_Unmarshal(b []byte) error {
@@ -192,7 +145,7 @@ func (m *StatusRequest) GetNotificationID() string {
 
 type StatusResponse struct {
 	NotificationID       string   `protobuf:"bytes,1,opt,name=notificationID,proto3" json:"notificationID,omitempty"`
-	Messagestatus        string   `protobuf:"bytes,2,opt,name=messagestatus,proto3" json:"messagestatus,omitempty"`
+	MessageStatus        string   `protobuf:"bytes,2,opt,name=messageStatus,proto3" json:"messageStatus,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -202,7 +155,7 @@ func (m *StatusResponse) Reset()         { *m = StatusResponse{} }
 func (m *StatusResponse) String() string { return proto.CompactTextString(m) }
 func (*StatusResponse) ProtoMessage()    {}
 func (*StatusResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ff76f27cb6af8e56, []int{3}
+	return fileDescriptor_ff76f27cb6af8e56, []int{2}
 }
 
 func (m *StatusResponse) XXX_Unmarshal(b []byte) error {
@@ -230,16 +183,16 @@ func (m *StatusResponse) GetNotificationID() string {
 	return ""
 }
 
-func (m *StatusResponse) GetMessagestatus() string {
+func (m *StatusResponse) GetMessageStatus() string {
 	if m != nil {
-		return m.Messagestatus
+		return m.MessageStatus
 	}
 	return ""
 }
 
 type ReleaseRequest struct {
 	NotificationID       string   `protobuf:"bytes,1,opt,name=notificationID,proto3" json:"notificationID,omitempty"`
-	Releasemassage       string   `protobuf:"bytes,2,opt,name=releasemassage,proto3" json:"releasemassage,omitempty"`
+	ReleaseMessage       string   `protobuf:"bytes,2,opt,name=releaseMessage,proto3" json:"releaseMessage,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -249,7 +202,7 @@ func (m *ReleaseRequest) Reset()         { *m = ReleaseRequest{} }
 func (m *ReleaseRequest) String() string { return proto.CompactTextString(m) }
 func (*ReleaseRequest) ProtoMessage()    {}
 func (*ReleaseRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ff76f27cb6af8e56, []int{4}
+	return fileDescriptor_ff76f27cb6af8e56, []int{3}
 }
 
 func (m *ReleaseRequest) XXX_Unmarshal(b []byte) error {
@@ -277,131 +230,269 @@ func (m *ReleaseRequest) GetNotificationID() string {
 	return ""
 }
 
-func (m *ReleaseRequest) GetReleasemassage() string {
+func (m *ReleaseRequest) GetReleaseMessage() string {
 	if m != nil {
-		return m.Releasemassage
+		return m.ReleaseMessage
 	}
 	return ""
 }
 
-type IncomeRequest struct {
-	ProfileID            map[string]string `protobuf:"bytes,1,rep,name=profileID,proto3" json:"profileID,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Requeststatus        string            `protobuf:"bytes,2,opt,name=requeststatus,proto3" json:"requeststatus,omitempty"`
-	Massagetype          string            `protobuf:"bytes,3,opt,name=massagetype,proto3" json:"massagetype,omitempty"`
+type MessageIn struct {
+	ProfileID            string            `protobuf:"bytes,1,opt,name=profileID,proto3" json:"profileID,omitempty"`
+	ProductID            string            `protobuf:"bytes,2,opt,name=productID,proto3" json:"productID,omitempty"`
+	MessageType          string            `protobuf:"bytes,3,opt,name=messageType,proto3" json:"messageType,omitempty"`
 	Language             string            `protobuf:"bytes,4,opt,name=language,proto3" json:"language,omitempty"`
-	Product              string            `protobuf:"bytes,5,opt,name=product,proto3" json:"product,omitempty"`
+	RequestStatus        string            `protobuf:"bytes,5,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	PayLoad              map[string]string `protobuf:"bytes,6,rep,name=payLoad,proto3" json:"payLoad,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
 	XXX_sizecache        int32             `json:"-"`
 }
 
-func (m *IncomeRequest) Reset()         { *m = IncomeRequest{} }
-func (m *IncomeRequest) String() string { return proto.CompactTextString(m) }
-func (*IncomeRequest) ProtoMessage()    {}
-func (*IncomeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ff76f27cb6af8e56, []int{5}
+func (m *MessageIn) Reset()         { *m = MessageIn{} }
+func (m *MessageIn) String() string { return proto.CompactTextString(m) }
+func (*MessageIn) ProtoMessage()    {}
+func (*MessageIn) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ff76f27cb6af8e56, []int{4}
 }
 
-func (m *IncomeRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_IncomeRequest.Unmarshal(m, b)
+func (m *MessageIn) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MessageIn.Unmarshal(m, b)
 }
-func (m *IncomeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_IncomeRequest.Marshal(b, m, deterministic)
+func (m *MessageIn) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MessageIn.Marshal(b, m, deterministic)
 }
-func (m *IncomeRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IncomeRequest.Merge(m, src)
+func (m *MessageIn) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MessageIn.Merge(m, src)
 }
-func (m *IncomeRequest) XXX_Size() int {
-	return xxx_messageInfo_IncomeRequest.Size(m)
+func (m *MessageIn) XXX_Size() int {
+	return xxx_messageInfo_MessageIn.Size(m)
 }
-func (m *IncomeRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_IncomeRequest.DiscardUnknown(m)
+func (m *MessageIn) XXX_DiscardUnknown() {
+	xxx_messageInfo_MessageIn.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_IncomeRequest proto.InternalMessageInfo
+var xxx_messageInfo_MessageIn proto.InternalMessageInfo
 
-func (m *IncomeRequest) GetProfileID() map[string]string {
+func (m *MessageIn) GetProfileID() string {
 	if m != nil {
 		return m.ProfileID
 	}
-	return nil
+	return ""
 }
 
-func (m *IncomeRequest) GetRequeststatus() string {
+func (m *MessageIn) GetProductID() string {
 	if m != nil {
-		return m.Requeststatus
+		return m.ProductID
 	}
 	return ""
 }
 
-func (m *IncomeRequest) GetMassagetype() string {
+func (m *MessageIn) GetMessageType() string {
 	if m != nil {
-		return m.Massagetype
+		return m.MessageType
 	}
 	return ""
 }
 
-func (m *IncomeRequest) GetLanguage() string {
+func (m *MessageIn) GetLanguage() string {
 	if m != nil {
 		return m.Language
 	}
 	return ""
 }
 
-func (m *IncomeRequest) GetProduct() string {
+func (m *MessageIn) GetRequestStatus() string {
 	if m != nil {
-		return m.Product
+		return m.RequestStatus
+	}
+	return ""
+}
+
+func (m *MessageIn) GetPayLoad() map[string]string {
+	if m != nil {
+		return m.PayLoad
+	}
+	return nil
+}
+
+type SearchRequest struct {
+	NotificationID       string   `protobuf:"bytes,1,opt,name=notificationID,proto3" json:"notificationID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SearchRequest) Reset()         { *m = SearchRequest{} }
+func (m *SearchRequest) String() string { return proto.CompactTextString(m) }
+func (*SearchRequest) ProtoMessage()    {}
+func (*SearchRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ff76f27cb6af8e56, []int{5}
+}
+
+func (m *SearchRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SearchRequest.Unmarshal(m, b)
+}
+func (m *SearchRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SearchRequest.Marshal(b, m, deterministic)
+}
+func (m *SearchRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SearchRequest.Merge(m, src)
+}
+func (m *SearchRequest) XXX_Size() int {
+	return xxx_messageInfo_SearchRequest.Size(m)
+}
+func (m *SearchRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SearchRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SearchRequest proto.InternalMessageInfo
+
+func (m *SearchRequest) GetNotificationID() string {
+	if m != nil {
+		return m.NotificationID
+	}
+	return ""
+}
+
+type SearchResponse struct {
+	NotificationID       string            `protobuf:"bytes,1,opt,name=notificationID,proto3" json:"notificationID,omitempty"`
+	ProfileID            string            `protobuf:"bytes,2,opt,name=profileID,proto3" json:"profileID,omitempty"`
+	ProductID            string            `protobuf:"bytes,3,opt,name=productID,proto3" json:"productID,omitempty"`
+	Language             string            `protobuf:"bytes,4,opt,name=language,proto3" json:"language,omitempty"`
+	MessageType          string            `protobuf:"bytes,5,opt,name=messageType,proto3" json:"messageType,omitempty"`
+	PayLoad              map[string]string `protobuf:"bytes,6,rep,name=payLoad,proto3" json:"payLoad,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	RequestStatus        string            `protobuf:"bytes,7,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
+}
+
+func (m *SearchResponse) Reset()         { *m = SearchResponse{} }
+func (m *SearchResponse) String() string { return proto.CompactTextString(m) }
+func (*SearchResponse) ProtoMessage()    {}
+func (*SearchResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ff76f27cb6af8e56, []int{6}
+}
+
+func (m *SearchResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SearchResponse.Unmarshal(m, b)
+}
+func (m *SearchResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SearchResponse.Marshal(b, m, deterministic)
+}
+func (m *SearchResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SearchResponse.Merge(m, src)
+}
+func (m *SearchResponse) XXX_Size() int {
+	return xxx_messageInfo_SearchResponse.Size(m)
+}
+func (m *SearchResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SearchResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SearchResponse proto.InternalMessageInfo
+
+func (m *SearchResponse) GetNotificationID() string {
+	if m != nil {
+		return m.NotificationID
+	}
+	return ""
+}
+
+func (m *SearchResponse) GetProfileID() string {
+	if m != nil {
+		return m.ProfileID
+	}
+	return ""
+}
+
+func (m *SearchResponse) GetProductID() string {
+	if m != nil {
+		return m.ProductID
+	}
+	return ""
+}
+
+func (m *SearchResponse) GetLanguage() string {
+	if m != nil {
+		return m.Language
+	}
+	return ""
+}
+
+func (m *SearchResponse) GetMessageType() string {
+	if m != nil {
+		return m.MessageType
+	}
+	return ""
+}
+
+func (m *SearchResponse) GetPayLoad() map[string]string {
+	if m != nil {
+		return m.PayLoad
+	}
+	return nil
+}
+
+func (m *SearchResponse) GetRequestStatus() string {
+	if m != nil {
+		return m.RequestStatus
 	}
 	return ""
 }
 
 func init() {
-	proto.RegisterType((*QueueRequest)(nil), "notification.QueueRequest")
-	proto.RegisterMapType((map[string]string)(nil), "notification.QueueRequest.MassagevariablesEntry")
-	proto.RegisterMapType((map[string]string)(nil), "notification.QueueRequest.ProfileIDEntry")
-	proto.RegisterType((*QueueResponse)(nil), "notification.QueueResponse")
+	proto.RegisterType((*MessageOut)(nil), "notification.MessageOut")
+	proto.RegisterMapType((map[string]string)(nil), "notification.MessageOut.MessageVariablesEntry")
 	proto.RegisterType((*StatusRequest)(nil), "notification.StatusRequest")
 	proto.RegisterType((*StatusResponse)(nil), "notification.StatusResponse")
 	proto.RegisterType((*ReleaseRequest)(nil), "notification.ReleaseRequest")
-	proto.RegisterType((*IncomeRequest)(nil), "notification.IncomeRequest")
-	proto.RegisterMapType((map[string]string)(nil), "notification.IncomeRequest.ProfileIDEntry")
+	proto.RegisterType((*MessageIn)(nil), "notification.MessageIn")
+	proto.RegisterMapType((map[string]string)(nil), "notification.MessageIn.PayLoadEntry")
+	proto.RegisterType((*SearchRequest)(nil), "notification.SearchRequest")
+	proto.RegisterType((*SearchResponse)(nil), "notification.SearchResponse")
+	proto.RegisterMapType((map[string]string)(nil), "notification.SearchResponse.PayLoadEntry")
 }
 
 func init() { proto.RegisterFile("notification/notification.proto", fileDescriptor_ff76f27cb6af8e56) }
 
 var fileDescriptor_ff76f27cb6af8e56 = []byte{
-	// 484 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0xdd, 0x6e, 0xd3, 0x30,
-	0x14, 0x56, 0x93, 0xad, 0x65, 0x67, 0x4b, 0x98, 0x0c, 0x48, 0x56, 0x40, 0xa2, 0x8a, 0x26, 0x54,
-	0xb8, 0x28, 0x68, 0x5c, 0x80, 0x10, 0xda, 0x05, 0x63, 0x82, 0x5e, 0xf0, 0xd7, 0xdd, 0x21, 0x40,
-	0x78, 0xd9, 0x59, 0x89, 0x48, 0xed, 0x10, 0xdb, 0x95, 0xfa, 0x20, 0x3c, 0x00, 0xef, 0xc0, 0x03,
-	0xa2, 0x26, 0xf6, 0x88, 0xbd, 0x52, 0xa8, 0xd0, 0xee, 0x72, 0x8e, 0xbf, 0x73, 0xce, 0x77, 0xe2,
-	0xef, 0x33, 0xdc, 0xe6, 0x42, 0xe5, 0x67, 0x79, 0xc6, 0x54, 0x2e, 0xf8, 0xfd, 0x76, 0x30, 0x2c,
-	0x2b, 0xa1, 0x04, 0xd9, 0x69, 0xe7, 0xd2, 0x9f, 0x21, 0xec, 0xbc, 0xd3, 0xa8, 0x71, 0x8c, 0xdf,
-	0x34, 0x4a, 0x45, 0x5e, 0xc0, 0x56, 0x59, 0x89, 0xb3, 0xbc, 0xc0, 0xd1, 0x73, 0xda, 0xe9, 0x87,
-	0x83, 0xed, 0xfd, 0xbb, 0x43, 0xa7, 0x4d, 0x1b, 0x3e, 0x7c, 0x6b, 0xb1, 0x47, 0x5c, 0x55, 0xf3,
-	0xf1, 0xef, 0x5a, 0x32, 0x80, 0xab, 0x53, 0x26, 0x25, 0x9b, 0xa0, 0xc2, 0x69, 0x59, 0xa0, 0x42,
-	0x1a, 0xf4, 0x3b, 0x83, 0xad, 0xb1, 0x9f, 0x26, 0x09, 0x5c, 0x29, 0x18, 0x9f, 0x68, 0x36, 0x41,
-	0x1a, 0xd6, 0x90, 0xf3, 0x98, 0x7c, 0x80, 0x5d, 0x03, 0x9f, 0xb1, 0x2a, 0x67, 0x27, 0x05, 0x4a,
-	0xba, 0x51, 0xb3, 0x7a, 0xb0, 0x82, 0xd5, 0x2b, 0xaf, 0xa4, 0x21, 0x77, 0xa1, 0x13, 0xa1, 0xd0,
-	0xcb, 0xbe, 0x30, 0xce, 0xb1, 0xa0, 0x9b, 0xf5, 0x60, 0x1b, 0x2e, 0x38, 0x31, 0xad, 0x84, 0x44,
-	0x7e, 0x4a, 0xbb, 0x0d, 0x27, 0x1b, 0x27, 0x4f, 0x21, 0x76, 0xd7, 0x26, 0xbb, 0x10, 0x7e, 0xc5,
-	0x39, 0xed, 0xd4, 0xc0, 0xc5, 0x27, 0xb9, 0x0e, 0x9b, 0x33, 0x56, 0x68, 0xbb, 0x73, 0x13, 0x3c,
-	0x09, 0x1e, 0x77, 0x92, 0x43, 0xb8, 0xb1, 0x94, 0xde, 0x3a, 0x4d, 0xd2, 0x8f, 0x10, 0x99, 0x85,
-	0x65, 0x29, 0xb8, 0x44, 0x72, 0x07, 0xe2, 0xf6, 0xef, 0xa8, 0xef, 0x6e, 0x51, 0xe3, 0x65, 0xc9,
-	0x1e, 0x44, 0x53, 0xac, 0xa7, 0x4b, 0xc5, 0x94, 0x96, 0xa6, 0xb5, 0x9b, 0x4c, 0x1f, 0x41, 0x74,
-	0x5c, 0x7f, 0x59, 0x55, 0xfc, 0x63, 0xfb, 0xf4, 0x13, 0xc4, 0xb6, 0xf0, 0x52, 0x88, 0x7d, 0x86,
-	0x78, 0x8c, 0x05, 0x32, 0x89, 0x6b, 0x32, 0x5b, 0xe0, 0xaa, 0xa6, 0xd2, 0xa8, 0xc0, 0x0c, 0xf0,
-	0xb2, 0xe9, 0xf7, 0x00, 0xa2, 0x11, 0xcf, 0xc4, 0xf4, 0x7c, 0xc2, 0xcb, 0x8b, 0x8e, 0xb8, 0xe7,
-	0x6a, 0xcf, 0xc1, 0xaf, 0xb0, 0xc4, 0x1e, 0x44, 0x55, 0x03, 0x72, 0x77, 0x74, 0x92, 0xa4, 0x0f,
-	0xdb, 0xd6, 0x21, 0xf3, 0xd2, 0x3a, 0xa2, 0x9d, 0x72, 0x0c, 0xb3, 0xe1, 0x19, 0x86, 0x42, 0xaf,
-	0xac, 0xc4, 0xa9, 0xce, 0x94, 0x95, 0xb4, 0x09, 0xff, 0x4f, 0xb6, 0xfb, 0x3f, 0x02, 0xb8, 0xf6,
-	0xba, 0xb5, 0xf4, 0x31, 0x56, 0xb3, 0x3c, 0x43, 0x72, 0x00, 0xe1, 0x1b, 0xad, 0x48, 0xf2, 0x67,
-	0x37, 0x26, 0x37, 0x97, 0x9e, 0x19, 0x7d, 0x1c, 0x42, 0xb7, 0x51, 0x0c, 0xf1, 0x60, 0x8e, 0x00,
-	0x93, 0x5b, 0xcb, 0x0f, 0x4d, 0x93, 0x23, 0xe8, 0x19, 0x59, 0x10, 0x0f, 0xe8, 0xaa, 0xe5, 0x2f,
-	0x6d, 0x0e, 0x20, 0x18, 0x71, 0x9f, 0x87, 0x73, 0xb9, 0x2b, 0x77, 0x79, 0x16, 0xbf, 0x77, 0x1e,
-	0xd7, 0x93, 0x6e, 0xfd, 0xe2, 0x3e, 0xfc, 0x15, 0x00, 0x00, 0xff, 0xff, 0x35, 0xee, 0x45, 0xe0,
-	0x94, 0x05, 0x00, 0x00,
+	// 538 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x55, 0xcd, 0x6e, 0xd3, 0x40,
+	0x10, 0x56, 0xec, 0x26, 0x21, 0xd3, 0xc6, 0x54, 0x0b, 0x08, 0x2b, 0x54, 0x22, 0xb2, 0x22, 0x14,
+	0x2e, 0x01, 0x95, 0x03, 0xa8, 0x08, 0x0e, 0xa4, 0x3d, 0x58, 0xe2, 0x4f, 0x29, 0xe2, 0xd0, 0x03,
+	0x62, 0xeb, 0x4e, 0x53, 0x0b, 0x77, 0x6d, 0xec, 0x75, 0xa5, 0x3c, 0x11, 0x8f, 0xc2, 0x33, 0x70,
+	0xe7, 0x41, 0x90, 0xbd, 0xbb, 0x89, 0x77, 0xed, 0x36, 0x44, 0xbd, 0x79, 0xc6, 0x33, 0xb3, 0xdf,
+	0x7c, 0xdf, 0xb7, 0x36, 0x3c, 0x66, 0x31, 0x0f, 0xcf, 0xc3, 0x80, 0xf2, 0x30, 0x66, 0xcf, 0xaa,
+	0xc1, 0x24, 0x49, 0x63, 0x1e, 0x93, 0x9d, 0x6a, 0xce, 0xfb, 0x6d, 0x01, 0x7c, 0xc0, 0x2c, 0xa3,
+	0x73, 0xfc, 0x94, 0x73, 0xb2, 0x07, 0xbd, 0x24, 0x8d, 0xcf, 0xc3, 0x08, 0xfd, 0x43, 0xb7, 0x35,
+	0x6c, 0x8d, 0x7b, 0xb3, 0x55, 0x82, 0x8c, 0xe1, 0xee, 0xa5, 0xa8, 0xfd, 0x82, 0x97, 0x49, 0x84,
+	0x1c, 0x5d, 0xab, 0xac, 0x31, 0xd3, 0x64, 0x00, 0x77, 0x22, 0xca, 0xe6, 0x39, 0x9d, 0xa3, 0x6b,
+	0x97, 0x25, 0xcb, 0x98, 0x9c, 0xc0, 0xae, 0x2c, 0xff, 0x4a, 0xd3, 0x90, 0x9e, 0x46, 0x98, 0xb9,
+	0x5b, 0x43, 0x7b, 0xbc, 0xbd, 0x3f, 0x99, 0x68, 0x78, 0x57, 0xb8, 0xd4, 0xe3, 0xb2, 0xe1, 0x88,
+	0xf1, 0x74, 0x31, 0xab, 0xcd, 0x21, 0x2e, 0x74, 0x83, 0x0b, 0xca, 0x18, 0x46, 0x6e, 0xbb, 0x3c,
+	0x56, 0x85, 0x05, 0x22, 0x9a, 0xf3, 0x38, 0x43, 0x76, 0xe6, 0x76, 0x04, 0x22, 0x15, 0x0f, 0xa6,
+	0xf0, 0xa0, 0xf1, 0x00, 0xb2, 0x0b, 0xf6, 0x0f, 0x5c, 0x48, 0x22, 0x8a, 0x47, 0x72, 0x1f, 0xda,
+	0x57, 0x34, 0xca, 0xd5, 0xe2, 0x22, 0x38, 0xb0, 0x5e, 0xb5, 0xbc, 0x97, 0xd0, 0x3f, 0xe6, 0x94,
+	0xe7, 0xd9, 0x0c, 0x7f, 0xe6, 0x98, 0x71, 0xf2, 0x04, 0x9c, 0xea, 0x3a, 0x4b, 0x42, 0x8d, 0xac,
+	0xf7, 0x0d, 0x1c, 0xd5, 0x98, 0x25, 0x31, 0xcb, 0xf0, 0x7f, 0x3b, 0xc9, 0x08, 0xfa, 0x92, 0x01,
+	0x31, 0x40, 0x82, 0xd2, 0x93, 0xde, 0x77, 0x70, 0x66, 0x18, 0x21, 0xcd, 0x70, 0x43, 0x64, 0x45,
+	0x5d, 0x2a, 0x3a, 0x25, 0x3d, 0xf2, 0x00, 0x23, 0xeb, 0xfd, 0xb2, 0xa0, 0x27, 0x9f, 0x7d, 0xb6,
+	0xc6, 0x43, 0xe2, 0xed, 0x59, 0x1e, 0x70, 0xff, 0x50, 0x8e, 0x5b, 0x25, 0xc8, 0x10, 0xb6, 0x95,
+	0x95, 0x16, 0x89, 0xb2, 0x4e, 0x35, 0xa5, 0x39, 0x6b, 0xcb, 0x70, 0xd6, 0x08, 0xfa, 0xa9, 0x58,
+	0x51, 0xf2, 0x21, 0x3c, 0xa0, 0x27, 0xc9, 0x5b, 0xe8, 0x26, 0x74, 0xf1, 0x3e, 0xa6, 0x85, 0x11,
+	0x0a, 0xdb, 0x8d, 0x1a, 0x6d, 0xe7, 0xb3, 0xc9, 0x67, 0x51, 0x26, 0xcc, 0xa6, 0x9a, 0x06, 0x07,
+	0xb0, 0x53, 0x7d, 0xb1, 0xb1, 0x49, 0x90, 0xa6, 0xc1, 0xc5, 0xa6, 0x26, 0xf9, 0x63, 0x81, 0xa3,
+	0x3a, 0x37, 0x74, 0x89, 0xa6, 0x87, 0x75, 0xa3, 0x1e, 0xb6, 0xa9, 0xc7, 0x4d, 0x6c, 0x1b, 0x5a,
+	0xb5, 0xeb, 0x5a, 0x4d, 0x4d, 0xa6, 0x9f, 0xea, 0x4c, 0xeb, 0x0b, 0x35, 0xd3, 0x5d, 0x17, 0xb5,
+	0xdb, 0x20, 0xea, 0x6d, 0x44, 0xd9, 0xff, 0x6b, 0xc1, 0xbd, 0x8f, 0x15, 0x5c, 0xc7, 0x98, 0x5e,
+	0x85, 0x01, 0x92, 0x37, 0x60, 0x17, 0xdf, 0x44, 0xf7, 0xba, 0xaf, 0xd2, 0x60, 0xcf, 0x58, 0x47,
+	0xbf, 0xc5, 0x53, 0xe8, 0x48, 0xc7, 0x3d, 0x6a, 0xae, 0x2b, 0xf1, 0xaf, 0x19, 0x72, 0x04, 0x5d,
+	0x79, 0x79, 0x89, 0x51, 0xa8, 0xdf, 0xe9, 0x35, 0x63, 0x5e, 0x83, 0xe5, 0x33, 0xf2, 0xf0, 0x1a,
+	0xa3, 0xaf, 0xc5, 0xd0, 0x11, 0x4a, 0xd5, 0x16, 0xa9, 0x5a, 0xb9, 0x36, 0x44, 0x13, 0xf7, 0x79,
+	0xeb, 0x9d, 0x73, 0xa2, 0xfd, 0x7a, 0x4e, 0x3b, 0xe5, 0xff, 0xe8, 0xc5, 0xbf, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0xc2, 0xa3, 0x69, 0x56, 0xb2, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -417,13 +508,15 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type NotificationServiceClient interface {
 	//Out method for queueing massages as requested
-	Out(ctx context.Context, in *QueueRequest, opts ...grpc.CallOption) (*QueueResponse, error)
+	Out(ctx context.Context, in *MessageOut, opts ...grpc.CallOption) (*StatusResponse, error)
 	//CommunicationStatus request to determine if notification is prepared or released
 	Status(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	//QueueRelease method for releasing queued massages and returns if notification status if released
 	Release(ctx context.Context, in *ReleaseRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	//In method is for client request for particular notification respones from system
-	In(ctx context.Context, in *IncomeRequest, opts ...grpc.CallOption) (*QueueResponse, error)
+	In(ctx context.Context, in *MessageIn, opts ...grpc.CallOption) (*StatusResponse, error)
+	//Search method is for client request for particular notification details from system
+	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (NotificationService_SearchClient, error)
 }
 
 type notificationServiceClient struct {
@@ -434,8 +527,8 @@ func NewNotificationServiceClient(cc *grpc.ClientConn) NotificationServiceClient
 	return &notificationServiceClient{cc}
 }
 
-func (c *notificationServiceClient) Out(ctx context.Context, in *QueueRequest, opts ...grpc.CallOption) (*QueueResponse, error) {
-	out := new(QueueResponse)
+func (c *notificationServiceClient) Out(ctx context.Context, in *MessageOut, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
 	err := c.cc.Invoke(ctx, "/notification.NotificationService/Out", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -461,8 +554,8 @@ func (c *notificationServiceClient) Release(ctx context.Context, in *ReleaseRequ
 	return out, nil
 }
 
-func (c *notificationServiceClient) In(ctx context.Context, in *IncomeRequest, opts ...grpc.CallOption) (*QueueResponse, error) {
-	out := new(QueueResponse)
+func (c *notificationServiceClient) In(ctx context.Context, in *MessageIn, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
 	err := c.cc.Invoke(ctx, "/notification.NotificationService/In", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -470,23 +563,57 @@ func (c *notificationServiceClient) In(ctx context.Context, in *IncomeRequest, o
 	return out, nil
 }
 
+func (c *notificationServiceClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (NotificationService_SearchClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_NotificationService_serviceDesc.Streams[0], "/notification.NotificationService/Search", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &notificationServiceSearchClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type NotificationService_SearchClient interface {
+	Recv() (*SearchResponse, error)
+	grpc.ClientStream
+}
+
+type notificationServiceSearchClient struct {
+	grpc.ClientStream
+}
+
+func (x *notificationServiceSearchClient) Recv() (*SearchResponse, error) {
+	m := new(SearchResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // NotificationServiceServer is the server API for NotificationService service.
 type NotificationServiceServer interface {
 	//Out method for queueing massages as requested
-	Out(context.Context, *QueueRequest) (*QueueResponse, error)
+	Out(context.Context, *MessageOut) (*StatusResponse, error)
 	//CommunicationStatus request to determine if notification is prepared or released
 	Status(context.Context, *StatusRequest) (*StatusResponse, error)
 	//QueueRelease method for releasing queued massages and returns if notification status if released
 	Release(context.Context, *ReleaseRequest) (*StatusResponse, error)
 	//In method is for client request for particular notification respones from system
-	In(context.Context, *IncomeRequest) (*QueueResponse, error)
+	In(context.Context, *MessageIn) (*StatusResponse, error)
+	//Search method is for client request for particular notification details from system
+	Search(*SearchRequest, NotificationService_SearchServer) error
 }
 
 // UnimplementedNotificationServiceServer can be embedded to have forward compatible implementations.
 type UnimplementedNotificationServiceServer struct {
 }
 
-func (*UnimplementedNotificationServiceServer) Out(ctx context.Context, req *QueueRequest) (*QueueResponse, error) {
+func (*UnimplementedNotificationServiceServer) Out(ctx context.Context, req *MessageOut) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Out not implemented")
 }
 func (*UnimplementedNotificationServiceServer) Status(ctx context.Context, req *StatusRequest) (*StatusResponse, error) {
@@ -495,8 +622,11 @@ func (*UnimplementedNotificationServiceServer) Status(ctx context.Context, req *
 func (*UnimplementedNotificationServiceServer) Release(ctx context.Context, req *ReleaseRequest) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Release not implemented")
 }
-func (*UnimplementedNotificationServiceServer) In(ctx context.Context, req *IncomeRequest) (*QueueResponse, error) {
+func (*UnimplementedNotificationServiceServer) In(ctx context.Context, req *MessageIn) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method In not implemented")
+}
+func (*UnimplementedNotificationServiceServer) Search(req *SearchRequest, srv NotificationService_SearchServer) error {
+	return status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 
 func RegisterNotificationServiceServer(s *grpc.Server, srv NotificationServiceServer) {
@@ -504,7 +634,7 @@ func RegisterNotificationServiceServer(s *grpc.Server, srv NotificationServiceSe
 }
 
 func _NotificationService_Out_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueueRequest)
+	in := new(MessageOut)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -516,7 +646,7 @@ func _NotificationService_Out_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: "/notification.NotificationService/Out",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NotificationServiceServer).Out(ctx, req.(*QueueRequest))
+		return srv.(NotificationServiceServer).Out(ctx, req.(*MessageOut))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -558,7 +688,7 @@ func _NotificationService_Release_Handler(srv interface{}, ctx context.Context, 
 }
 
 func _NotificationService_In_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IncomeRequest)
+	in := new(MessageIn)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -570,9 +700,30 @@ func _NotificationService_In_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: "/notification.NotificationService/In",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NotificationServiceServer).In(ctx, req.(*IncomeRequest))
+		return srv.(NotificationServiceServer).In(ctx, req.(*MessageIn))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _NotificationService_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SearchRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(NotificationServiceServer).Search(m, &notificationServiceSearchServer{stream})
+}
+
+type NotificationService_SearchServer interface {
+	Send(*SearchResponse) error
+	grpc.ServerStream
+}
+
+type notificationServiceSearchServer struct {
+	grpc.ServerStream
+}
+
+func (x *notificationServiceSearchServer) Send(m *SearchResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 var _NotificationService_serviceDesc = grpc.ServiceDesc{
@@ -596,6 +747,12 @@ var _NotificationService_serviceDesc = grpc.ServiceDesc{
 			Handler:    _NotificationService_In_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Search",
+			Handler:       _NotificationService_Search_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "notification/notification.proto",
 }
