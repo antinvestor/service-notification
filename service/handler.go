@@ -14,8 +14,6 @@ import (
 	stan "github.com/nats-io/stan.go"
 )
 
-
-
 type notificationserver struct {
 	Env    *Env
 	stream *notification.NotificationService_SearchServer
