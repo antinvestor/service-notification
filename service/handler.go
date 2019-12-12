@@ -70,7 +70,7 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 	}
 	//}
 
-	return &notification.StatusResponse{NotificationID: xid.New().String()}, nil
+	return &notification.StatusResponse{NotificationID: xid.New().String(),}, nil
 
 }
 
@@ -182,37 +182,25 @@ func (server *notificationserver) In(ctxt context.Context, req *notification.Mes
 		if len(Channel) != 0 {
 			//create notification
 			server.Env.GeWtDb(ctxt).Create(in)
-
-		} else {
-			return nil, errors.New("notification channel is invalid")
-
-		}
-	}
-
-	return &notification.StatusResponse{NotificationID: xid.New().String()}, nil
+			
+	return &notification.StatusResponse{NotificationID: xid.New().String(),}, nil
 
 }
 
-func (server *notificationserver) Search(req *notification.SearchRequest, stream notification.NotificationService_SearchServer) error {
-
+func (server *notificationserver) Search(req *notification.SearchRequest, stream notification.NotificationService_SearchServer) error{
+	
+		
+	
 	var cxt context.Context
-	var serch []string
-
-	server.Env.GeWtDb(cxt).Where("notification_id = ?", req.GetNotificationID()).Find(&Notification{}).Pluck("status", &serch)
-	//check if request input exist in database
-	if len(serch) != 0 {
-
-		for _, d := range serch {
-
-			if err := stream.Send(&notification.SearchResponse{RequestStatus: d}); err != nil {
-				return err
-			}
+	var serch [] string
+	
+	server.Env.GetRDb(cxt).Where("notification_id = ?", req.GetNotificationID()).Find(&Notification{}).Pluck("status",&serch)
+	 for _,d := range serch {
+		 if err := stream.Send(&notification.SearchResponse{RequestStatus: d}); err !=nil{
+			return err
 		}
-
-	} else {
-		return errors.New("notificationID is invalid")
-
 	}
-	return nil
+			
+	return  nil
 
 }

@@ -31,9 +31,9 @@ func Runclient(db *gorm.DB) {
 
 	//search(c)
 	//status(c)
-	dosend(c)
+	//dosend(c)
 	//income(c)
-	//Release(c)
+	Release(c)
 }
 
 // income notification requests
@@ -45,11 +45,6 @@ func income(c notification.NotificationServiceClient) {
 		ProductID:     "Funds",    //req.Product,
 		MessageType:   "Recieved", //req.Massagetype,
 		ProfileID:     "001isaac",
-		PayLoad: map[string]string{
-			"id":         "1",
-			"name":        "test entity 1",
-			"description": "a test entity for some guy's blog",
-		},
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -70,7 +65,7 @@ func dosend(c notification.NotificationServiceClient) {
 		Channel:         "Email",
 		MessageTemplete: "Receveid_templete",
 		Autosend:        "false",
-		ProfileID:       "Funds",
+		ProfileID:       "001isaac",
 		MessageVariables: map[string]string{
 			"name":    "isa",
 			"Account": "AC100000",
@@ -125,9 +120,9 @@ func Release(c notification.NotificationServiceClient) {
 
 func search(c notification.NotificationServiceClient) {
 
-	req := &notification.SearchRequest{ 
-		
-		NotificationID: "bmg4apdq29bieu2s9640",
+	req := &notification.SearchRequest{
+
+		NotificationID: "bmnh675q29bhgm38theg",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
