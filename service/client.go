@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/rs/xid"
 )
 
 //Runclient runs client server
@@ -28,28 +29,39 @@ func Runclient(db *gorm.DB) {
 	c := notification.NewNotificationServiceClient(cc)
 
 	//client methods called on particular occasion/functionality
+ 
+	// req := &notification.SearchRequest{
 
-	//search(c)
+	// 	NotificationID: "req.GetNotificationID()",
+	// 	Message: "Recieved",
+	// }
+
+	//search(c,req)
 	//status(c)
 	//dosend(c)
-	income(c)
-	//Release(c)
+	MessageIn(c)
+	MessageOut(c)
+	//Release
 
 }
-
-// income notification requests
-func income(c notification.NotificationServiceClient) {
-
+//IDGen genereate unigue id format
+func  IDGen(uniqueCode string) string {
+	return fmt.Sprintf("%s_%s", uniqueCode, xid.New().String())
+}
+// MessageIn notification requests
+func MessageIn(c notification.NotificationServiceClient) {
+	 
 	req := &notification.MessageIn{
-		RequestStatus: "send",     //req.Requeststatus,
-		Language:      "English",  //req.Language,
-		ProductID:     "Funds",    //req.Product,
-		MessageType:   "Recieved", //req.Massagetype,
-		ProfileID:     "001isaac",
+		NotificationID: IDGen("ntf"),
+		RequestStatus:  "send",     //req.Requeststatus,
+		Language:       "English",  //req.Language,
+		ProductID:      "Funds",    //req.Product,
+		MessageType:    "Recieved", //req.Massagetype,
+		ProfileID:      "001isaac",
 		PayLoad: map[string]string{
-			"id":         "1",
+			"id":          "1",
 			"name":        "test entity 1",
-			"description": "a test entity for some guy's blog",
+			"description": "Testing email service on the notification service part",
 		},
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -57,20 +69,19 @@ func income(c notification.NotificationServiceClient) {
 	res, err := c.In(env2, req)
 
 	if err != nil {
-		log.Fatalf("error while call send RPC %v", err)
+		log.Fatalf("error while call messageIn RPC %v", err)
 	}
 	log.Printf("Response from sender: %s", res.GetNotificationID())
-		
-	
+
 	//dosend creates notification for outgoing
-		dosend(c)
+	//MessageOut(c)
 }
 
-//dosend creates notification for outgoing
-func dosend(c notification.NotificationServiceClient) {
+//MessageOut creates notification for outgoing
+func MessageOut(c notification.NotificationServiceClient) {
 
 	req := &notification.MessageOut{
-
+		NotificationID:	IDGen("ntf"),
 		Language:        "English",
 		Channel:         "Email",
 		MessageTemplete: "Receveid_templete",
@@ -81,7 +92,6 @@ func dosend(c notification.NotificationServiceClient) {
 			"Account": "AC100000",
 			"Amount":  "100000",
 		},
-		
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -116,7 +126,7 @@ func Release(c notification.NotificationServiceClient) {
 
 	req := &notification.ReleaseRequest{
 
-		NotificationID: "bmnh675q29bhgm38theg",
+		ReleaseMessage: "Send",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -126,15 +136,12 @@ func Release(c notification.NotificationServiceClient) {
 	if err != nil {
 		log.Fatalf("error while call send RPC %v", err)
 	}
-	log.Printf("Response from sender: %s", res.GetMessageStatus())
+	log.Printf("Response from sender: %s", res.GetNotificationID())
 }
 
-func search(c notification.NotificationServiceClient) {
+func search(c notification.NotificationServiceClient, req *notification.SearchRequest ) {
 
-	req := &notification.SearchRequest{
-
-		NotificationID: "bmg4apdq29bieu2s9640",
-	}
+	
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()

@@ -1,0 +1,37 @@
+version: '3'
+services:
+  
+    db1:
+      image: postgres:alpine
+      environment:
+        FILLA_DB_DATABASE: service_notification
+        FILLA_DB_USER: ant
+        FILLA_DB_PASSWORD: ant-secret
+      ports:
+        - "5432:5432"
+                  
+
+    app:
+      build: .
+      command: ["go", "run", "main.go"]
+      hostname: app
+    
+      ports:
+        - "7000:7000"
+      depends_on: 
+        - db1
+        - nats
+      links: 
+        - db1
+        - nats
+
+    nats:
+        image: nats-streaming:latest
+        restart: always
+        command: -m 8222 --store file --dir ./data --max_msgs 0 --max_bytes 0
+        ports:
+          - "4222:4222"
+          - "8222:8222"
+
+
+    

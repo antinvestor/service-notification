@@ -66,7 +66,7 @@ func scanForNewMigrations(logger *logrus.Entry, db *gorm.DB, migrationsDirPath s
 				continue
 			}
 			migration.Patch = string(migrationPatch)
-			migration.Version = 0
+			 
 			db.Create(&migration)
 		} else {
 

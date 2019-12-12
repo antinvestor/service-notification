@@ -1,11 +1,12 @@
 package main
 
 import (
-	"bitbucket.org/antinvestor/service-notification/service"
+	
 	"log"
 	"os"
 	"time"
 
+	"bitbucket.org/antinvestor/service-notification/service"
 	"bitbucket.org/antinvestor/service-notification/utils"
 )
 
@@ -53,11 +54,18 @@ func main() {
 
 	} else {
 		logger.Infof("Initiating the service at %v", time.Now())
+		
+		healthChecker, err := utils.ConfigureHealthChecker(logger, database, replicaDatabase)
+		if err != nil {
+			logger.Warnf("Error configuring health checks: %v", err)
+		}
 
 		env := service.Env{
-			Logger:          logger,
+			Logger:     logger,
+			Health:     healthChecker,
 			ServerPort: utils.GetEnv("SERVER_PORT", "7000"),
 		}
+		 
 		env.SetWriteDb(database)
 		env.SetReadDb(replicaDatabase)
 
