@@ -32,8 +32,9 @@ func Runclient(db *gorm.DB) {
 	//search(c)
 	//status(c)
 	//dosend(c)
-	//income(c)
-	Release(c)
+	income(c)
+	//Release(c)
+
 }
 
 // income notification requests
@@ -45,6 +46,11 @@ func income(c notification.NotificationServiceClient) {
 		ProductID:     "Funds",    //req.Product,
 		MessageType:   "Recieved", //req.Massagetype,
 		ProfileID:     "001isaac",
+		PayLoad: map[string]string{
+			"id":         "1",
+			"name":        "test entity 1",
+			"description": "a test entity for some guy's blog",
+		},
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -54,6 +60,10 @@ func income(c notification.NotificationServiceClient) {
 		log.Fatalf("error while call send RPC %v", err)
 	}
 	log.Printf("Response from sender: %s", res.GetNotificationID())
+		
+	
+	//dosend creates notification for outgoing
+		dosend(c)
 }
 
 //dosend creates notification for outgoing
@@ -71,6 +81,7 @@ func dosend(c notification.NotificationServiceClient) {
 			"Account": "AC100000",
 			"Amount":  "100000",
 		},
+		
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -122,7 +133,7 @@ func search(c notification.NotificationServiceClient) {
 
 	req := &notification.SearchRequest{
 
-		NotificationID: "bmnh675q29bhgm38theg",
+		NotificationID: "bmg4apdq29bieu2s9640",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)

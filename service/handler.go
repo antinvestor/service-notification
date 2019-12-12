@@ -4,10 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
+	"time"
 
 	"bitbucket.org/antinvestor/service-notification/notification"
 
 	"github.com/rs/xid"
+
+	stan "github.com/nats-io/stan.go"
 )
 
 type notificationserver struct {
@@ -20,57 +24,43 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 
 	Massagevariables, _ := json.Marshal(req.GetMessageVariables())
 
-	var cxt context.Context
+	NOTID := xid.New().String()
 	var id []string
-	var ProfileDetails []string
-	var ProductDetails []string
 
 	//checks if profileID is valid
-	server.Env.GeWtDb(cxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
+	server.Env.GetRDb(ctxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
 	if len(id) != 0 {
 
-		//query the profile service to get the profile data like name, contacts and any set of communication preferences
-		server.Env.GeWtDb(cxt).Raw("select name,contact from profiles where profile_id = ?", req.GetProfileID()).Pluck("name", &ProfileDetails)
-		if len(ProfileDetails) != 0 {
-
-			//for _, profiledetails := range ProfileDetails {   to get contact, name and communication channels
-
-			//service queries the product service to also get preferred communication preferences
-			server.Env.GeWtDb(cxt).Raw("select channel,contact from product where product_id = ?", req.GetProfileID()).Pluck("channel", &ProductDetails)
-			if len(ProductDetails) != 0 {
-
-				//for _, productdetails := range ProductDetails {
-
-				//send notification
-				in := &Notification{
-					NotificationID:   xid.New().String(),
-					ProfileID:        req.GetProfileID(),
-					Messagevariables: string(Massagevariables),
-					Language:         req.Language,
-					//channel will be determined by product preferences or profile client request
-					//if the user has multiple phone numbers attached to their profile prefer the phone number that was last added and verified or last known to work
-					Channel:     req.Channel,
-					Messagetype: req.MessageTemplete,
-					Autosend:    req.Autosend,
-				}
-
-				server.Env.GeWtDb(ctxt).Create(in)
-
-			} else {
-				return nil, errors.New("ProductID doesnot exit register and try again")
-			}
-			//}
-		} else {
-			return nil, errors.New("ProfileID doesnot exit register and try again")
+		
+		//send notification
+		in := &Notification{
+			NotificationID:   NOTID,
+			ProfileID:        req.GetProfileID(),
+			Messagevariables: string(Massagevariables),
+			Language:         req.Language,
+			//channel will be determined by product preferences or profile client request
+			//if the user has multiple phone numbers attached to their profile prefer the phone number that was last added and verified or last known to work
+			Channel:     req.Channel,
+			Messagetype: req.MessageTemplete,
+			Autosend:    req.Autosend,
+			ProductID:"3900Rent",
+			Payload: string(Massagevariables),
 		}
-		//}
+
+		server.Env.GeWtDb(ctxt).Create(in)
+		
+		//nats stream subscribation
+		go subscribetion()
+		go QueueSubscribeGroup()
+		go QueueSubscribeGroup2()
+
+		
 	} else {
 		return nil, errors.New("ProfileID doesnot exit/match any value")
 
 	}
-	//}
 
-	return &notification.StatusResponse{NotificationID: xid.New().String(),}, nil
+	return &notification.StatusResponse{NotificationID: NOTID}, nil
 
 }
 
@@ -109,98 +99,208 @@ func (server *notificationserver) Release(ctxt context.Context, req *notificatio
 
 		for _, status := range Status {
 
-			return &notification.StatusResponse{NotificationID: status}, nil
+			return &notification.StatusResponse{MessageStatus: status}, nil
 		}
 	} else {
 
 		return nil, errors.New("Invalid status request")
 	}
 
-	return &notification.StatusResponse{NotificationID: status}, nil
+	return &notification.StatusResponse{MessageStatus: status}, nil
 }
 
 //In method call for income rquest of any notification
 func (server *notificationserver) In(ctxt context.Context, req *notification.MessageIn) (*notification.StatusResponse, error) {
-
-	var Contact []string
-	var Channel []string
+	NOTID := xid.New().String()
 
 	//checks if profileID  contact field is not null in table
-	server.Env.GeWtDb(ctxt).Raw("select contact from profiles  where profile_id = ?", req.GetProfileID()).Pluck("contact", &Contact)
-	if len(Contact) == 0 {
+	if len(req.GetProfileID()) == 0 || req.ProductID == ""{
 
-		//needs contact field added
-		result := server.Env.GeWtDb(ctxt).Raw("insert into profiles (contact) values (?) where profile_id = ?", "---------", req.GetProfileID())
+			
+			return nil, errors.New("ProfileID or ProductID is invalid")
 
-		if result.RowsAffected == 1 {
-
-			uPayload, _ := json.Marshal(req.GetPayLoad())
-			in := &Notification{
-				NotificationID: xid.New().String(),
-				ProfileID:      req.GetProfileID(),
-				ProductID:      req.ProductID,
-				Status:         req.RequestStatus,
-				Language:       req.Language,
-				Messagetype:    req.MessageType,
-				Payload:        string(uPayload),
-			}
-
-			//checki if income notification channel route are mapped to particular product
-			server.Env.GeWtDb(ctxt).Raw("select channel from product where channel = ?", req.GetProfileID()).Pluck("channel", &Channel)
-
-			if len(Channel) != 0 {
-				//create notification
-				server.Env.GeWtDb(ctxt).Create(in)
-
-			} else {
-				return nil, errors.New("notification channel is invalid")
-
-			}
-
-			//fails to add to table
-		} else {
-			return nil, errors.New("ProfileID is invalid")
-
-		}
-
-	} else {
+	} 
 
 		uPayload, _ := json.Marshal(req.GetPayLoad())
+		
 		in := &Notification{
-			NotificationID: xid.New().String(),
+			NotificationID: NOTID,
 			ProfileID:      req.GetProfileID(),
 			ProductID:      req.ProductID,
 			Status:         req.RequestStatus,
 			Language:       req.Language,
 			Messagetype:    req.MessageType,
 			Payload:        string(uPayload),
+			Channel:		"Email",
 		}
-
-		//checki if income notification channel route are mapped to particular product
-		server.Env.GeWtDb(ctxt).Raw("select channel from product where channel = ?", req.GetProfileID()).Pluck("channel", &Channel)
-
-		if len(Channel) != 0 {
 			//create notification
 			server.Env.GeWtDb(ctxt).Create(in)
-			
-	return &notification.StatusResponse{NotificationID: xid.New().String(),}, nil
+
+			go publishEvent(in)
+		 
+
+	 
+
+	return &notification.StatusResponse{NotificationID: NOTID}, nil
 
 }
 
-func (server *notificationserver) Search(req *notification.SearchRequest, stream notification.NotificationService_SearchServer) error{
-	
-		
-	
-	var cxt context.Context
-	var serch [] string
-	
-	server.Env.GetRDb(cxt).Where("notification_id = ?", req.GetNotificationID()).Find(&Notification{}).Pluck("status",&serch)
-	 for _,d := range serch {
-		 if err := stream.Send(&notification.SearchResponse{RequestStatus: d}); err !=nil{
-			return err
-		}
-	}
-			
-	return  nil
+func (server *notificationserver) Search(req *notification.SearchRequest, stream notification.NotificationService_SearchServer) error {
 
+	var cxt context.Context
+	var serch []string
+
+	server.Env.GetRDb(cxt).Where("notification_id = ?", req.GetNotificationID()).Find(&Notification{}).Pluck("status", &serch)
+	//check if request input exist in database
+	if len(serch) != 0 {
+
+		for _, d := range serch {
+
+			if err := stream.Send(&notification.SearchResponse{RequestStatus: d}); err != nil {
+				return err
+			}
+		}
+
+	} else {
+		return errors.New("notificationID is invalid")
+
+	}
+	return nil
+
+}
+
+// publishEvent publish an event via NATS Streaming server
+func publishEvent(model *Notification) error {
+
+	const (
+		clusterID = "test-cluster"
+		clientID  = "event-store"
+	)
+
+	// Connect to NATS Streaming server
+	sc, err := stan.Connect(
+		clusterID,
+		clientID,
+		stan.NatsURL(stan.DefaultNatsURL),
+	)
+	if err != nil {
+		return err
+	}
+	defer sc.Close()
+	channel := model.Channel
+	eventMsg := []byte(model.Payload)
+	// Publish message on subject (channel)
+	//for i:=0;i<=5;i++{
+	sc.Publish(channel, eventMsg)
+	//}
+	log.Println("Published message on channel: " + channel)
+
+	return nil
+}
+
+//subscribetion event
+func subscribetion() {
+
+	const (
+		clusterID = "test-cluster"
+		clientID  = "notification-service"
+		channel   = "Email"
+		durableID = "notification-service-durable"
+	)
+
+	sc, err := stan.Connect(
+		clusterID,
+		clientID,
+		stan.NatsURL(stan.DefaultNatsURL),
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Subscribe with manual ack mode, and set AckWait to 60 seconds
+	aw, _ := time.ParseDuration("60s")
+	sc.Subscribe(channel, func(msg *stan.Msg) {
+		msg.Ack() // Manual ACK
+		order := &Notification{}
+		//Unmarshal JSON that represents the Order data
+		err := json.Unmarshal(msg.Data, &order)
+		if err != nil {
+			log.Print("ll",err)
+			return
+		}
+		//Handle the message
+		log.Printf("Subscribed message from clientID - %s for Order: %+v\n", clientID,string(msg.Data))
+
+	}, stan.DurableName(durableID),
+		stan.MaxInflight(25),
+		stan.SetManualAckMode(),
+		stan.AckWait(aw),
+	)
+}
+//QueueSubscribeGroup duarable queue subscription with same durable Name
+func QueueSubscribeGroup() {
+
+	const (
+		clusterID  = "test-cluster"
+		clientID   = "notification-service-query"
+		channel    = "Email"
+		durableID  = "notification-durable"
+		queueGroup = "notification-service-group"
+	)
+
+	// Connect to NATS Streaming server
+	sc, err := stan.Connect(
+		clusterID,
+		clientID,
+		stan.NatsURL(stan.DefaultNatsURL),
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	sc.QueueSubscribe(channel, queueGroup, func(msg *stan.Msg) {
+		order := &Notification{}
+		err := json.Unmarshal(msg.Data, &order)
+		if err == nil {
+			// Handle the message
+			log.Printf("QueueSubscribed message from clientID - %s: %+v\n", clientID, string(msg.Data))
+			
+		}
+	}, stan.DurableName(durableID),
+	)
+	//runtime.Goexit()
+}
+
+//QueueSubscribeGroup2 duarable queue subscription with same durable Name
+func QueueSubscribeGroup2() {
+
+	const (
+		clusterID  = "test-cluster"
+		clientID   = "notification-service-query2"
+		channel    = "Email"
+		durableID  = "notification-durable"
+		queueGroup = "notification-service-group"
+	)
+
+	// Connect to NATS Streaming server
+	sc, err := stan.Connect(
+		clusterID,
+		clientID,
+		stan.NatsURL(stan.DefaultNatsURL),
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	sc.QueueSubscribe(channel, queueGroup, func(msg *stan.Msg) {
+		order := &Notification{}
+		err := json.Unmarshal(msg.Data, &order)
+		if err == nil {
+			// Handle the message
+			log.Printf("2QueueSubscribed message from clientID - %s: %+v\n", clientID, string(msg.Data))
+			
+		}
+	}, stan.DurableName(durableID),
+	)
+	//runtime.Goexit()
 }
