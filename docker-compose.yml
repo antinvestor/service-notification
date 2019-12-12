@@ -4,9 +4,9 @@ services:
     db1:
       image: postgres:alpine
       environment:
-        POSTGRES_DB: service_notification
-        POSTGRES_USER: ant
-        POSTGRES_PASSWORD: ant-secret
+        FILLA_DB_DATABASE: service_notification
+        FILLA_DB_USER: ant
+        FILLA_DB_PASSWORD: ant-secret
       ports:
         - "5432:5432"
                   
@@ -28,11 +28,9 @@ services:
     nats:
         image: nats-streaming:latest
         restart: always
-        # depends_on:
-        #   - db
         command: -m 8222 --store file --dir ./data --max_msgs 0 --max_bytes 0
         ports:
-          - "4222"
+          - "4222:4222"
           - "8222:8222"
 
 
