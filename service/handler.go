@@ -1,13 +1,14 @@
 package service
 
 import (
+	"antinvestor.com/service/notification/utils"
 	"context"
 	"encoding/json"
 	"errors"
 	"log"
 	"time"
 
-	"bitbucket.org/antinvestor/service-notification/notification"
+	"antinvestor.com/service/notification/notification"
 
 	stan "github.com/nats-io/stan.go"
 
@@ -19,7 +20,7 @@ import (
 )
 
 type notificationserver struct {
-	Env    *Env
+	Env    *utils.Env
 	stream *notification.NotificationService_SearchServer
 }
 
@@ -34,15 +35,15 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 	profileCtx, cancel := context.WithTimeout(ctxt, time.Second)
 	defer cancel()
 
-	profileService := profile.NewProfileServiceClient(env.GetProfileServiceConn())
+	profileService := profile.NewProfileServiceClient(server.Env.GetProfileServiceConn())
 
 	contactRequest := profile.ProfileContactRequest{
 		Contact: contact,
 	}
 
 	//checks if profileID is valid
-	server.Env.GetRDb(ctxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
-	if len(id) != 0 {
+	//server.Env.GetRDb(ctxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
+	if profileService.GetByContact(profileCtx, &contactRequest) {
 
 		//send notification
 		out := &Notification{

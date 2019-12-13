@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 
-	"bitbucket.org/antinvestor/service-notification/notification"
+	"antinvestor.com/service/notification/notification"
 	"google.golang.org/grpc"
 
 	//"github.com/rs/xid"

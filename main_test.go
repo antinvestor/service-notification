@@ -20,8 +20,8 @@ import (
 	"google.golang.org/grpc"
 	//"google.golang.org/grpc/grpclog"
 
-	pb "bitbucket.org/antinvestor/service-notification/notification"
-	serv "bitbucket.org/antinvestor/service-notification/service"
+	pb "antinvestor.com/service/notification/notification"
+	serv "antinvestor.com/service/notification/service"
 )
 
 // Test started when the test binary is started. Only calls main.

@@ -1,5 +1,9 @@
 package utils
 
-const ConfigDatabaseDriver = "DATABASE_DRIVER"
-const ConfigDatabaseUrl = "postgres://ant:ant-secret@127.0.0.1:5432/service_notification?sslmode=disable"
-const ConfigReplicaDatabaseUrl = "REPLICA_DATABASE_URL"
+const EnvServerPort = "SERVER_PORT"
+
+const EnvDatabaseDriver = "DATABASE_DRIVER"
+const EnvDatabaseUrl = "DATABASE_URL"
+const EnvReplicaDatabaseUrl = "REPLICA_DATABASE_URL"
+
+const EnvOnlyMigrate = "ONLY_DO_MIGRATION"
