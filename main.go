@@ -47,8 +47,11 @@ func main() {
 
 	}else{
 
-	if len(stdArgs) > 0 && stdArgs[0] == "migrate" {
-		logger.Info("Initiating migrations")
+		isMigration := utils.GetEnv(utils.EnvOnlyMigrate, "")
+		stdArgs := os.Args[1:]
+		if (len(stdArgs) > 0 && stdArgs[0] == "migrate") || isMigration == "true" {
+
+			logger.Info("Initiating migrations")
 
 		service.PerformMigration(logger, database)
 
