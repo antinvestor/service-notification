@@ -84,11 +84,6 @@ func (server *notificationserver) Status(ctxt context.Context, req *notification
 	}
 
 	return &notification.StatusResponse{MessageStatus: status}, nil
-
-		return nil, errors.New("Invalid status request")
-	}
-
-	return &notification.StatusResponse{MessageStatus: status}, nil
 }
 
 //Release method that is called for messages queued for release
