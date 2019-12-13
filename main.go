@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"bitbucket.org/antinvestor/service-notification/service"
-	"bitbucket.org/antinvestor/service-notification/utils"
+	"antinvestor.com/service/notification/service"
+	"antinvestor.com/service/notification/utils"
 )
 
 func main() {
@@ -63,10 +63,9 @@ func main() {
 			logger.Warnf("Error configuring health checks: %v", err)
 		}
 
-		env := service.Env{
+		env := utils.Env{
 			Logger:     logger,
 			Health:     healthChecker,
-			ServerPort: utils.GetEnv("SERVER_PORT", "7000"),
 		}
 		 
 		env.SetWriteDb(database)

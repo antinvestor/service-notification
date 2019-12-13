@@ -1,13 +1,14 @@
 package service
 
 import (
+	"antinvestor.com/service/notification/utils"
 	"context"
 	"encoding/json"
 	"errors"
 	"log"
 	"time"
 
-	"bitbucket.org/antinvestor/service-notification/notification"
+	"antinvestor.com/service/notification/notification"
 
 	stan "github.com/nats-io/stan.go"
 
@@ -17,7 +18,7 @@ import (
 )
 
 type notificationserver struct {
-	Env    *Env
+	Env    *utils.Env
 	stream *notification.NotificationService_SearchServer
 }
 
