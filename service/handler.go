@@ -14,6 +14,8 @@ import (
 	"net/smtp"
 
 	"github.com/subosito/twilio"
+
+	"antinvestor.com/service/auth/service/profile"
 )
 
 type notificationserver struct {
@@ -27,6 +29,16 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 	Massagevariables, _ := json.Marshal(req.GetMessageVariables())
 
 	var id []string
+
+
+	profileCtx, cancel := context.WithTimeout(ctxt, time.Second)
+	defer cancel()
+
+	profileService := profile.NewProfileServiceClient(env.GetProfileServiceConn())
+
+	contactRequest := profile.ProfileContactRequest{
+		Contact: contact,
+	}
 
 	//checks if profileID is valid
 	server.Env.GetRDb(ctxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
