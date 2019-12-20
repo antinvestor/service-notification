@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc"
 	//"google.golang.org/grpc/grpclog"
 
-	pb "antinvestor.com/service/notification/notification"
+	pb "antinvestor.com/service/notification/grpc/notification"
 	serv "antinvestor.com/service/notification/service"
 )
 

@@ -1,6 +1,9 @@
 package service
 
 import (
+	grpc_health_v1 "antinvestor.com/service/notification/grpc/health"
+	"antinvestor.com/service/notification/grpc/notification"
+	"antinvestor.com/service/notification/service/handlers"
 	"fmt"
 	"net"
 	"time"
@@ -10,7 +13,6 @@ import (
 
 	"antinvestor.com/service/notification/utils"
 
-	"antinvestor.com/service/notification/notification"
 	"google.golang.org/grpc"
 	"log"
 )
@@ -41,16 +43,18 @@ func (se StatusError) Status() int {
 //RunServer Starts a server and waits on it
 func RunServer(env *utils.Env) {
 
+	implementation := &handlers.Notificationserver{Env: env}
 	//waitDuration := time.Second * 15
 	serverPort := utils.GetEnv(utils.EnvServerPort, "7020")
-	im := &notificationserver{Env: env}
-	//instantiate grpc server not http server for api proccessing and registers
-	srv := grpc.NewServer()
-	notification.RegisterNotificationServiceServer(srv, im)
 
-	//this comes in second telling server to listen on tcp address and on serverport as defined in os enviroment
+	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(AuthInterceptor),
+	)
+
+	notification.RegisterNotificationServiceServer(srv, implementation)
+	grpc_health_v1.RegisterHealthServer(srv, implementation)
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", serverPort))
-
 	if err != nil {
 		env.Logger.Fatalf("Could not start on supplied port %v %v ", serverPort, err)
 	}

@@ -4,16 +4,22 @@ import (
 	"context"
 	"github.com/InVisionApp/go-health/v2"
 	"github.com/jinzhu/gorm"
+	"github.com/nats-io/stan.go"
 	"github.com/sirupsen/logrus"
 	otgorm "github.com/smacker/opentracing-gorm"
+	"google.golang.org/grpc"
 )
 
 // Env Context object supplied around the applications lifetime
 type Env struct {
 	wDb              *gorm.DB
 	rDb              *gorm.DB
+
+	Queue      stan.Conn
+
 	Logger          *logrus.Entry
 	Health   		*health.Health
+
 
 	profileServiceConn *grpc.ClientConn
 }
@@ -62,7 +68,7 @@ func (env *Env) GetProfileServiceConn() *grpc.ClientConn {
 	//dialOption = grpc.WithTransportCredentials(creds)
 	//
 
-	profileServiceUri := GetEnv(ConfigProfileServiceUri, "")
+	profileServiceUri := GetEnv(EnvProfileServiceUri, "")
 	profileServiceConnection, err := grpc.Dial(
 		profileServiceUri,
 		dialOption,
