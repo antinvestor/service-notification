@@ -16,6 +16,11 @@ type NotificationBusiness interface {
 }
 
 func NewNotificationBusiness(ctx context.Context, env *utils.Env) NotificationBusiness {
-	notificationRepository := repository.NewRepository(ctx, env)
-	return &notificationBusiness{env:env, notificationRepository: notificationRepository}
+	notificationRepository := repository.NewNotificationRepository(ctx, env)
+	languageRepository := repository.NewLanguageRepository(ctx, env)
+	templateRepository := repository.NewTemplateRepository(ctx, env)
+	return &notificationBusiness{env: env,
+		notificationRepository: notificationRepository,
+		languageRepository:     languageRepository,
+		templateRepository:     templateRepository}
 }

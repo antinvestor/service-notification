@@ -16,6 +16,8 @@ import (
 type notificationBusiness struct {
 	env                    *utils.Env
 	notificationRepository repository.NotificationRepository
+	templateRepository repository.TemplateRepository
+	languageRepository repository.LanguageRepository
 }
 
 func (nb *notificationBusiness) QueueOut(
@@ -33,6 +35,21 @@ func (nb *notificationBusiness) QueueOut(
 		releaseDate = time.Now()
 	}
 
+	languageCode := message.GetLanguage()
+	if languageCode == ""{
+		languageCode = "en"
+	}
+	language, err := nb.languageRepository.GetByCode(languageCode)
+	if err != nil{
+		return nil, err
+	}
+
+	template, err := nb.templateRepository.GetByNameProductIDAndLanguageID(
+		message.GetMessageTemplete(), productID, language.LanguageID)
+	if err != nil{
+		return nil, err
+	}
+
 	n := models.Notification{
 		ContactID: message.GetContactID(),
 		ProfileID: message.GetProfileID(),
@@ -41,10 +58,10 @@ func (nb *notificationBusiness) QueueOut(
 		LanguageID: message.GetLanguage(),
 		OutBound:   true,
 
-		Template:   message.GetMessageTemplete(),
+		TemplateID:   template.TempleteID,
 		Payload:    postgres.Jsonb{payloadString},
-		Status:     "Logged",
-		Type:       "text",
+		Type:       "",
+		State:      "Logged",
 		ReleasedAt: &releaseDate,
 	}
 
@@ -53,18 +70,16 @@ func (nb *notificationBusiness) QueueOut(
 		return nil, err
 	}
 
-	status := notification.StatusResponse{NotificationID: n.NotificationID, Status: n.Status}
+	status := notification.StatusResponse{NotificationID: n.NotificationID, State: n.State}
 
-	queueMap := make(map[string]string)
-	queueMap["id"] = n.NotificationID
-	queueID, err := json.Marshal(queueMap)
+	queueID, err := utils.QueueMakeID(ctx, n.NotificationID)
 	if err != nil {
 		return &status, err
 	}
 	// Queue out message for further processing
-	err = nb.env.Queue.Publish(utils.ConfigMessageOutLoggedQueueName, queueID)
+	err = nb.env.Queue.Publish(utils.ConfigQueueMessageOutLoggedName, queueID)
 	if err != nil {
-		nb.env.Logger.WithError(err).Errorf("Could not queue message with id : %s", n.NotificationID)
+		nb.env.Logger.WithError(err).Errorf("Could not subscriptions message with id : %s", n.NotificationID)
 		return &status, err
 	}
 
@@ -75,22 +90,21 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 
 	contactDetail := strings.Trim(message.GetContact(), " ")
 
-	p, err := getOrCreateProfileByContact(nb.env, ctx, contactDetail)
-	if err != nil{
+	p, err := profile.GetOrCreateProfileByContactDetail(ctx, nb.env.GetProfileServiceConn(), contactDetail)
+	if err != nil {
 		return nil, err
 	}
 
 	var activeContact *profile.ContactObject
-	for _, contact := range p.GetContacts(){
+	for _, contact := range p.GetContacts() {
 		if contact.Detail == contactDetail {
 			activeContact = contact
 		}
 	}
 
-	if activeContact == nil{
+	if activeContact == nil {
 		return nil, notification.ErrorItemDoesNotExist
 	}
-
 
 	payloadString, err := json.Marshal(message.GetPayLoad())
 	if err != nil {
@@ -109,10 +123,11 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		OutBound:   false,
 
 		Payload:    postgres.Jsonb{payloadString},
-		Status:     "Logged",
 		Type:       message.GetMessageType(),
 		ReleasedAt: &releaseDate,
 		ExternalID: message.GetNotificationID(),
+
+		State: "Logged",
 	}
 
 	err = nb.notificationRepository.Save(&n)
@@ -120,7 +135,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		return nil, err
 	}
 
-	status := notification.StatusResponse{NotificationID: n.NotificationID, Status: n.Status, ExternalID: n.ExternalID}
+	status := notification.StatusResponse{NotificationID: n.NotificationID, State: n.State, ExternalID: n.ExternalID}
 
 	queueMap := make(map[string]string)
 	queueMap["id"] = n.NotificationID
@@ -130,9 +145,9 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		return &status, err
 	}
 	// Queue in message for further processing
-	err = nb.env.Queue.Publish(utils.ConfigMessageInLoggedQueueName, queueID)
+	err = nb.env.Queue.Publish(utils.ConfigQueueMessageInLoggedName, queueID)
 	if err != nil {
-		nb.env.Logger.WithError(err).Errorf("Could not queue message with id : %s", n.NotificationID)
+		nb.env.Logger.WithError(err).Errorf("Could not subscriptions message with id : %s", n.NotificationID)
 		return &status, err
 	}
 
@@ -148,7 +163,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, productID string, st
 
 	status := notification.StatusResponse{
 		NotificationID: n.NotificationID,
-		Status:         n.Status,
+		State:          n.State,
 		TransientID:    n.TransientID,
 		ExternalID:     n.ExternalID,
 		ExternalStatus: n.Extra,
@@ -167,7 +182,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, productID string, r
 
 	status := notification.StatusResponse{
 		NotificationID: n.NotificationID,
-		Status:         n.Status,
+		State:          n.State,
 		Released:       n.IsReleased(),
 	}
 
@@ -195,7 +210,7 @@ func (nb *notificationBusiness) Search(ctx context.Context, productID string, se
 			MessageType:    n.Type,
 			PayLoad:        payload,
 			Outbound:       n.OutBound,
-			Status:         n.Status,
+			State:          n.State,
 			Released:       n.IsReleased(),
 			TransientID:    n.TransientID,
 			ExternalID:     n.ExternalID,

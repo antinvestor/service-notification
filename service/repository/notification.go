@@ -19,7 +19,7 @@ type notificationRepository struct {
 	writeDb *gorm.DB
 }
 
-func NewRepository(ctx context.Context, env *utils.Env) NotificationRepository {
+func NewNotificationRepository(ctx context.Context, env *utils.Env) NotificationRepository {
 	return &notificationRepository{readDb: env.GetRDb(ctx), writeDb: env.GeWtDb(ctx)}
 }
 

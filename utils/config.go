@@ -12,9 +12,13 @@ const EnvQueueUrl = "QUEUE_URL"
 const EnvQueueClusterId = "QUEUE_CLUSTER_ID"
 const EnvQueueClientId = "QUEUE_CLIENT_ID"
 
+const EnvQueueAcknowledgementWaitTime = "QUEUE_ACK_WAIT_TIME"
+const EnvQueueMaximumInflightMessages = "QUEUE_MAX_INFLIGHT_MESSAGES"
+
 const EnvProfileServiceUri  = ""
 
-const ConfigMessageInLoggedQueueName = "service_notification_in_logged"
-
-const ConfigMessageOutLoggedQueueName = "service_notification_out_logged"
-const ConfigMessageOutChannelledQueueName = "service_notification_out_channel_%s"
+const ConfigQueuesDurableName = "service_notification"
+const ConfigQueueMessageInLoggedName = "message_in_logged"
+const ConfigQueueMessageInQueuedName = "message_in_queued_%s"
+const ConfigQueueMessageOutLoggedName = "message_out_logged"
+const ConfigQueueMessageOutChannelledName = "message_out_channel_%s"

@@ -2,31 +2,57 @@ package models
 
 import (
 	"github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/qor/transition"
 	"time"
 
 	"github.com/jinzhu/gorm"
 )
 
-// MessageTemplete Our simple table holding all the templete details
-type MessageTemplete struct {
+const (
+	ChannelModeTransmit   = "tx"
+	ChannelModeReceive    = "rx"
+	ChannelModeTransceive = "trx"
+
+	ChannelTypeEmail = "email"
+	ChannelTypeSms   = "sms"
+)
+
+// Templete Table holds the templete details
+type Templete struct {
 	AntBaseModel
 
-	MessageTempleteID string `gorm:"type:varchar(50);primary_key"`
-	LanguageID        string `gorm:"type:text"`
-	TempleteName      string `gorm:"type:varchar(50);unique_index"`
-	TempleteValue     string `gorm:"type:text"`
-	AppliedAt         *time.Time
+	TempleteID string `gorm:"type:varchar(50);primary_key"`
+	LanguageID string `gorm:"type:varchar(50)"`
+	Name       string `gorm:"type:varchar(255)"`
+
+	DataList []TempleteData
 }
 
 // BeforeCreate Ensures we update a migrations time stamps
-func (model *MessageTemplete) BeforeCreate(scope *gorm.Scope) error {
+func (model *Templete) BeforeCreate(scope *gorm.Scope) error {
 
 	if err := model.AntBaseModel.BeforeCreate(scope); err != nil {
 		return err
 	}
 
-	return scope.SetColumn("MessageTempleteID", model.IDGen("mt"))
+	return scope.SetColumn("TempleteID", model.IDGen("tmp"))
+}
+
+type TempleteData struct {
+	AntBaseModel
+	TempleteDataID string `gorm:"type:varchar(50);primary_key"`
+	TempleteID     string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
+	Type           string `gorm:"type:varchar(10);unique_index:uq_template_by_type"`
+	Detail         string `gorm:"type:text"`
+}
+
+// BeforeCreate Ensures we update a migrations time stamps
+func (model *TempleteData) BeforeCreate(scope *gorm.Scope) error {
+
+	if err := model.AntBaseModel.BeforeCreate(scope); err != nil {
+		return err
+	}
+
+	return scope.SetColumn("TempleteDataID", model.IDGen("tmd"))
 }
 
 // Language Our simple table holding all the supported languages
@@ -35,9 +61,8 @@ type Language struct {
 
 	LanguageID  string `gorm:"type:varchar(50);primary_key"`
 	Name        string `gorm:"type:varchar(50);unique_index"`
+	Code        string `gorm:"type:varchar(10);unique_index"`
 	Description string `gorm:"type:text"`
-	Region      string `gorm:"type:text"`
-	AppliedAt   *time.Time
 }
 
 // BeforeCreate Ensures we update a migrations time stamps
@@ -54,26 +79,27 @@ type Notification struct {
 
 	NotificationID string `gorm:"type:varchar(50);primary_key"`
 
-	ProfileID      string `gorm:"type:varchar(50)"`
-	ContactID      string `gorm:"type:varchar(50)"`
+	ProfileID string `gorm:"type:varchar(50)"`
+	ContactID string `gorm:"type:varchar(50)"`
 
-	ProductID      string `gorm:"type:varchar(50)"`
-	ChannelID      string `gorm:"type:varchar(50)"`
-	OutBound bool
+	ProductID string `gorm:"type:varchar(50)"`
+	ChannelID string `gorm:"type:varchar(50)"`
+	OutBound  bool
 
-	LanguageID     string `gorm:"type:varchar(50)"`
-	Type     string `gorm:"type:varchar(10)"`
-	Template string `gorm:"type:varchar(10)"`
-	Payload  postgres.Jsonb
+	LanguageID string `gorm:"type:varchar(50)"`
+
+	TemplateID string `gorm:"type:varchar(50)"`
+	Payload    postgres.Jsonb
+
+	Type string `gorm:"type:varchar(10)"`
 
 	Message string `gorm:"type:text"`
 
 	TransientID string `gorm:"type:varchar(50)"`
 	ExternalID  string `gorm:"type:varchar(50)"`
-	Extra      string `gorm:"type:text"`
-	Status      string `gorm:"type:varchar(10)"`
+	Extra       string `gorm:"type:text"`
 	ReleasedAt  *time.Time
-	transition.Transition
+	State       string `gorm:"type:varchar(10)"`
 }
 
 // BeforeCreate Ensures we update a migrations time stamps
@@ -92,10 +118,13 @@ func (model *Notification) IsReleased() bool {
 type Channel struct {
 	AntBaseModel
 
-	ChannelID   string `gorm:"type:varchar(50);primary_key"`
-	Channel     string `gorm:"type:text"`
-	Description string `gorm:"type:text"`
-	AppliedAt   *time.Time
+	ChannelID        string `gorm:"type:varchar(50);primary_key"`
+	CounterChannelID string `gorm:"type:varchar(50)"`
+	ProductID        string `gorm:"type:varchar(50)"`
+	Name             string `gorm:"type:varchar(50)"`
+	Description      string `gorm:"type:text"`
+	Type             string `gorm:"type:varchar(10)"`
+	Mode             string `gorm:"type:varchar(10)"`
 }
 
 // BeforeCreate Ensures we update a migrations time stamps

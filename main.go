@@ -37,12 +37,6 @@ func main() {
 	}
 	defer replicaDatabase.Close()
 
-	queue, queueChecker, err := utils.ConfigureQueue(logger)
-	if err != nil {
-		logger.WithError(err).Fatal("Could not configure Stan queue")
-	}
-	defer queue.Close()
-
 	isMigration := utils.GetEnv(utils.EnvOnlyMigrate, "")
 	stdArgs := os.Args[1:]
 	if (len(stdArgs) > 0 && stdArgs[0] == "migrate") || isMigration == "true" {
@@ -52,6 +46,13 @@ func main() {
 		service.PerformMigration(logger, database)
 
 	} else {
+
+		queue, queueChecker, err := utils.ConfigureQueue(logger)
+		if err != nil {
+			logger.WithError(err).Fatal("Could not configure Stan subscriptions")
+		}
+		defer queue.Close()
+
 		logger.Infof("Initiating the service at %v", time.Now())
 
 		healthChecker, err := utils.ConfigureHealthChecker(logger, database, replicaDatabase, queueChecker)
@@ -67,6 +68,7 @@ func main() {
 
 		env.SetWriteDb(database)
 		env.SetReadDb(replicaDatabase)
+
 
 		service.RunServer(&env)
 	}

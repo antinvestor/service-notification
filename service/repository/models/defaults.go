@@ -10,10 +10,11 @@ import (
 
 // Migration Our simple table holding all the migration data
 type AntBaseModel struct {
+
 	CreatedAt      time.Time
 	ModifiedAt     time.Time
 	Version        uint32 `gorm:"DEFAULT 0"`
-	DeletedAt      *time.Time
+	DeletedAt      *time.Time `sql:"index"`
 }
 
 func (model *AntBaseModel) IDGen( uniqueCode string, ) string{

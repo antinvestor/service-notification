@@ -12,7 +12,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflag
 
 FROM scratch
 COPY --from=builder /go/src/antinvestor.com/service/notification/notification_binary /notification
-COPY --from=builder /go/src/antinvestor.com/service/notification/migrations /
+COPY --from=builder /go/src/antinvestor.com/service/notification/migrations /migrations
 #WORKDIR /
 
 # Run the service command by default when the container starts.

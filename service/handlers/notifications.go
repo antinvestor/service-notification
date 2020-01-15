@@ -19,7 +19,7 @@ func (server *Notificationserver) Out(ctxt context.Context, req *notification.Me
 	defer span.Finish()
 
 	notificationBusiness := business.NewNotificationBusiness(ctx, server.Env)
-	return notificationBusiness.QueueOut(ctx, "", req)
+	return notificationBusiness.QueueOut(ctx, "#", req)
 
 }
 

@@ -12,14 +12,13 @@ import (
 
 // Env Context object supplied around the applications lifetime
 type Env struct {
-	wDb              *gorm.DB
-	rDb              *gorm.DB
+	wDb *gorm.DB
+	rDb *gorm.DB
 
-	Queue      stan.Conn
+	Queue           stan.Conn
 
-	Logger          *logrus.Entry
-	Health   		*health.Health
-
+	Logger *logrus.Entry
+	Health *health.Health
 
 	profileServiceConn *grpc.ClientConn
 }
@@ -28,25 +27,22 @@ func (env *Env) SetWriteDb(db *gorm.DB) {
 	env.wDb = db
 }
 
-
 func (env *Env) SetReadDb(db *gorm.DB) {
 	env.rDb = db
 }
 
-func (env *Env) GeWtDb(ctx context.Context) *gorm.DB{
+func (env *Env) GeWtDb(ctx context.Context) *gorm.DB {
 	return otgorm.SetSpanToGorm(ctx, env.wDb)
 }
 
-
-func (env *Env) GetRDb(ctx context.Context) *gorm.DB{
+func (env *Env) GetRDb(ctx context.Context) *gorm.DB {
 	return otgorm.SetSpanToGorm(ctx, env.rDb)
 }
-
 
 // ConfigureProfileService creates required connection to the profile service
 func (env *Env) GetProfileServiceConn() *grpc.ClientConn {
 
-	if env.profileServiceConn != nil{
+	if env.profileServiceConn != nil {
 		return env.profileServiceConn
 	}
 
@@ -56,7 +52,6 @@ func (env *Env) GetProfileServiceConn() *grpc.ClientConn {
 	}
 
 	dialOption := grpc.WithInsecure()
-
 
 	//
 	//pool, err := x509.SystemCertPool()

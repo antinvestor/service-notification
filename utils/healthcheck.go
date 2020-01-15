@@ -69,7 +69,7 @@ func ConfigureHealthChecker(realLog *logrus.Entry, writeDb *gorm.DB, readDb *gor
 		},
 
 		{
-			Name:     "Stan queue",
+			Name:     "Stan subscriptions",
 			Checker:  queueChecker,
 			Interval: time.Duration(5) * time.Second,
 			Fatal:    true,
