@@ -24,7 +24,7 @@ type mutexMap struct {
 	sync.Mutex
 	data map[string]interface{}
 }
-//ConfigureHealthChecker
+//ConfigureHealthChecker nn
 func ConfigureHealthChecker(realLog *logrus.Entry, writeDb *gorm.DB, readDb *gorm.DB) (*health.Health, error) {
 
 	h := health.New()
@@ -78,7 +78,7 @@ func ConfigureHealthChecker(realLog *logrus.Entry, writeDb *gorm.DB, readDb *gor
 	return h, nil
 
 }
-
+//HealthCheckProcessing func
 func HealthCheckProcessing(logger *logrus.Entry, healthChecker *health.Health, ) (int, []byte) {
 
 	states, failed, err := healthChecker.State()

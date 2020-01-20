@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 )
-
+//GetIp ipconfig
 func GetIp(r *http.Request) string  {
 	sourceIp := r.Header.Get("X-FORWARDED-FOR")
 	if sourceIp == ""{

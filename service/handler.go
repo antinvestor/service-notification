@@ -11,12 +11,13 @@ import (
 	"antinvestor.com/service/notification/notification"
 
 	stan "github.com/nats-io/stan.go"
+	"github.com/sirupsen/logrus"
 
 	"net/smtp"
 
 	"github.com/subosito/twilio"
 
-	"antinvestor.com/service/auth/service/profile"
+	"antinvestor.com/service/notification/service/profile"
 )
 
 type notificationserver struct {
@@ -29,31 +30,31 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 
 	Massagevariables, _ := json.Marshal(req.GetMessageVariables())
 
-	var id []string
-
+	//var id []string
 
 	profileCtx, cancel := context.WithTimeout(ctxt, time.Second)
 	defer cancel()
 
-	profileService := profile.NewProfileServiceClient(server.Env.GetProfileServiceConn())
+	con := server.Env.GetProfileServiceConn()
+	profileService := profile.NewProfileServiceClient(con)
 
-	contactRequest := profile.ProfileContactRequest{
-		Contact: contact,
+	profileIDRequest := profile.ProfileIDRequest{
+		ID: req.GetProfileID(),
 	}
 
 	//checks if profileID is valid
 	//server.Env.GetRDb(ctxt).Where("profile_id = ?", req.GetProfileID()).Find(&Notification{}).Pluck("profile_id", &id)
-	if profileService.GetByContact(profileCtx, &contactRequest) {
+	if _, err := profileService.GetByID(profileCtx, &profileIDRequest); err != nil {
 
 		//send notification
 		out := &Notification{
 			NotificationID:   req.GetNotificationID(),
 			ProfileID:        req.GetProfileID(),
 			Messagevariables: string(Massagevariables),
-			LanguageID:         req.Language,
+			LanguageID:       req.Language,
 			//channel will be determined by product preferences or profile client request
 			//if the user has multiple phone numbers attached to their profile prefer the phone number that was last added and verified or last known to work
-			ChannelsID:     req.Channel,
+			ChannelsID:  req.Channel,
 			Messagetype: req.MessageTemplete,
 			Autosend:    req.Autosend,
 			ProductID:   "3900Rent",
@@ -63,12 +64,17 @@ func (server *notificationserver) Out(ctxt context.Context, req *notification.Me
 		server.Env.GeWtDb(ctxt).Create(out)
 
 		//nats stream subscribation
-		go subscribetion()
-		// go QueueSubscribeGroup()
-		// go QueueSubscribeGroup2()
+				serviceName := "Notification"
+
+				logger, err := utils.ConfigureLogging(serviceName)
+				if err != nil {
+					log.Fatal("Failed to configure logging: " + err.Error())
+						}
+				go subscribetion(logger)
+				// go QueueSubscribeGroup()
 
 	} else {
-		return nil, errors.New("ProfileID doesnot exit/match any value")
+		return nil, errors.New("ProfileID doesnot exist/match any value")
 
 	}
 
@@ -137,18 +143,24 @@ func (server *notificationserver) In(ctxt context.Context, req *notification.Mes
 		ProfileID:      req.GetProfileID(),
 		ProductID:      req.ProductID,
 		Status:         req.RequestStatus,
-		LanguageID:       req.Language,
+		LanguageID:     req.Language,
 		Messagetype:    req.MessageType,
 		Payload:        string(uPayload),
-		ChannelsID:        "Email",
+		ChannelsID:     "Email",
 	}
 	//create notification
 	server.Env.GeWtDb(ctxt).Create(in)
-	
-	//publishing notification
-	if err:= publishEvent(in);err != nil{
-		return nil, err 
-	}
+
+				//publishing notification
+				serviceName := "Notification"
+
+				logger, err := utils.ConfigureLogging(serviceName)
+				if err != nil {
+					log.Fatal("Failed to configure logging: " + err.Error())
+				}
+				if err := publishEvent(in,logger); err != nil {
+					return nil, err
+				}
 
 	var Notificationid []string
 	var id string
@@ -176,7 +188,7 @@ func (server *notificationserver) Search(req *notification.SearchRequest, stream
 	var cxt context.Context
 	var serch []string
 
-	server.Env.GetRDb(cxt).Where("notification_id = ? And messagetype = ? ", req.GetNotificationID(),req.GetMessage()).Find(&Notification{}).Pluck("status", &serch)
+	server.Env.GetRDb(cxt).Where("notification_id = ? And messagetype = ? ", req.GetNotificationID(), req.GetMessage()).Find(&Notification{}).Pluck("status", &serch)
 	//check if request input exist in database
 	if len(serch) != 0 {
 
@@ -195,62 +207,64 @@ func (server *notificationserver) Search(req *notification.SearchRequest, stream
 
 }
 
-
 // publishEvent publish an event via NATS Streaming server
-func publishEvent(model *Notification) error {
+func publishEvent(model *Notification,lg *logrus.Entry) error {
 
-	const (
-		clusterID = "test-cluster"
-		clientID  = "event-store"
-	)
+	// const (
+	// 	clusterID = "test-cluster"
+	// 	clientID  = "event-store"
+	// )
 
-	
-	// Connect to NATS Streaming server
-	sc, err := stan.Connect(
-		clusterID,
-		clientID,
-		stan.NatsURL("nats://nats:4222"),
-	)
+	// // Connect to NATS Streaming server
+	// sc, err := stan.Connect(
+	// 	clusterID,
+	// 	clientID,
+	// 	stan.NatsURL("nats://nats:4222"),
+	// )
+	scon, _ ,err := utils.ConfigureQueue(lg )
+
 	if err != nil {
 		return err
 	}
-	defer sc.Close()
+	defer scon.Close()
 	channel := model.ChannelsID
-	eventMsg,err := json.Marshal(model.NotificationID )
+	eventMsg, err := json.Marshal(model.NotificationID)
 	// Publish message on subject (channel)
 	if err != nil {
 		log.Print("pub", err)
 		return err
 	}
-	sc.Publish(channel, eventMsg)
-	 
-	log.Println("Published message on channel: " , channel)
+	scon.Publish(channel, eventMsg)
+
+	log.Println("Published message on channel: ", channel)
 
 	return nil
 }
 
 //subscribetion event
-func subscribetion() {
+func subscribetion(lg *logrus.Entry) {
 
-	const (
-		clusterID = "test-cluster"
-		clientID  = "notification-service"
+	 const (
+	// 	clusterID = "test-cluster"
+	// 	clientID  = "notification-service"
 		channel   = "Email"
-		durableID = "notification-service-durable"
-	)
+	// 	durableID = "notification-service-durable"
+	 )
 
-	sc, err := stan.Connect(
-		clusterID,
-		clientID,
-		stan.NatsURL("nats://nats:4222"),
-	)
+	// sc, err := stan.Connect(
+	// 	clusterID,
+	// 	clientID,
+	// 	stan.NatsURL("nats://nats:4222"),
+	// )
+
+	scon, _ ,err := utils.ConfigureQueue(lg )
 
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Subscribe with manual ack mode, and set AckWait to 60 seconds
 	aw, _ := time.ParseDuration("60s")
-	sc.Subscribe(channel, func(msg *stan.Msg) {
+	scon.Subscribe(channel, func(msg *stan.Msg) {
 		msg.Ack() // Manual ACK
 
 		id := &Notification{}
@@ -261,14 +275,13 @@ func subscribetion() {
 			return
 		}
 		//Handle the message
-		log.Printf("Subscribed message from clientID - %s for ID: %+v\n", clientID, string(msg.Data))
+		log.Printf("Subscribed message from clientID - for ID: %+v\n",  string(msg.Data))
 
 		//send Email
 		HandleEmail(msg.Data)
 		//SmsHandler(msg.Data)
 
-	}, stan.DurableName(durableID),
-		stan.MaxInflight(25),
+	},  stan.MaxInflight(25),
 		stan.SetManualAckMode(),
 		stan.AckWait(aw),
 	)

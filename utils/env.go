@@ -6,6 +6,8 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	otgorm "github.com/smacker/opentracing-gorm"
+
+	"google.golang.org/grpc"
 )
 
 // Env Context object supplied around the applications lifetime
@@ -37,7 +39,7 @@ func (env *Env) GetRDb(ctx context.Context) *gorm.DB{
 }
 
 
-// ConfigureProfileService creates required connection to the profile service
+// GetProfileServiceConn creates required connection to the profile service
 func (env *Env) GetProfileServiceConn() *grpc.ClientConn {
 
 	if env.profileServiceConn != nil{

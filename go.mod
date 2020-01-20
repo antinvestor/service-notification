@@ -12,6 +12,7 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/nats-io/nats-server/v2 v2.1.0 // indirect
 	github.com/nats-io/nats-streaming-server v0.16.2 // indirect
+	github.com/nats-io/nats.go v1.8.1
 	github.com/nats-io/stan.go v0.5.0
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
