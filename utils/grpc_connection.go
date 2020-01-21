@@ -14,7 +14,6 @@ import (
 )
 
 type (
-	//JWTInterceptor struct
 	JWTInterceptor struct {
 		http     *http.Client // The HTTP client for calling the token-serving API
 		token    string       // The JWT token that will be used in every call to the server
@@ -80,7 +79,6 @@ func (jwt *JWTInterceptor) performAuthRequest() (*http.Response, error) {
 
 	return resp, nil
 }
-//UnaryClientInterceptor mm
 func (jwt *JWTInterceptor) UnaryClientInterceptor(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	// Create a new context with the token and make the first request
 	authCtx := metadata.AppendToOutgoingContext(ctx, "authorization", "bearer "+jwt.token)

@@ -1,15 +1,15 @@
 package service
 
 import (
+	"antinvestor.com/service/notification/service/repository/models"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
 
-	
-	"github.com/sirupsen/logrus"
 	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
 )
 
 /*
@@ -28,7 +28,8 @@ func PerformMigration(logger *logrus.Entry, db *gorm.DB) {
 	migrationsDirPath := "./migrations/0001"
 
 	// Migrate the schema
-	db.AutoMigrate(&AntMigration{},&MessageTemplete{},&Language{},&Notification{},&Channels{})
+	db.AutoMigrate(&models.Migration{}, &models.Templete{}, &models.TempleteData{},
+		&models.Language{}, &models.Notification{}, &models.Channel{})
 
 	if err := scanForNewMigrations(logger, db, migrationsDirPath); err != nil {
 		logger.Warnf("Error scanning for new migrations : %v ", err)
@@ -42,6 +43,7 @@ func PerformMigration(logger *logrus.Entry, db *gorm.DB) {
 
 func scanForNewMigrations(logger *logrus.Entry, db *gorm.DB, migrationsDirPath string) error {
 
+	logger.Info("scanning for new migrations")
 	// Get a list of migration files
 	files, err := filepath.Glob(migrationsDirPath + "/*.sql")
 	if err != nil {
@@ -49,9 +51,11 @@ func scanForNewMigrations(logger *logrus.Entry, db *gorm.DB, migrationsDirPath s
 		return err
 	}
 
+	logger.Infof("found %d migrations to process", len(files))
+
 	for _, file := range files {
 
-		var migration AntMigration
+		var migration models.Migration
 
 		filename := filepath.Base(file)
 		filename = strings.Replace(filename, ".sql", "", 1)
@@ -65,15 +69,23 @@ func scanForNewMigrations(logger *logrus.Entry, db *gorm.DB, migrationsDirPath s
 				logger.Warnf("Problem reading migration file content : %v", err)
 				continue
 			}
+			logger.Infof("migration %s is unapplied", file)
 			migration.Patch = string(migrationPatch)
-			 
-			db.Create(&migration)
+
+			err = db.Create(&migration).Error
+			if err != nil {
+				logger.WithError(err).Warnf("There is an error adding migration :%s", file)
+			}
 		} else {
 
 			if migration.AppliedAt == nil {
 
 				if migration.Patch != string(migrationPatch) {
-					db.Model(&migration).Update("patch", string(migrationPatch))
+					err = db.Model(&migration).Update("patch", string(migrationPatch)).Error
+
+					if err != nil {
+						logger.WithError(err).Warnf("There is an error updating migration :%s", file)
+					}
 				}
 			}
 
@@ -84,7 +96,7 @@ func scanForNewMigrations(logger *logrus.Entry, db *gorm.DB, migrationsDirPath s
 
 func applyNewMigrations(logger *logrus.Entry, db *gorm.DB) error {
 
-	unAppliedMigrations := []AntMigration{}
+	unAppliedMigrations := []models.Migration{}
 	if err := db.Where("applied_at IS NULL").Find(&unAppliedMigrations).Error; err != nil {
 		return err
 	}

@@ -24,8 +24,8 @@ type mutexMap struct {
 	sync.Mutex
 	data map[string]interface{}
 }
-//ConfigureHealthChecker nn
-func ConfigureHealthChecker(realLog *logrus.Entry, writeDb *gorm.DB, readDb *gorm.DB) (*health.Health, error) {
+//ConfigureHealthChecker
+func ConfigureHealthChecker(realLog *logrus.Entry, writeDb *gorm.DB, readDb *gorm.DB, queueChecker *StanQueue) (*health.Health, error) {
 
 	h := health.New()
 
@@ -64,6 +64,13 @@ func ConfigureHealthChecker(realLog *logrus.Entry, writeDb *gorm.DB, readDb *gor
 		{
 			Name:     "Read Database",
 			Checker:  readDBSqlCheck,
+			Interval: time.Duration(5) * time.Second,
+			Fatal:    true,
+		},
+
+		{
+			Name:     "Stan subscriptions",
+			Checker:  queueChecker,
 			Interval: time.Duration(5) * time.Second,
 			Fatal:    true,
 		},

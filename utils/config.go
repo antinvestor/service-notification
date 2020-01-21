@@ -8,8 +8,17 @@ const EnvReplicaDatabaseUrl = "REPLICA_DATABASE_URL"
 
 const EnvOnlyMigrate = "ONLY_DO_MIGRATION"
 
-const ConfigCsrfSecret = "CSRF_SECRET"
+const EnvQueueUrl = "QUEUE_URL"
+const EnvQueueClusterId = "QUEUE_CLUSTER_ID"
+const EnvQueueClientId = "QUEUE_CLIENT_ID"
 
-const ConfigHydraAdminUri = "HYDR_ADMIN_URI"
+const EnvQueueAcknowledgementWaitTime = "QUEUE_ACK_WAIT_TIME"
+const EnvQueueMaximumInflightMessages = "QUEUE_MAX_INFLIGHT_MESSAGES"
 
-const ConfigProfileServiceUri = "PROFILE_SERVICE_URI"
+const EnvProfileServiceUri  = ""
+
+const ConfigQueuesDurableName = "service_notification"
+const ConfigQueueMessageInLoggedName = "message_in_logged"
+const ConfigQueueMessageInQueuedName = "message_in_queued_%s"
+const ConfigQueueMessageOutLoggedName = "message_out_logged"
+const ConfigQueueMessageOutChannelledName = "message_out_channel_%s"
