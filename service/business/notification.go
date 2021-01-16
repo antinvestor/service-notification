@@ -1,29 +1,33 @@
 package business
 
 import (
-	"antinvestor.com/service/notification/grpc/notification"
-	profile "antinvestor.com/service/notification/grpc/profile"
-	"antinvestor.com/service/notification/service/repository"
-	"antinvestor.com/service/notification/service/repository/models"
-	"antinvestor.com/service/notification/utils"
 	"context"
 	"encoding/json"
-	"github.com/jinzhu/gorm/dialects/postgres"
+	n_api "github.com/antinvestor/service-notification-api"
+	"github.com/antinvestor/service-notification/service/repository"
+	"github.com/antinvestor/service-notification/service/repository/models"
+	"github.com/antinvestor/service-notification/config"
+	p_api "github.com/antinvestor/service-profile-api"
+	"github.com/pitabwire/frame"
+	"gorm.io/datatypes"
+	"log"
 	"strings"
 	"time"
 )
 
 type notificationBusiness struct {
-	env                    *utils.Env
+	service *frame.Service
+
+	profile_cli *p_api.ProfileClient
+
 	notificationRepository repository.NotificationRepository
-	templateRepository repository.TemplateRepository
-	languageRepository repository.LanguageRepository
+	templateRepository     repository.TemplateRepository
+	languageRepository     repository.LanguageRepository
+
 }
 
-func (nb *notificationBusiness) QueueOut(
-	ctx context.Context,
-	productID string,
-	message *notification.MessageOut) (*notification.StatusResponse, error) {
+func (nb *notificationBusiness) QueueOut(ctx context.Context,
+	productID string, message *n_api.MessageOut) (*n_api.StatusResponse, error) {
 
 	payloadString, err := json.Marshal(message.GetMessageVariables())
 	if err != nil {
@@ -36,17 +40,17 @@ func (nb *notificationBusiness) QueueOut(
 	}
 
 	languageCode := message.GetLanguage()
-	if languageCode == ""{
+	if languageCode == "" {
 		languageCode = "en"
 	}
 	language, err := nb.languageRepository.GetByCode(languageCode)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
 	template, err := nb.templateRepository.GetByNameProductIDAndLanguageID(
-		message.GetMessageTemplete(), productID, language.LanguageID)
-	if err != nil{
+		message.GetMessageTemplete(), productID, language.ID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -58,8 +62,8 @@ func (nb *notificationBusiness) QueueOut(
 		LanguageID: message.GetLanguage(),
 		OutBound:   true,
 
-		TemplateID:   template.TempleteID,
-		Payload:    postgres.Jsonb{payloadString},
+		TemplateID: template.ID,
+		Payload:    datatypes.JSON(payloadString),
 		Type:       "",
 		State:      "Logged",
 		ReleasedAt: &releaseDate,
@@ -70,32 +74,34 @@ func (nb *notificationBusiness) QueueOut(
 		return nil, err
 	}
 
-	status := notification.StatusResponse{NotificationID: n.NotificationID, State: n.State}
+	status := n_api.StatusResponse{NotificationID: n.ID, State: n.State}
 
-	queueID, err := utils.QueueMakeID(ctx, n.NotificationID)
+
+	payload, meta, err := nb.service.QObject(ctx, &n)
 	if err != nil {
 		return &status, err
 	}
+
 	// Queue out message for further processing
-	err = nb.env.Queue.Publish(utils.ConfigQueueMessageOutLoggedName, queueID)
+	err = nb.service.Publish(ctx, config.ConfigQueueMessageOutLoggedName, payload, meta)
 	if err != nil {
-		nb.env.Logger.WithError(err).Errorf("Could not subscriptions message with id : %s", n.NotificationID)
+		log.Printf("Could not subscriptions message with id : %s - > %v", n.ID, err)
 		return &status, err
 	}
 
 	return &status, nil
 }
 
-func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notification.MessageIn) (*notification.StatusResponse, error) {
+func (nb *notificationBusiness) QueueIn(ctx context.Context, message *n_api.MessageIn) (*n_api.StatusResponse, error) {
 
 	contactDetail := strings.Trim(message.GetContact(), " ")
 
-	p, err := profile.GetOrCreateProfileByContactDetail(ctx, nb.env.GetProfileServiceConn(), contactDetail)
+	p, err := nb.profile_cli.GetOrCreateProfileByContactDetail(ctx, contactDetail)
 	if err != nil {
 		return nil, err
 	}
 
-	var activeContact *profile.ContactObject
+	var activeContact *p_api.ContactObject
 	for _, contact := range p.GetContacts() {
 		if contact.Detail == contactDetail {
 			activeContact = contact
@@ -103,7 +109,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	}
 
 	if activeContact == nil {
-		return nil, notification.ErrorItemDoesNotExist
+		return nil, ErrorItemDoesNotExist
 	}
 
 	payloadString, err := json.Marshal(message.GetPayLoad())
@@ -122,7 +128,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		LanguageID: message.GetLanguage(),
 		OutBound:   false,
 
-		Payload:    postgres.Jsonb{payloadString},
+		Payload:    datatypes.JSON(payloadString),
 		Type:       message.GetMessageType(),
 		ReleasedAt: &releaseDate,
 		ExternalID: message.GetNotificationID(),
@@ -135,34 +141,34 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		return nil, err
 	}
 
-	status := notification.StatusResponse{NotificationID: n.NotificationID, State: n.State, ExternalID: n.ExternalID}
+	status := n_api.StatusResponse{NotificationID: n.ID, State: n.State, ExternalID: n.ExternalID}
 
 	queueMap := make(map[string]string)
-	queueMap["id"] = n.NotificationID
+	queueMap["id"] = n.ID
 	queueMap["product_id"] = n.ProductID
 	queueID, err := json.Marshal(queueMap)
 	if err != nil {
 		return &status, err
 	}
 	// Queue in message for further processing
-	err = nb.env.Queue.Publish(utils.ConfigQueueMessageInLoggedName, queueID)
+	err = nb.service.Publish(ctx, config.ConfigQueueMessageInLoggedName, queueID, nil)
 	if err != nil {
-		nb.env.Logger.WithError(err).Errorf("Could not subscriptions message with id : %s", n.NotificationID)
+		log.Printf("Could not subscriptions message with id : %s -> %v", n.ID, err)
 		return &status, err
 	}
 
 	return &status, nil
 }
 
-func (nb *notificationBusiness) Status(ctx context.Context, productID string, statusReq *notification.StatusRequest) (*notification.StatusResponse, error) {
+func (nb *notificationBusiness) Status(ctx context.Context, productID string, statusReq *n_api.StatusRequest) (*n_api.StatusResponse, error) {
 
 	n, err := nb.notificationRepository.GetByIDAndProductID(statusReq.NotificationID, productID)
 	if err != nil {
 		return nil, err
 	}
 
-	status := notification.StatusResponse{
-		NotificationID: n.NotificationID,
+	status := n_api.StatusResponse{
+		NotificationID: n.ID,
 		State:          n.State,
 		TransientID:    n.TransientID,
 		ExternalID:     n.ExternalID,
@@ -173,15 +179,15 @@ func (nb *notificationBusiness) Status(ctx context.Context, productID string, st
 	return &status, nil
 }
 
-func (nb *notificationBusiness) Release(ctx context.Context, productID string, releaseReq *notification.ReleaseRequest) (*notification.StatusResponse, error) {
+func (nb *notificationBusiness) Release(ctx context.Context, productID string, releaseReq *n_api.ReleaseRequest) (*n_api.StatusResponse, error) {
 
 	n, err := nb.notificationRepository.GetByIDAndProductID(releaseReq.NotificationID, productID)
 	if err != nil {
 		return nil, err
 	}
 
-	status := notification.StatusResponse{
-		NotificationID: n.NotificationID,
+	status := n_api.StatusResponse{
+		NotificationID: n.ID,
 		State:          n.State,
 		Released:       n.IsReleased(),
 	}
@@ -189,7 +195,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, productID string, r
 	return &status, nil
 }
 
-func (nb *notificationBusiness) Search(ctx context.Context, productID string, search *notification.SearchRequest, stream notification.NotificationService_SearchServer) error {
+func (nb *notificationBusiness) Search(ctx context.Context, productID string, search *n_api.SearchRequest, stream n_api.NotificationService_SearchServer) error {
 
 	notificationList, err := nb.notificationRepository.Search(search.GetNotificationID(), productID)
 	if err != nil {
@@ -199,10 +205,13 @@ func (nb *notificationBusiness) Search(ctx context.Context, productID string, se
 	for _, n := range notificationList {
 
 		payload := make(map[string]string)
-		json.Unmarshal(n.Payload.RawMessage, payload)
-
-		result := notification.SearchResponse{
-			NotificationID: n.NotificationID,
+		payloadValue, _ := n.Payload.MarshalJSON()
+		err = json.Unmarshal(payloadValue, &payload)
+		if err != nil {
+			log.Printf(" Search -- there is a problem ")
+		}
+		result := n_api.SearchResponse{
+			NotificationID: n.ID,
 			ProfileID:      n.ProfileID,
 			ContactID:      n.ContactID,
 			ProductID:      n.ProductID,
@@ -217,7 +226,10 @@ func (nb *notificationBusiness) Search(ctx context.Context, productID string, se
 			ExternalStatus: n.Extra,
 		}
 
-		stream.Send(&result)
+		err = stream.Send(&result)
+		if err != nil {
+			log.Printf(" Search -- unable to send a result see %v", err)
+		}
 	}
 
 	return nil

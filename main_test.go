@@ -1,6 +1,7 @@
 package main
 
 import (
+	n_api "github.com/antinvestor/service-notification-api"
 	"log"
 	"testing"
 
@@ -20,8 +21,6 @@ import (
 	"google.golang.org/grpc"
 	//"google.golang.org/grpc/grpclog"
 
-	pb "antinvestor.com/service/notification/grpc/notification"
-	serv "antinvestor.com/service/notification/service"
 )
 
 // Test started when the test binary is started. Only calls main.
@@ -32,7 +31,7 @@ func TestSystem(t *testing.T) {
 
 }
 
-var client pb.NotificationServiceClient
+var client n_api.NotificationServiceClient
 var conn *grpc.ClientConn
 var serverCmd *exec.Cmd
 
@@ -97,7 +96,7 @@ func stopServer() {
 	con.Stop()
 }
 
-func startClient() (pb.NotificationServiceClient, *grpc.ClientConn) {
+func startClient() (n_api.NotificationServiceClient, *grpc.ClientConn) {
 	log.Printf("startClient()")
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
@@ -106,7 +105,7 @@ func startClient() (pb.NotificationServiceClient, *grpc.ClientConn) {
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
-	client := pb.NewNotificationServiceClient(conn)
+	client := n_api.NewNotificationServiceClient(conn)
 
 	return client, conn
 }
@@ -119,10 +118,10 @@ func stopClient() {
 
 func TestSearch(t *testing.T) {
 
-	req := &pb.SearchRequest{
+	req := &n_api.SearchRequest{
 
 		NotificationID: "ntf_bn1ucplq29bhp57ik8kg",
-		Message:        "Recieved",
+		Query:        "Recieved",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -148,7 +147,7 @@ func TestSearch(t *testing.T) {
 
 func TestRelease(t *testing.T) {
 
-	req := &pb.ReleaseRequest{
+	req := &n_api.ReleaseRequest{
 
 		ReleaseMessage: "send",
 	}
@@ -165,7 +164,7 @@ func TestRelease(t *testing.T) {
 
 func TestStatus(t *testing.T) {
 
-	req := &pb.StatusRequest{
+	req := &n_api.StatusRequest{
 
 		NotificationID: "ntf_bn1ucplq29bhp57ik8kg",
 	}
@@ -177,17 +176,16 @@ func TestStatus(t *testing.T) {
 	if err != nil {
 		log.Fatalf("error while call send RPC %v", err)
 	}
-	log.Printf("Response from sender: %s", res.GetMessageStatus())
+	log.Printf("Response from sender: %s", res.GetExternalStatus())
 }
 
 func TestMessageOut(t *testing.T) {
 
-	req := &pb.MessageOut{
-		NotificationID:  serv.IDGen("ntf"),
+	req := &n_api.MessageOut{
 		Language:        "English",
 		Channel:         "Email",
 		MessageTemplete: "Receveid_templete",
-		Autosend:        "false",
+		Autosend:        false,
 		ProfileID:       "001isaac",
 		MessageVariables: map[string]string{
 			"name":    "isa",
@@ -207,9 +205,7 @@ func TestMessageOut(t *testing.T) {
 
 func TestMessageIn(t *testing.T) {
 
-	req := &pb.MessageIn{
-		NotificationID: serv.IDGen("ntf"),
-		RequestStatus:  "send",     //req.Requeststatus,
+	req := &n_api.MessageIn{
 		Language:       "English",  //req.Language,
 		ProductID:      "Funds",    //req.Product,
 		MessageType:    "Recieved", //req.Massagetype,

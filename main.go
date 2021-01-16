@@ -1,76 +1,114 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	napi "github.com/antinvestor/service-notification-api"
+	"github.com/antinvestor/service-notification/config"
+	"github.com/antinvestor/service-notification/service"
+	"github.com/antinvestor/service-notification/service/handlers"
+	"github.com/pitabwire/frame"
+	"gocloud.dev/server"
+	"google.golang.org/grpc"
 	"log"
 	"os"
-	"time"
-
-	"antinvestor.com/service/notification/service"
-	"antinvestor.com/service/notification/utils"
+	"strings"
 )
 
 func main() {
 
 	serviceName := "Notification"
 
-	logger, err := utils.ConfigureLogging(serviceName)
-	if err != nil {
-		log.Fatal("Failed to configure logging: " + err.Error())
+	ctx := context.Background()
+
+	datasource := frame.GetEnv(config.EnvDatabaseUrl, "")
+	mainDb := frame.Datastore(ctx, datasource, false)
+
+	readOnlydatasource := frame.GetEnv(config.EnvReplicaDatabaseUrl, datasource)
+	readDb := frame.Datastore(ctx, readOnlydatasource, true)
+
+	messageInLoggedHandler := &handlers.MessageInLoggedQueueHandler{}
+	//Setup queue subscribers
+	messageInLoggedQueueUrl := frame.GetEnv(config.EnvQueueMessageInLogged, fmt.Sprintf("memt+://%s", config.ConfigQueueMessageInLoggedName))
+	messageInLoggedQueue := frame.RegisterSubscriber(config.ConfigQueueMessageInLoggedName, messageInLoggedQueueUrl, 5, messageInLoggedHandler)
+	messageInLoggedQueueP := frame.RegisterPublisher(config.ConfigQueueMessageInLoggedName, messageInLoggedQueueUrl)
+
+	messageOutLoggedHandler := &handlers.MessageOutLoggedQueueHandler{}
+	messageOutLoggedQueueUrl := frame.GetEnv(config.EnvQueueMessageOutLogged, fmt.Sprintf("memt+://%s", config.ConfigQueueMessageOutLoggedName))
+	messageOutLoggedQueue := frame.RegisterSubscriber(config.ConfigQueueMessageOutLoggedName, messageOutLoggedQueueUrl, 5, messageOutLoggedHandler)
+	messageOutLoggedQueueP := frame.RegisterPublisher(config.ConfigQueueMessageOutLoggedName, messageOutLoggedQueueUrl)
+
+	dynamicPublishQueues := make([]frame.Option, 1)
+
+	messageInRoutedIds := frame.GetEnv(config.EnvQueueMessageInRouteIds, "")
+	for _, routeId := range strings.Split(messageInRoutedIds, ",") {
+
+		messageInRouteQueueUrl := frame.GetEnv(config.EnvQueueMessageOutLogged,
+			fmt.Sprintf("memt+://%s",
+				fmt.Sprintf(config.ConfigQueueMessageInRoutedName, routeId)))
+
+		messageInRoutedQueue := frame.RegisterPublisher(
+			fmt.Sprintf(config.ConfigQueueMessageInRoutedName, routeId), messageInRouteQueueUrl)
+
+		dynamicPublishQueues = append(dynamicPublishQueues, messageInRoutedQueue)
 	}
 
-	closer, err := utils.ConfigureJuegler(serviceName)
-	if err != nil {
-		logger.Fatal("Failed to configure Juegler: " + err.Error())
+	messageOutRouteHandler := &handlers.MessageOutRouteQueueHandler{}
+	messageOutRoutedIds := frame.GetEnv(config.EnvQueueMessageOutRouteIds, "9bsv0s23l8og00vgjq7g,9bsv0s23l8og00vgjq1g")
+	for _, routeId := range strings.Split(messageOutRoutedIds, ",") {
+
+		messageOutRouteQueueUrl := frame.GetEnv(config.EnvQueueMessageOutRouteIds,
+			fmt.Sprintf("memt+://%s",
+				fmt.Sprintf(config.ConfigQueueMessageOutRoutedName, routeId)))
+
+		messageOutRoutedQueueSub := frame.RegisterSubscriber(
+			fmt.Sprintf(config.ConfigQueueMessageOutRoutedName, routeId), messageOutRouteQueueUrl, 5, messageOutRouteHandler)
+
+		messageOutRoutedQueuePub := frame.RegisterPublisher(
+			fmt.Sprintf(config.ConfigQueueMessageOutRoutedName, routeId), messageOutRouteQueueUrl)
+
+		dynamicPublishQueues = append(dynamicPublishQueues, messageOutRoutedQueueSub, messageOutRoutedQueuePub)
+
 	}
 
-	defer closer.Close()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(service.AuthInterceptor),
+	)
 
-	database, err := utils.ConfigureDatabase(logger, false)
-	if err != nil {
-		logger.WithError(err).Fatal("Could not Configure write database")
+	implementation := &handlers.Notificationserver{}
+
+	napi.RegisterNotificationServiceServer(grpcServer, implementation)
+
+	httpOptions := &server.Options{}
+
+	defaultServer := frame.GrpcServer(grpcServer, httpOptions)
+
+	serviceOptions := []frame.Option{
+		mainDb, readDb, defaultServer,
+		messageInLoggedQueue, messageInLoggedQueueP, messageOutLoggedQueue, messageOutLoggedQueueP,
 	}
-	defer database.Close()
+	serviceOptions = append(serviceOptions, dynamicPublishQueues...)
 
-	replicaDatabase, err := utils.ConfigureDatabase(logger, true)
-	if err != nil {
-		logger.WithError(err).Fatal("Could not Configure read database")
-	}
-	defer replicaDatabase.Close()
+	sysService := frame.NewService(serviceName, serviceOptions...)
 
-	isMigration := utils.GetEnv(utils.EnvOnlyMigrate, "")
+	isMigration := frame.GetEnv(config.EnvMigrate, "")
 	stdArgs := os.Args[1:]
 	if (len(stdArgs) > 0 && stdArgs[0] == "migrate") || isMigration == "true" {
 
-		logger.Info("Initiating migrations")
-
-		service.PerformMigration(logger, database)
+		migrationPath := frame.GetEnv(config.EnvMigrationPath, "./migrations/0001")
+		err := sysService.MigrateDatastore(ctx, migrationPath)
+		if err != nil {
+			log.Printf("main -- Could not migrate successfully because : %v", err)
+		}
 
 	} else {
 
-		queue, queueChecker, err := utils.ConfigureQueue(logger)
+		serverPort := frame.GetEnv(config.EnvServerPort, "7020")
+		err := sysService.Run(ctx, fmt.Sprintf(":%v", serverPort))
 		if err != nil {
-			logger.WithError(err).Fatal("Could not configure Stan subscriptions")
-		}
-		defer queue.Close()
-
-		logger.Infof("Initiating the service at %v", time.Now())
-
-		healthChecker, err := utils.ConfigureHealthChecker(logger, database, replicaDatabase, queueChecker)
-		if err != nil {
-			logger.Warnf("Error configuring health checks: %v", err)
+			log.Printf("main -- Could not run Server : %v", err)
 		}
 
-		env := utils.Env{
-			Logger: logger,
-			Health: healthChecker,
-			Queue: queue,
-		}
-
-		env.SetWriteDb(database)
-		env.SetReadDb(replicaDatabase)
-
-
-		service.RunServer(&env)
 	}
 
 }

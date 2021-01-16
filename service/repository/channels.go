@@ -1,10 +1,10 @@
 package repository
 
 import (
-	"antinvestor.com/service/notification/service/repository/models"
-	"antinvestor.com/service/notification/utils"
 	"context"
-	"github.com/jinzhu/gorm"
+	"github.com/antinvestor/service-notification/service/repository/models"
+	"github.com/pitabwire/frame"
+	"gorm.io/gorm"
 )
 
 type ChannelRepository interface {
@@ -19,8 +19,8 @@ type channelRepository struct {
 	writeDb *gorm.DB
 }
 
-func NewChannelRepository(ctx context.Context, env *utils.Env) ChannelRepository {
-	return &channelRepository{readDb: env.GetRDb(ctx), writeDb: env.GeWtDb(ctx)}
+func NewChannelRepository(ctx context.Context, service *frame.Service) ChannelRepository {
+	return &channelRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
 }
 
 func (repo *channelRepository) GetByID(id string) (*models.Channel, error) {

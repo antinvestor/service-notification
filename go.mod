@@ -1,27 +1,17 @@
-module antinvestor.com/service/notification
+module github.com/antinvestor/service-notification
 
-go 1.13
+go 1.14
 
 require (
-	github.com/InVisionApp/go-health/v2 v2.1.2
-	github.com/InVisionApp/go-logger v1.0.1
-	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
-	github.com/golang/protobuf v1.3.2
-	github.com/jinzhu/gorm v1.9.8
-	github.com/kr/pretty v0.1.0 // indirect
-	github.com/nats-io/nats-server/v2 v2.1.2 // indirect
+	github.com/antinvestor/service-notification-api v0.0.0-20210116121221-7769cd545d5b
+	github.com/antinvestor/service-profile-api v0.0.0-20210116115247-f7c02820b2b4
+	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/nats-io/nats-streaming-server v0.16.2 // indirect
-	github.com/nats-io/nats.go v1.9.1
-	github.com/nats-io/stan.go v0.5.0
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/rs/xid v1.2.1
-	github.com/sirupsen/logrus v1.4.2
-	github.com/smacker/opentracing-gorm v0.0.0-20181207094635-cd4974441042
-	github.com/stretchr/testify v1.4.0
-	github.com/subosito/twilio v0.0.1
-	github.com/uber/jaeger-client-go v2.21.1+incompatible
-	github.com/uber/jaeger-lib v2.2.0+incompatible
-	go.uber.org/atomic v1.5.1 // indirect
-	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 // indirect
-	google.golang.org/grpc v1.19.0
+	github.com/pitabwire/frame v0.0.0-20210116155942-12a190b0c8a5
+	github.com/stretchr/testify v1.6.1
+	gocloud.dev v0.21.0
+	google.golang.org/grpc v1.35.0
+	gorm.io/datatypes v1.0.0
+	gorm.io/gorm v1.20.11
 )

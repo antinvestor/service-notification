@@ -1,10 +1,11 @@
 package repository
 
 import (
-	"antinvestor.com/service/notification/service/repository/models"
-	"antinvestor.com/service/notification/utils"
 	"context"
-	"github.com/jinzhu/gorm"
+	"github.com/antinvestor/service-notification/service/repository/models"
+	"github.com/pitabwire/frame"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type TemplateRepository interface {
@@ -19,8 +20,8 @@ type templateRepository struct {
 	writeDb *gorm.DB
 }
 
-func NewTemplateRepository(ctx context.Context, env *utils.Env) TemplateRepository {
-	return &templateRepository{readDb: env.GetRDb(ctx), writeDb: env.GeWtDb(ctx)}
+func NewTemplateRepository(ctx context.Context, service *frame.Service) TemplateRepository {
+	return &templateRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
 }
 
 func (repo *templateRepository) GetByNameAndProductID(id string, productId string) ([]models.Templete, error) {
@@ -43,12 +44,10 @@ func (repo *templateRepository) GetByNameProductIDAndLanguageID(id string, produ
 
 func (repo *templateRepository) GetByID(id string) (*models.Templete, error) {
 	template := models.Templete{}
-	templateData := []models.TempleteData{}
-	err := repo.readDb.First(&template, "template_id = ?", id).Related(&templateData).Error
+	err := repo.readDb.Preload(clause.Associations).First(&template, "template_id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
-	template.DataList = templateData
 	return &template, nil
 }
 

@@ -1,4 +1,4 @@
-package notification
+package business
 
 import (
 	"google.golang.org/grpc/codes"

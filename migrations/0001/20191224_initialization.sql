@@ -1,8 +1,8 @@
 
 
-INSERT INTO channels(channel_id, product_id, name, description, mode, type, created_at, modified_at) VALUES
-	('ch_9bsv0s23l8og00vgjq1g', '#', 'Profile Email', 'Channel for emailing profile queries', 'trx', 'email',  '2020-01-08 21:22:30',  '2020-01-08 21:22:30'),
-	('ch_9bsv0s23l8og00vgjq7g', '#', 'Profile Sms', 'Channel to sms profile queries', 'trx', 'sms',  '2020-01-08 21:22:30',  '2020-01-08 21:22:30');
+INSERT INTO channels(id, product_id, name, description, mode, type, created_at, modified_at) VALUES
+	('9bsv0s23l8og00vgjq1g', '#', 'Profile Email', 'Channel for emailing profile queries', 'trx', 'email',  '2020-01-08 21:22:30',  '2020-01-08 21:22:30'),
+	('9bsv0s23l8og00vgjq7g', '#', 'Profile Sms', 'Channel to sms profile queries', 'trx', 'sms',  '2020-01-08 21:22:30',  '2020-01-08 21:22:30');
 
 
 -- Languages :

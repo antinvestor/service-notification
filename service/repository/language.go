@@ -1,10 +1,10 @@
 package repository
 
 import (
-	"antinvestor.com/service/notification/service/repository/models"
-	"antinvestor.com/service/notification/utils"
 	"context"
-	"github.com/jinzhu/gorm"
+	"github.com/antinvestor/service-notification/service/repository/models"
+	"github.com/pitabwire/frame"
+	"gorm.io/gorm"
 )
 
 type LanguageRepository interface {
@@ -19,8 +19,8 @@ type languageRepository struct {
 	writeDb *gorm.DB
 }
 
-func NewLanguageRepository(ctx context.Context, env *utils.Env) LanguageRepository {
-	return &languageRepository{readDb: env.GetRDb(ctx), writeDb: env.GeWtDb(ctx)}
+func NewLanguageRepository(ctx context.Context, service *frame.Service) LanguageRepository {
+	return &languageRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
 }
 
 func (repo *languageRepository) GetByCode(code string) (*models.Language, error) {

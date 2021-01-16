@@ -1,25 +1,25 @@
 package business
 
 import (
-	"antinvestor.com/service/notification/grpc/notification"
-	"antinvestor.com/service/notification/service/repository"
-	"antinvestor.com/service/notification/utils"
 	"context"
+	n_api "github.com/antinvestor/service-notification-api"
+	"github.com/antinvestor/service-notification/service/repository"
+	"github.com/pitabwire/frame"
 )
 
 type NotificationBusiness interface {
-	QueueOut(ctx context.Context, productID string, out *notification.MessageOut) (*notification.StatusResponse, error)
-	QueueIn(ctx context.Context, in *notification.MessageIn) (*notification.StatusResponse, error)
-	Status(ctx context.Context, productID string, status *notification.StatusRequest) (*notification.StatusResponse, error)
-	Release(ctx context.Context, productID string, status *notification.ReleaseRequest) (*notification.StatusResponse, error)
-	Search(ctx context.Context, productID string, search *notification.SearchRequest, stream notification.NotificationService_SearchServer) error
+	QueueOut(ctx context.Context, productID string, out *n_api.MessageOut) (*n_api.StatusResponse, error)
+	QueueIn(ctx context.Context, in *n_api.MessageIn) (*n_api.StatusResponse, error)
+	Status(ctx context.Context, productID string, status *n_api.StatusRequest) (*n_api.StatusResponse, error)
+	Release(ctx context.Context, productID string, status *n_api.ReleaseRequest) (*n_api.StatusResponse, error)
+	Search(ctx context.Context, productID string, search *n_api.SearchRequest, stream n_api.NotificationService_SearchServer) error
 }
 
-func NewNotificationBusiness(ctx context.Context, env *utils.Env) NotificationBusiness {
-	notificationRepository := repository.NewNotificationRepository(ctx, env)
-	languageRepository := repository.NewLanguageRepository(ctx, env)
-	templateRepository := repository.NewTemplateRepository(ctx, env)
-	return &notificationBusiness{env: env,
+func NewNotificationBusiness(ctx context.Context, service *frame.Service) NotificationBusiness {
+	notificationRepository := repository.NewNotificationRepository(ctx, service)
+	languageRepository := repository.NewLanguageRepository(ctx, service)
+	templateRepository := repository.NewTemplateRepository(ctx, service)
+	return &notificationBusiness{service: service,
 		notificationRepository: notificationRepository,
 		languageRepository:     languageRepository,
 		templateRepository:     templateRepository}

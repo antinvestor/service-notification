@@ -1,10 +1,10 @@
 package repository
 
 import (
-	"antinvestor.com/service/notification/service/repository/models"
-	"antinvestor.com/service/notification/utils"
 	"context"
-	"github.com/jinzhu/gorm"
+	"github.com/antinvestor/service-notification/service/repository/models"
+	"github.com/pitabwire/frame"
+	"gorm.io/gorm"
 )
 
 type NotificationRepository interface {
@@ -19,8 +19,8 @@ type notificationRepository struct {
 	writeDb *gorm.DB
 }
 
-func NewNotificationRepository(ctx context.Context, env *utils.Env) NotificationRepository {
-	return &notificationRepository{readDb: env.GetRDb(ctx), writeDb: env.GeWtDb(ctx)}
+func NewNotificationRepository(ctx context.Context, service *frame.Service) NotificationRepository {
+	return &notificationRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
 }
 
 func (repo *notificationRepository) GetByIDAndProductID(id string, productId string) (*models.Notification, error) {
