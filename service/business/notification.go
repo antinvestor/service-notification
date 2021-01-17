@@ -18,7 +18,7 @@ import (
 type notificationBusiness struct {
 	service *frame.Service
 
-	profile_cli *p_api.ProfileClient
+	profileCli *p_api.ProfileClient
 
 	notificationRepository repository.NotificationRepository
 	templateRepository     repository.TemplateRepository
@@ -96,7 +96,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *n_api.Mess
 
 	contactDetail := strings.Trim(message.GetContact(), " ")
 
-	p, err := nb.profile_cli.GetOrCreateProfileByContactDetail(ctx, contactDetail)
+	p, err := nb.profileCli.GetOrCreateProfileByContactDetail(ctx, contactDetail)
 	if err != nil {
 		return nil, err
 	}

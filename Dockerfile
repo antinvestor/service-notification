@@ -9,7 +9,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflag
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /notification_binary /notification
-COPY --from=builder /go/src/github.com/antinvestor/service-notification/migrations /migrations
+COPY --from=builder /migrations /migrations
 
 WORKDIR /
 

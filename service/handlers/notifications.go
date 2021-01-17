@@ -2,66 +2,54 @@ package handlers
 
 import (
 	"context"
-	n_api "github.com/antinvestor/service-notification-api"
+	napi "github.com/antinvestor/service-notification-api"
 	"github.com/antinvestor/service-notification/service/business"
-	"github.com/opentracing/opentracing-go"
+	papi "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 )
 
 type Notificationserver struct {
-	Service *frame.Service
-	n_api.NotificationServiceServer
+	Service    *frame.Service
+	ProfileCli *papi.ProfileClient
+
+	napi.NotificationServiceServer
 }
 
 
 // Out method act after income request let out notification
-func (server *Notificationserver) Out(ctxt context.Context, req *n_api.MessageOut) (*n_api.StatusResponse, error) {
+func (server *Notificationserver) Out(ctx context.Context, req *napi.MessageOut) (*napi.StatusResponse, error) {
 
-	span, ctx := opentracing.StartSpanFromContext(ctxt, "Message Send")
-	defer span.Finish()
-
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service)
+	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 	return notificationBusiness.QueueOut(ctx, "#", req)
 
 }
 
 // Status
-func (server *Notificationserver) Status(ctxt context.Context, req *n_api.StatusRequest) (*n_api.StatusResponse, error) {
+func (server *Notificationserver) Status(ctx context.Context, req *napi.StatusRequest) (*napi.StatusResponse, error) {
 
-	span, ctx := opentracing.StartSpanFromContext(ctxt, "Message Status")
-	defer span.Finish()
-
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service)
+	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 	return notificationBusiness.Status(ctx, "", req)
 
 }
 
 //Release method that is called for messages queued for release
-func (server *Notificationserver) Release(ctxt context.Context, req *n_api.ReleaseRequest) (*n_api.StatusResponse, error) {
+func (server *Notificationserver) Release(ctx context.Context, req *napi.ReleaseRequest) (*napi.StatusResponse, error) {
 
-	span, ctx := opentracing.StartSpanFromContext(ctxt, "Message Release")
-	defer span.Finish()
-
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service)
+	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 	return notificationBusiness.Release(ctx, "", req)
 }
 
 //In method call for income rquest of any notification
-func (server *Notificationserver) In(ctxt context.Context, req *n_api.MessageIn) (*n_api.StatusResponse, error) {
+func (server *Notificationserver) In(ctx context.Context, req *napi.MessageIn) (*napi.StatusResponse, error) {
 
-	span, ctx := opentracing.StartSpanFromContext(ctxt, "Message Receive")
-	defer span.Finish()
-
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service)
+	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 	return notificationBusiness.QueueIn(ctx, req)
 }
 
-func (server *Notificationserver) Search(req *n_api.SearchRequest, stream n_api.NotificationService_SearchServer) error {
+func (server *Notificationserver) Search(req *napi.SearchRequest, stream napi.NotificationService_SearchServer) error {
 
-	span, ctx := opentracing.StartSpanFromContext(stream.Context(), "Message Search")
-	defer span.Finish()
-
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service)
+	ctx := stream.Context()
+	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 	return notificationBusiness.Search(ctx, "", req, stream)
 
 }

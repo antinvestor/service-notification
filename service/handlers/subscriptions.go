@@ -102,27 +102,27 @@ func pushOutMessage(ctx context.Context, profile *papi.ProfileObject, contact *p
 }
 
 type MessageOutLoggedQueueHandler struct {
-	service    *frame.Service
-	profileCli *papi.ProfileClient
+	Service    *frame.Service
+	ProfileCli *papi.ProfileClient
 }
 
 // MessageOutLoggedQueueHandler Method subscribing to receive all messages that will be queued after being logged on their way out of the system.
 func (m *MessageOutLoggedQueueHandler)Handle(ctx context.Context,  payload []byte, metadata map[string]string) error {
 
-	notificationId, err := m.service.QID(ctx, payload)
+	notificationId, err := m.Service.QID(ctx, payload)
 	if err != nil {
 		return err
 	}
 
-	notificationRepo := repository.NewNotificationRepository(ctx, m.service)
-	channelRepo := repository.NewChannelRepository(ctx, m.service)
+	notificationRepo := repository.NewNotificationRepository(ctx, m.Service)
+	channelRepo := repository.NewChannelRepository(ctx, m.Service)
 
 	n, err := notificationRepo.GetByID(notificationId)
 	if err != nil {
 		return err
 	}
 
-	p, err := m.profileCli.GetProfileByID(ctx, n.ProfileID)
+	p, err := m.ProfileCli.GetProfileByID(ctx, n.ProfileID)
 	if err != nil {
 		log.Printf("MessageOutLoggedQueueHandler -- Could not get the profile with id : %s : %v", n.ProfileID, err)
 		return err
@@ -150,10 +150,10 @@ func (m *MessageOutLoggedQueueHandler)Handle(ctx context.Context,  payload []byt
 		return err
 	}
 
-	payload, metadata, err = m.service.QObject(ctx, n)
+	payload, metadata, err = m.Service.QObject(ctx, n)
 	queueName := fmt.Sprintf(config.ConfigQueueMessageOutRoutedName, n.ChannelID)
 	// Queue out a routed message for further processing
-	err = m.service.Publish(ctx, queueName, payload, metadata)
+	err = m.Service.Publish(ctx, queueName, payload, metadata)
 	if err != nil {
 		log.Printf("MessageOutLoggedQueueHandler -- Could not publish channeled message out with id %s : %v ", n.GetID(), err)
 		return err
@@ -163,19 +163,19 @@ func (m *MessageOutLoggedQueueHandler)Handle(ctx context.Context,  payload []byt
 }
 
 type MessageOutRouteQueueHandler struct {
-	service    *frame.Service
-	profileCli *papi.ProfileClient
+	Service    *frame.Service
+	ProfileCli *papi.ProfileClient
 }
 
 func (m *MessageOutRouteQueueHandler) Handle(ctx context.Context, payload []byte, metadata map[string]string) error {
 
-	notificationId, err := m.service.QID(ctx, payload)
+	notificationId, err := m.Service.QID(ctx, payload)
 	if err != nil {
 		return err
 	}
 
-	notificationRepo := repository.NewNotificationRepository(ctx, m.service)
-	templateRepo := repository.NewTemplateRepository(ctx, m.service)
+	notificationRepo := repository.NewNotificationRepository(ctx, m.Service)
+	templateRepo := repository.NewTemplateRepository(ctx, m.Service)
 
 	n, err := notificationRepo.GetByID(notificationId)
 	if err != nil {
@@ -183,7 +183,7 @@ func (m *MessageOutRouteQueueHandler) Handle(ctx context.Context, payload []byte
 		return err
 	}
 
-	p, err := m.profileCli.GetProfileByID(ctx, n.ProfileID)
+	p, err := m.ProfileCli.GetProfileByID(ctx, n.ProfileID)
 	if err != nil {
 		log.Printf("MessageOutRouteQueueHandler -- Could not get the profile %s : %v", n.ProfileID, err)
 		return err
@@ -220,17 +220,17 @@ func (m *MessageOutRouteQueueHandler) Handle(ctx context.Context, payload []byte
 }
 
 type MessageInLoggedQueueHandler struct {
-	service    *frame.Service
-	profileCli *papi.ProfileClient
+	Service    *frame.Service
+	ProfileCli *papi.ProfileClient
 }
 
 func (m *MessageInLoggedQueueHandler)Handle(ctx context.Context, payload []byte, metadata map[string]string) error {
-	notificationId, err := m.service.QID(ctx, payload)
+	notificationId, err := m.Service.QID(ctx, payload)
 	if err != nil {
 		return err
 	}
 
-	notificationRepo := repository.NewNotificationRepository(ctx, m.service)
+	notificationRepo := repository.NewNotificationRepository(ctx, m.Service)
 
 	_, err = notificationRepo.GetByID(notificationId)
 	if err != nil {
@@ -242,18 +242,18 @@ func (m *MessageInLoggedQueueHandler)Handle(ctx context.Context, payload []byte,
 }
 
 type MessageInRoutedQueueHandler struct {
-	service    *frame.Service
-	profileCli *papi.ProfileClient
+	Service    *frame.Service
+	ProfileCli *papi.ProfileClient
 }
 
 func (m *MessageInRoutedQueueHandler) Handle(ctx context.Context, payload []byte, metadata map[string]string) error {
 
-	notificationId, err := m.service.QID(ctx, payload)
+	notificationId, err := m.Service.QID(ctx, payload)
 	if err != nil {
 		return err
 	}
 
-	notificationRepo := repository.NewNotificationRepository(ctx, m.service)
+	notificationRepo := repository.NewNotificationRepository(ctx, m.Service)
 
 	_, err = notificationRepo.GetByID(notificationId)
 	if err != nil {

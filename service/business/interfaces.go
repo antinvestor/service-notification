@@ -4,6 +4,7 @@ import (
 	"context"
 	n_api "github.com/antinvestor/service-notification-api"
 	"github.com/antinvestor/service-notification/service/repository"
+	papi "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 )
 
@@ -15,11 +16,13 @@ type NotificationBusiness interface {
 	Search(ctx context.Context, productID string, search *n_api.SearchRequest, stream n_api.NotificationService_SearchServer) error
 }
 
-func NewNotificationBusiness(ctx context.Context, service *frame.Service) NotificationBusiness {
+func NewNotificationBusiness(ctx context.Context, service *frame.Service, profileCli *papi.ProfileClient) NotificationBusiness {
 	notificationRepository := repository.NewNotificationRepository(ctx, service)
 	languageRepository := repository.NewLanguageRepository(ctx, service)
 	templateRepository := repository.NewTemplateRepository(ctx, service)
-	return &notificationBusiness{service: service,
+	return &notificationBusiness{
+		service: service,
+		profileCli: profileCli,
 		notificationRepository: notificationRepository,
 		languageRepository:     languageRepository,
 		templateRepository:     templateRepository}

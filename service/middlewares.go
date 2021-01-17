@@ -28,3 +28,4 @@ func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 
 	return handler(ctx, req)
 }
+
