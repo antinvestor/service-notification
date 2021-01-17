@@ -11,7 +11,7 @@ import (
 
 func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
-	envToken := strings.TrimSpace(os.Getenv("LEDGER_AUTH_TOKEN"))
+	envToken := strings.TrimSpace(os.Getenv("NOTIFICATION_AUTH_TOKEN"))
 	if envToken != "" {
 
 		requestToken := ctx.Value("token")
