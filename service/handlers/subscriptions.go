@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/antinvestor/service-notification/service/repository/models"
 	papi "github.com/antinvestor/service-profile-api"
+	"github.com/go-errors/errors"
 	"github.com/pitabwire/frame"
 	"log"
 	"text/template"
@@ -19,7 +19,7 @@ func routeOutboundNotification(channelRepo repository.ChannelRepository, notific
 
 	channels, err := channelRepo.GetByModeAndTypeAndProductID(models.ChannelModeTransmit, notification.Type, notification.ProductID)
 	if err != nil {
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	if len(channels) > 0 {
@@ -40,18 +40,18 @@ func formatOutboundNotification(templateRepository repository.TemplateRepository
 
 	tmplDetail, err := templateRepository.GetByID(notification.TemplateID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	payload := make(map[string]string)
 	data, err := notification.Payload.MarshalJSON()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	err = json.Unmarshal(data, &payload)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	templateMap := make(map[string]string)
@@ -60,7 +60,7 @@ func formatOutboundNotification(templateRepository repository.TemplateRepository
 
 		tmpl, err := template.New("message_out").Parse(data.Detail)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, 1)
 		}
 
 		var tmplBytes bytes.Buffer
@@ -110,7 +110,7 @@ func (m *MessageOutLoggedQueueHandler)Handle(ctx context.Context,  payload []byt
 
 	notificationId, err := m.Service.QID(ctx, payload)
 	if err != nil {
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	notificationRepo := repository.NewNotificationRepository(ctx, m.Service)
@@ -118,13 +118,13 @@ func (m *MessageOutLoggedQueueHandler)Handle(ctx context.Context,  payload []byt
 
 	n, err := notificationRepo.GetByID(notificationId)
 	if err != nil {
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	p, err := m.ProfileCli.GetProfileByID(ctx, n.ProfileID)
 	if err != nil {
 		log.Printf("MessageOutLoggedQueueHandler -- Could not get the profile with id : %s : %v", n.ProfileID, err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	contact := getContactFromProfileByContactID(p, n.ContactID)
@@ -140,13 +140,13 @@ func (m *MessageOutLoggedQueueHandler)Handle(ctx context.Context,  payload []byt
 	err = routeOutboundNotification(channelRepo, n)
 	if err != nil {
 		log.Printf("MessageOutLoggedQueueHandler -- Unable to route outbound notification by id %s : %v", n.GetID(), err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	err = notificationRepo.Save(n)
 	if err != nil {
 		log.Printf(" MessageOutLoggedQueueHandler -- Unable to update outbound notification by id %s : %v", n.GetID(), err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	payload, metadata, err = m.Service.QObject(ctx, n)
@@ -155,7 +155,7 @@ func (m *MessageOutLoggedQueueHandler)Handle(ctx context.Context,  payload []byt
 	err = m.Service.Publish(ctx, queueName, payload, metadata)
 	if err != nil {
 		log.Printf("MessageOutLoggedQueueHandler -- Could not publish channeled message out with id %s : %v ", n.GetID(), err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	return nil
@@ -170,7 +170,7 @@ func (m *MessageOutRouteQueueHandler) Handle(ctx context.Context, payload []byte
 
 	notificationId, err := m.Service.QID(ctx, payload)
 	if err != nil {
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	notificationRepo := repository.NewNotificationRepository(ctx, m.Service)
@@ -179,13 +179,13 @@ func (m *MessageOutRouteQueueHandler) Handle(ctx context.Context, payload []byte
 	n, err := notificationRepo.GetByID(notificationId)
 	if err != nil {
 		log.Printf("MessageOutRouteQueueHandler -- Unable to obtain an outbound notification by queue id %s : %v", notificationId, err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	p, err := m.ProfileCli.GetProfileByID(ctx, n.ProfileID)
 	if err != nil {
 		log.Printf("MessageOutRouteQueueHandler -- Could not get the profile %s : %v", n.ProfileID, err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	contact := getContactFromProfileByContactID(p, n.ContactID)
@@ -193,13 +193,13 @@ func (m *MessageOutRouteQueueHandler) Handle(ctx context.Context, payload []byte
 	templateMap, err := formatOutboundNotification(templateRepo, n)
 	if err != nil {
 		log.Printf("MessageOutRouteQueueHandler -- Unable to format outbound notification by id %s : %v", n.GetID(), err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	response, err := pushOutMessage(ctx, p, contact, n, templateMap)
 	if err != nil {
 		log.Printf("MessageOutRouteQueueHandler -- Could not push out message with id %s : %v", n.GetID(), err)
-		return err
+		return errors.Wrap(err, 1)
 
 	}
 
@@ -212,7 +212,7 @@ func (m *MessageOutRouteQueueHandler) Handle(ctx context.Context, payload []byte
 	err = notificationRepo.Save(n)
 	if err != nil {
 		log.Printf("MessageOutRouteQueueHandler -- Unable to update message with id %s : %v", n.GetID(), err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	return nil
@@ -226,7 +226,7 @@ type MessageInLoggedQueueHandler struct {
 func (m *MessageInLoggedQueueHandler)Handle(ctx context.Context, payload []byte, metadata map[string]string) error {
 	notificationId, err := m.Service.QID(ctx, payload)
 	if err != nil {
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	notificationRepo := repository.NewNotificationRepository(ctx, m.Service)
@@ -234,7 +234,7 @@ func (m *MessageInLoggedQueueHandler)Handle(ctx context.Context, payload []byte,
 	_, err = notificationRepo.GetByID(notificationId)
 	if err != nil {
 		log.Printf("MessageInLoggedQueueHandler -- Unable to obtain an inbound notification by queue id %s : %v", notificationId, err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	return nil
@@ -249,7 +249,7 @@ func (m *MessageInRoutedQueueHandler) Handle(ctx context.Context, payload []byte
 
 	notificationId, err := m.Service.QID(ctx, payload)
 	if err != nil {
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	notificationRepo := repository.NewNotificationRepository(ctx, m.Service)
@@ -257,7 +257,7 @@ func (m *MessageInRoutedQueueHandler) Handle(ctx context.Context, payload []byte
 	_, err = notificationRepo.GetByID(notificationId)
 	if err != nil {
 		log.Printf("MessageInQueuedQueueHandler -- Unable to obtain an inbound notification by queue id %s : %v", notificationId, err)
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	return nil

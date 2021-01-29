@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/antinvestor/service-notification/service/repository/models"
+	"github.com/go-errors/errors"
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -28,7 +29,7 @@ func (repo *templateRepository) GetByNameAndProductID(name string, productId str
 	var templetes []models.Templete
 	err := repo.readDb.Find(&templetes, "name = ? and product_id = ?", name, productId).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 	return templetes, nil
 }
@@ -37,7 +38,7 @@ func (repo *templateRepository) GetByNameProductIDAndLanguageID(name string, pro
 	templete := models.Templete{}
 	err := repo.readDb.First(&templete, "name = ? and product_id = ? and language_id =?", name, productId, languageId).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 	return &templete, nil
 }
@@ -46,7 +47,7 @@ func (repo *templateRepository) GetByID(id string) (*models.Templete, error) {
 	template := models.Templete{}
 	err := repo.readDb.Preload(clause.Associations).First(&template, "id = ?", id).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 	return &template, nil
 }

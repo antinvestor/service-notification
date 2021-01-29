@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/antinvestor/service-notification/service/repository/models"
+	"github.com/go-errors/errors"
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm"
 )
@@ -27,7 +28,7 @@ func (repo *channelRepository) GetByID(id string) (*models.Channel, error) {
 	channel := models.Channel{}
 	err := repo.readDb.First(&channel, "id = ?", id).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 	return &channel, nil
 }
@@ -38,7 +39,7 @@ func (repo *channelRepository) GetByMode(mode string) ([]models.Channel, error) 
 	err := repo.readDb.Find(&channels,
 		"mode = ? OR ( mode = ?)", mode, models.ChannelModeTransceive).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 	return channels, nil
 }
@@ -49,7 +50,7 @@ func (repo *channelRepository) GetByModeAndTypeAndProductID(mode string, chType 
 		"product_id = ? AND type = ? AND (mode = ? OR ( mode = ?))",
 		productId, chType, mode, models.ChannelModeTransceive).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 	return channels, nil
 }

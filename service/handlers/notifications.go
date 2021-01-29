@@ -8,7 +8,7 @@ import (
 	"github.com/pitabwire/frame"
 )
 
-type Notificationserver struct {
+type NotificationServer struct {
 	Service    *frame.Service
 	ProfileCli *papi.ProfileClient
 
@@ -17,7 +17,7 @@ type Notificationserver struct {
 
 
 // Out method act after income request let out notification
-func (server *Notificationserver) Out(ctx context.Context, req *napi.MessageOut) (*napi.StatusResponse, error) {
+func (server *NotificationServer) Out(ctx context.Context, req *napi.MessageOut) (*napi.StatusResponse, error) {
 
 	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 	return notificationBusiness.QueueOut(ctx, "#", req)
@@ -25,7 +25,7 @@ func (server *Notificationserver) Out(ctx context.Context, req *napi.MessageOut)
 }
 
 // Status
-func (server *Notificationserver) Status(ctx context.Context, req *napi.StatusRequest) (*napi.StatusResponse, error) {
+func (server *NotificationServer) Status(ctx context.Context, req *napi.StatusRequest) (*napi.StatusResponse, error) {
 
 	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 	return notificationBusiness.Status(ctx, "", req)
@@ -33,20 +33,20 @@ func (server *Notificationserver) Status(ctx context.Context, req *napi.StatusRe
 }
 
 //Release method that is called for messages queued for release
-func (server *Notificationserver) Release(ctx context.Context, req *napi.ReleaseRequest) (*napi.StatusResponse, error) {
+func (server *NotificationServer) Release(ctx context.Context, req *napi.ReleaseRequest) (*napi.StatusResponse, error) {
 
 	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 	return notificationBusiness.Release(ctx, "", req)
 }
 
 //In method call for income rquest of any notification
-func (server *Notificationserver) In(ctx context.Context, req *napi.MessageIn) (*napi.StatusResponse, error) {
+func (server *NotificationServer) In(ctx context.Context, req *napi.MessageIn) (*napi.StatusResponse, error) {
 
 	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 	return notificationBusiness.QueueIn(ctx, req)
 }
 
-func (server *Notificationserver) Search(req *napi.SearchRequest, stream napi.NotificationService_SearchServer) error {
+func (server *NotificationServer) Search(req *napi.SearchRequest, stream napi.NotificationService_SearchServer) error {
 
 	ctx := stream.Context()
 	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)

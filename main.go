@@ -91,7 +91,7 @@ func main() {
 		grpc.UnaryInterceptor(service.AuthInterceptor),
 	)
 
-	implementation := &handlers.Notificationserver{}
+	implementation := &handlers.NotificationServer{}
 
 	napi.RegisterNotificationServiceServer(grpcServer, implementation)
 

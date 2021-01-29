@@ -8,6 +8,7 @@ import (
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/antinvestor/service-notification/service/repository/models"
 	p_api "github.com/antinvestor/service-profile-api"
+	"github.com/go-errors/errors"
 	"github.com/pitabwire/frame"
 	"gorm.io/datatypes"
 	"log"
@@ -31,7 +32,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context,
 
 	payloadString, err := json.Marshal(message.GetMessageVariables())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	var releaseDate time.Time
@@ -45,13 +46,13 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context,
 	}
 	language, err := nb.languageRepository.GetByCode(languageCode)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	template, err := nb.templateRepository.GetByNameProductIDAndLanguageID(
 		message.GetMessageTemplete(), productID, language.ID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	n := models.Notification{
@@ -71,7 +72,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context,
 
 	err = nb.notificationRepository.Save(&n)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	status := n_api.StatusResponse{NotificationID: n.ID, State: n.State}
@@ -98,7 +99,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *n_api.Mess
 
 	p, err := nb.profileCli.GetProfileByContact(ctx, contactDetail)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	var activeContact *p_api.ContactObject
@@ -114,7 +115,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *n_api.Mess
 
 	payloadString, err := json.Marshal(message.GetPayLoad())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	releaseDate := time.Now()
@@ -138,7 +139,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *n_api.Mess
 
 	err = nb.notificationRepository.Save(&n)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	status := n_api.StatusResponse{NotificationID: n.ID, State: n.State, ExternalID: n.ExternalID}
@@ -164,7 +165,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, productID string, st
 
 	n, err := nb.notificationRepository.GetByIDAndProductID(statusReq.NotificationID, productID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	status := n_api.StatusResponse{
@@ -183,7 +184,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, productID string, r
 
 	n, err := nb.notificationRepository.GetByIDAndProductID(releaseReq.NotificationID, productID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, 1)
 	}
 
 	status := n_api.StatusResponse{
@@ -199,7 +200,7 @@ func (nb *notificationBusiness) Search(ctx context.Context, productID string, se
 
 	notificationList, err := nb.notificationRepository.Search(search.GetNotificationID(), productID)
 	if err != nil {
-		return err
+		return errors.Wrap(err, 1)
 	}
 
 	for _, n := range notificationList {

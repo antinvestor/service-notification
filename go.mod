@@ -8,6 +8,7 @@ require (
 	github.com/antinvestor/apis v0.0.0-20210116085558-3a23e70e5458
 	github.com/antinvestor/service-notification-api v0.0.0-20210118102100-b820ec0744e5
 	github.com/antinvestor/service-profile-api v0.0.0-20210118102557-7d0a5c4b4881
+	github.com/go-errors/errors v1.1.1
 	github.com/google/wire v0.5.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
 	github.com/pitabwire/frame v1.0.2
