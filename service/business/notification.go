@@ -46,13 +46,13 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context,
 	}
 	language, err := nb.languageRepository.GetByCode(languageCode)
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 
 	template, err := nb.templateRepository.GetByNameProductIDAndLanguageID(
 		message.GetMessageTemplete(), productID, language.ID)
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 
 	n := models.Notification{
@@ -72,7 +72,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context,
 
 	err = nb.notificationRepository.Save(&n)
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 
 	status := n_api.StatusResponse{NotificationID: n.ID, State: n.State}
@@ -139,7 +139,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *n_api.Mess
 
 	err = nb.notificationRepository.Save(&n)
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 
 	status := n_api.StatusResponse{NotificationID: n.ID, State: n.State, ExternalID: n.ExternalID}
@@ -149,7 +149,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *n_api.Mess
 	queueMap["product_id"] = n.ProductID
 	queueID, err := json.Marshal(queueMap)
 	if err != nil {
-		return &status, err
+		return &status, errors.Wrap(err, 1)
 	}
 	// Queue in message for further processing
 	err = nb.service.Publish(ctx, config.ConfigQueueMessageInLoggedName, queueID, nil)
@@ -184,7 +184,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, productID string, r
 
 	n, err := nb.notificationRepository.GetByIDAndProductID(releaseReq.NotificationID, productID)
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 
 	status := n_api.StatusResponse{
@@ -200,7 +200,7 @@ func (nb *notificationBusiness) Search(ctx context.Context, productID string, se
 
 	notificationList, err := nb.notificationRepository.Search(search.GetNotificationID(), productID)
 	if err != nil {
-		return errors.Wrap(err, 1)
+		return err
 	}
 
 	for _, n := range notificationList {
@@ -209,7 +209,7 @@ func (nb *notificationBusiness) Search(ctx context.Context, productID string, se
 		payloadValue, _ := n.Payload.MarshalJSON()
 		err = json.Unmarshal(payloadValue, &payload)
 		if err != nil {
-			log.Printf(" Search -- there is a problem ")
+			log.Printf(" Search -- there is a problem : %v ", errors.Wrap(err, 1))
 		}
 		result := n_api.SearchResponse{
 			NotificationID: n.ID,
@@ -229,7 +229,7 @@ func (nb *notificationBusiness) Search(ctx context.Context, productID string, se
 
 		err = stream.Send(&result)
 		if err != nil {
-			log.Printf(" Search -- unable to send a result see %v", err)
+			log.Printf(" Search -- unable to send a result see %v", errors.Wrap(err, 1))
 		}
 	}
 
