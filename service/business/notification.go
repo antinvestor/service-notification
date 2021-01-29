@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	n_api "github.com/antinvestor/service-notification-api"
+	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/antinvestor/service-notification/service/repository/models"
-	"github.com/antinvestor/service-notification/config"
 	p_api "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 	"gorm.io/datatypes"
@@ -96,7 +96,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *n_api.Mess
 
 	contactDetail := strings.Trim(message.GetContact(), " ")
 
-	p, err := nb.profileCli.GetOrCreateProfileByContactDetail(ctx, contactDetail)
+	p, err := nb.profileCli.GetProfileByContact(ctx, contactDetail)
 	if err != nil {
 		return nil, err
 	}

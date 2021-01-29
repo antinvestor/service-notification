@@ -1,8 +1,13 @@
 FROM golang:1.14 as builder
 
 WORKDIR /
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
 # Copy the local package files to the container's workspace.
-ADD . .
+COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o notification_binary .
 

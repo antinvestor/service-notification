@@ -24,18 +24,18 @@ func NewTemplateRepository(ctx context.Context, service *frame.Service) Template
 	return &templateRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
 }
 
-func (repo *templateRepository) GetByNameAndProductID(id string, productId string) ([]models.Templete, error) {
+func (repo *templateRepository) GetByNameAndProductID(name string, productId string) ([]models.Templete, error) {
 	var templetes []models.Templete
-	err := repo.readDb.Find(&templetes, "template_id = ? and product_id = ?", id, productId).Error
+	err := repo.readDb.Find(&templetes, "name = ? and product_id = ?", name, productId).Error
 	if err != nil {
 		return nil, err
 	}
 	return templetes, nil
 }
 
-func (repo *templateRepository) GetByNameProductIDAndLanguageID(id string, productId string, languageId string) (*models.Templete, error) {
+func (repo *templateRepository) GetByNameProductIDAndLanguageID(name string, productId string, languageId string) (*models.Templete, error) {
 	templete := models.Templete{}
-	err := repo.readDb.First(&templete, "template_id = ? and product_id = ? and language_id =?", id, productId, languageId).Error
+	err := repo.readDb.First(&templete, "name = ? and product_id = ? and language_id =?", name, productId, languageId).Error
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (repo *templateRepository) GetByNameProductIDAndLanguageID(id string, produ
 
 func (repo *templateRepository) GetByID(id string) (*models.Templete, error) {
 	template := models.Templete{}
-	err := repo.readDb.Preload(clause.Associations).First(&template, "template_id = ?", id).Error
+	err := repo.readDb.Preload(clause.Associations).First(&template, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}

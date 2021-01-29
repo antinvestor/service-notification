@@ -20,6 +20,7 @@ type Templete struct {
 	frame.BaseModel
 
 	LanguageID string `gorm:"type:varchar(50)"`
+	ProductID  string `gorm:"type:varchar(50)"`
 	Name       string `gorm:"type:varchar(255)"`
 
 	DataList []TempleteData

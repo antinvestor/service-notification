@@ -25,7 +25,7 @@ func NewChannelRepository(ctx context.Context, service *frame.Service) ChannelRe
 
 func (repo *channelRepository) GetByID(id string) (*models.Channel, error) {
 	channel := models.Channel{}
-	err := repo.readDb.First(&channel, "channel_id = ?", id).Error
+	err := repo.readDb.First(&channel, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}

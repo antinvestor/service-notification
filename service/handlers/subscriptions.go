@@ -38,8 +38,7 @@ func routeOutboundNotification(channelRepo repository.ChannelRepository, notific
 
 func formatOutboundNotification(templateRepository repository.TemplateRepository, notification *models.Notification) (map[string]string, error) {
 
-	tmplDetail, err := templateRepository.GetByNameProductIDAndLanguageID(notification.TemplateID,
-		notification.ProductID, notification.LanguageID)
+	tmplDetail, err := templateRepository.GetByID(notification.TemplateID)
 	if err != nil {
 		return nil, err
 	}

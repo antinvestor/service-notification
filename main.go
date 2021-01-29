@@ -11,7 +11,6 @@ import (
 	"github.com/antinvestor/service-notification/service/repository/models"
 	papi "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
-	"gocloud.dev/server"
 	"google.golang.org/grpc"
 	"log"
 	"os"
@@ -96,15 +95,13 @@ func main() {
 
 	napi.RegisterNotificationServiceServer(grpcServer, implementation)
 
-	httpOptions := &server.Options{}
-
-	defaultServer := frame.GrpcServer(grpcServer, httpOptions)
-	serviceOptions = append(serviceOptions, defaultServer)
+	grpcServerOpt := frame.GrpcServer(grpcServer)
+	serviceOptions = append(serviceOptions, grpcServerOpt)
 
 	sysService := frame.NewService(serviceName, serviceOptions...)
 
 
-	profileServiceUrl := frame.GetEnv(config.EnvProfileServiceUri, "profile.api.antinvestor.com:443")
+	profileServiceUrl := frame.GetEnv(config.EnvProfileServiceUri, "127.0.0.1:7005")
 	profileCli, err := papi.NewProfileClient(ctx, apis.WithEndpoint(profileServiceUrl))
 	if err != nil {
 		log.Printf("main -- Could not setup profile server : %v", err)
@@ -124,7 +121,6 @@ func main() {
 
 	messageOutRouteHandler.Service = sysService
 	messageOutRouteHandler.ProfileCli = profileCli
-
 
 	isMigration, err := strconv.ParseBool(frame.GetEnv(config.EnvMigrate, "false"))
 	if err != nil {

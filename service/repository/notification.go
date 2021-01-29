@@ -25,7 +25,7 @@ func NewNotificationRepository(ctx context.Context, service *frame.Service) Noti
 
 func (repo *notificationRepository) GetByIDAndProductID(id string, productId string) (*models.Notification, error) {
 	notification := models.Notification{}
-	err := repo.readDb.First(&notification, "notification_id = ? and product_id = ?", id, productId).Error
+	err := repo.readDb.First(&notification, "id = ? and product_id = ?", id, productId).Error
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (repo *notificationRepository) GetByIDAndProductID(id string, productId str
 
 func (repo *notificationRepository) GetByID(id string) (*models.Notification, error) {
 	notification := models.Notification{}
-	err := repo.readDb.First(&notification, "notification_id = ?", id).Error
+	err := repo.readDb.First(&notification, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (repo *notificationRepository) Search(query string, productId string) ([]mo
 	var notifications []models.Notification
 
 	err := repo.readDb.Find(&notifications,
-		"product_id = ? AND (notification_id LIKE ? OR external_id LIKE ? OR transient_id LIKE ?)",
+		"product_id = ? AND (id LIKE ? OR external_id LIKE ? OR transient_id LIKE ?)",
 		productId, query).Error
 	if err != nil {
 		return nil, err

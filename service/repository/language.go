@@ -43,7 +43,7 @@ func (repo *languageRepository) GetByName(name string) (*models.Language, error)
 
 func (repo *languageRepository) GetByID(id string) (*models.Language, error) {
 	language := models.Language{}
-	err := repo.readDb.First(&language, "language_id = ?", id).Error
+	err := repo.readDb.First(&language, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
