@@ -150,7 +150,7 @@ func (m *MessageOutLoggedQueueHandler)Handle(ctx context.Context,  payload []byt
 	}
 
 	payload, metadata, err = m.Service.QObject(ctx, n)
-	queueName := fmt.Sprintf(config.ConfigQueueMessageOutRoutedName, n.ChannelID)
+	queueName := fmt.Sprintf(config.QueueMessageOutRoutedName, n.ChannelID)
 	// Queue out a routed message for further processing
 	err = m.Service.Publish(ctx, queueName, payload, metadata)
 	if err != nil {

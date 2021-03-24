@@ -38,15 +38,15 @@ func main() {
 
 	messageInLoggedHandler := &handlers.MessageInLoggedQueueHandler{}
 	//Setup queue subscribers
-	messageInLoggedQueueUrl := frame.GetEnv(config.EnvQueueMessageInLogged, fmt.Sprintf("mem://%s", config.ConfigQueueMessageInLoggedName))
-	messageInLoggedQueue := frame.RegisterSubscriber(config.ConfigQueueMessageInLoggedName, messageInLoggedQueueUrl, 5, messageInLoggedHandler)
-	messageInLoggedQueueP := frame.RegisterPublisher(config.ConfigQueueMessageInLoggedName, messageInLoggedQueueUrl)
+	messageInLoggedQueueUrl := frame.GetEnv(config.EnvQueueMessageInLogged, fmt.Sprintf("mem://%s", config.QueueMessageInLoggedName))
+	messageInLoggedQueue := frame.RegisterSubscriber(config.QueueMessageInLoggedName, messageInLoggedQueueUrl, 5, messageInLoggedHandler)
+	messageInLoggedQueueP := frame.RegisterPublisher(config.QueueMessageInLoggedName, messageInLoggedQueueUrl)
 	serviceOptions = append(serviceOptions, messageInLoggedQueue, messageInLoggedQueueP)
 
 	messageOutLoggedHandler := &handlers.MessageOutLoggedQueueHandler{}
-	messageOutLoggedQueueUrl := frame.GetEnv(config.EnvQueueMessageOutLogged, fmt.Sprintf("mem://%s", config.ConfigQueueMessageOutLoggedName))
-	messageOutLoggedQueue := frame.RegisterSubscriber(config.ConfigQueueMessageOutLoggedName, messageOutLoggedQueueUrl, 5, messageOutLoggedHandler)
-	messageOutLoggedQueueP := frame.RegisterPublisher(config.ConfigQueueMessageOutLoggedName, messageOutLoggedQueueUrl)
+	messageOutLoggedQueueUrl := frame.GetEnv(config.EnvQueueMessageOutLogged, fmt.Sprintf("mem://%s", config.QueueMessageOutLoggedName))
+	messageOutLoggedQueue := frame.RegisterSubscriber(config.QueueMessageOutLoggedName, messageOutLoggedQueueUrl, 5, messageOutLoggedHandler)
+	messageOutLoggedQueueP := frame.RegisterPublisher(config.QueueMessageOutLoggedName, messageOutLoggedQueueUrl)
 	serviceOptions = append(serviceOptions, messageOutLoggedQueue, messageOutLoggedQueueP)
 
 	messageInRouteHandler := &handlers.MessageInRoutedQueueHandler{}
@@ -55,14 +55,14 @@ func main() {
 
 		messageInRouteQueueUrl := frame.GetEnv(config.EnvQueueMessageOutLogged,
 			fmt.Sprintf("mem://%s",
-				fmt.Sprintf(config.ConfigQueueMessageInRoutedName, routeId)))
+				fmt.Sprintf(config.QueueMessageInRoutedName, routeId)))
 
 		messageInRoutedQueueSub := frame.RegisterSubscriber(
-			fmt.Sprintf(config.ConfigQueueMessageInRoutedName, routeId),
+			fmt.Sprintf(config.QueueMessageInRoutedName, routeId),
 			messageInRouteQueueUrl, 5, messageInRouteHandler)
 
 		messageInRoutedQueue := frame.RegisterPublisher(
-			fmt.Sprintf(config.ConfigQueueMessageInRoutedName, routeId), messageInRouteQueueUrl)
+			fmt.Sprintf(config.QueueMessageInRoutedName, routeId), messageInRouteQueueUrl)
 
 		serviceOptions = append(serviceOptions, messageInRoutedQueueSub, messageInRoutedQueue)
 	}
@@ -74,14 +74,14 @@ func main() {
 
 		messageOutRouteQueueUrl := frame.GetEnv(config.EnvQueueMessageOutRouteIds,
 			fmt.Sprintf("mem://%s",
-				fmt.Sprintf(config.ConfigQueueMessageOutRoutedName, routeId)))
+				fmt.Sprintf(config.QueueMessageOutRoutedName, routeId)))
 
 		messageOutRoutedQueueSub := frame.RegisterSubscriber(
-			fmt.Sprintf(config.ConfigQueueMessageOutRoutedName, routeId),
+			fmt.Sprintf(config.QueueMessageOutRoutedName, routeId),
 			messageOutRouteQueueUrl, 5, messageOutRouteHandler)
 
 		messageOutRoutedQueuePub := frame.RegisterPublisher(
-			fmt.Sprintf(config.ConfigQueueMessageOutRoutedName, routeId), messageOutRouteQueueUrl)
+			fmt.Sprintf(config.QueueMessageOutRoutedName, routeId), messageOutRouteQueueUrl)
 
 		serviceOptions = append(serviceOptions, messageOutRoutedQueueSub, messageOutRoutedQueuePub)
 

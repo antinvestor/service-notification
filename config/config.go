@@ -1,6 +1,6 @@
 package config
 
-const EnvServerPort = "SERVER_PORT"
+const EnvServerPort = "PORT"
 
 const EnvDatabaseUrl = "DATABASE_URL"
 const EnvReplicaDatabaseUrl = "REPLICA_DATABASE_URL"
@@ -8,7 +8,7 @@ const EnvReplicaDatabaseUrl = "REPLICA_DATABASE_URL"
 const EnvMigrate = "DO_MIGRATION"
 const EnvMigrationPath = "MIGRATION_PATH"
 
-const EnvProfileServiceUri  = ""
+const EnvProfileServiceUri  = "PROFILE_SERVICE_URI"
 
 const EnvQueueMessageInLogged = "QUEUE_MESSAGE_IN_LOGGED"
 const EnvQueueMessageInRouteIds = "QUEUE_MESSAGE_IN_ROUTE_IDS"
@@ -16,8 +16,8 @@ const EnvQueueMessageOutLogged = "QUEUE_MESSAGE_OUT_LOGGED"
 const EnvQueueMessageOutRouteIds = "QUEUE_MESSAGE_OUT_ROUTE_IDS"
 
 
-const ConfigQueuesDurableName = "service_notification"
-const ConfigQueueMessageInLoggedName = "message_in_logged"
-const ConfigQueueMessageInRoutedName = "message_in_route_%s"
-const ConfigQueueMessageOutLoggedName = "message_out_logged"
-const ConfigQueueMessageOutRoutedName = "message_out_route_%s"
+const QueuesDurableName = "service_notification"
+const QueueMessageInLoggedName = "message_in_logged"
+const QueueMessageInRoutedName = "message_in_route_%s"
+const QueueMessageOutLoggedName = "message_out_logged"
+const QueueMessageOutRoutedName = "message_out_route_%s"

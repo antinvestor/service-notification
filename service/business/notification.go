@@ -84,7 +84,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context,
 	}
 
 	// Queue out message for further processing
-	err = nb.service.Publish(ctx, config.ConfigQueueMessageOutLoggedName, payload, meta)
+	err = nb.service.Publish(ctx, config.QueueMessageOutLoggedName, payload, meta)
 	if err != nil {
 		log.Printf("Could not subscriptions message with id : %s - > %v", n.ID, err)
 		return &status, err
@@ -152,7 +152,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *n_api.Mess
 		return &status, errors.Wrap(err, 1)
 	}
 	// Queue in message for further processing
-	err = nb.service.Publish(ctx, config.ConfigQueueMessageInLoggedName, queueID, nil)
+	err = nb.service.Publish(ctx, config.QueueMessageInLoggedName, queueID, nil)
 	if err != nil {
 		log.Printf("Could not subscriptions message with id : %s -> %v", n.ID, err)
 		return &status, err
