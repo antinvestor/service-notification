@@ -209,7 +209,7 @@ func (nb *notificationBusiness) Search(ctx context.Context, productID string, se
 		payloadValue, _ := n.Payload.MarshalJSON()
 		err = json.Unmarshal(payloadValue, &payload)
 		if err != nil {
-			log.Printf(" Search -- there is a problem : %v ", errors.Wrap(err, 1))
+			log.Printf(" Search -- there is a problem : %+v ", err)
 		}
 		result := n_api.SearchResponse{
 			NotificationID: n.ID,

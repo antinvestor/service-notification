@@ -20,7 +20,7 @@ import (
 
 func main() {
 
-	serviceName := "Notification"
+	serviceName := "service_notification"
 
 	ctx := context.Background()
 

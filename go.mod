@@ -11,7 +11,7 @@ require (
 	github.com/go-errors/errors v1.1.1
 	github.com/google/wire v0.5.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
-	github.com/pitabwire/frame v1.0.2
+	github.com/pitabwire/frame v1.0.3
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
