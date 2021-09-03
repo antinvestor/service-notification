@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"github.com/antinvestor/service-notification/service/repository/models"
-	"github.com/go-errors/errors"
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm"
 )
@@ -28,7 +27,7 @@ func (repo *languageRepository) GetByCode(code string) (*models.Language, error)
 	var language models.Language
 	err := repo.readDb.First(&language, "code = ?", code).Error
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 	return &language, nil
 }
@@ -37,7 +36,7 @@ func (repo *languageRepository) GetByName(name string) (*models.Language, error)
 	var language models.Language
 	err := repo.readDb.First(&language, "code = ?", name).Error
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 	return &language, nil
 }
@@ -46,7 +45,7 @@ func (repo *languageRepository) GetByID(id string) (*models.Language, error) {
 	language := models.Language{}
 	err := repo.readDb.First(&language, "id = ?", id).Error
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 	return &language, nil
 }

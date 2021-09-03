@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"github.com/antinvestor/service-notification/service/repository/models"
-	"github.com/go-errors/errors"
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm"
 )
@@ -28,7 +27,7 @@ func (repo *notificationRepository) GetByIDAndProductID(id string, productId str
 	notification := models.Notification{}
 	err := repo.readDb.First(&notification, "id = ? and product_id = ?", id, productId).Error
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 	return &notification, nil
 }
@@ -37,7 +36,7 @@ func (repo *notificationRepository) GetByID(id string) (*models.Notification, er
 	notification := models.Notification{}
 	err := repo.readDb.First(&notification, "id = ?", id).Error
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 	return &notification, nil
 }
@@ -49,7 +48,7 @@ func (repo *notificationRepository) Search(query string, productId string) ([]mo
 		"product_id = ? AND (id LIKE ? OR external_id LIKE ? OR transient_id LIKE ?)",
 		productId, query).Error
 	if err != nil {
-		return nil, errors.Wrap(err, 1)
+		return nil, err
 	}
 	return notifications, nil
 }

@@ -20,19 +20,17 @@ type Templete struct {
 	frame.BaseModel
 
 	LanguageID string `gorm:"type:varchar(50)"`
-	ProductID  string `gorm:"type:varchar(50)"`
 	Name       string `gorm:"type:varchar(255)"`
 
 	DataList []TempleteData
 }
 
-
 type TempleteData struct {
 	frame.BaseModel
 
-	TempleteID     string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
-	Type           string `gorm:"type:varchar(10);unique_index:uq_template_by_type"`
-	Detail         string `gorm:"type:text"`
+	TempleteID string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
+	Type       string `gorm:"type:varchar(10);unique_index:uq_template_by_type"`
+	Detail     string `gorm:"type:text"`
 }
 
 // Language Our simple table holding all the supported languages
@@ -44,22 +42,22 @@ type Language struct {
 	Description string `gorm:"type:text"`
 }
 
-
 // Notification table holding all the payload of message in transit in and out of the system
 type Notification struct {
 	frame.BaseModel
 
+	AccessID string `gorm:"type:varchar(50)"`
+
 	ProfileID string `gorm:"type:varchar(50)"`
 	ContactID string `gorm:"type:varchar(50)"`
 
-	ProductID string `gorm:"type:varchar(50)"`
 	ChannelID string `gorm:"type:varchar(50)"`
 	OutBound  bool
 
 	LanguageID string `gorm:"type:varchar(50)"`
 
 	TemplateID string `gorm:"type:varchar(50)"`
-	Payload    datatypes.JSON
+	Payload    datatypes.JSONMap
 
 	Type string `gorm:"type:varchar(10)"`
 
@@ -69,7 +67,8 @@ type Notification struct {
 	ExternalID  string `gorm:"type:varchar(50)"`
 	Extra       string `gorm:"type:text"`
 	ReleasedAt  *time.Time
-	State       string `gorm:"type:varchar(10)"`
+	State       int32
+	Status      int32
 }
 
 func (model *Notification) IsReleased() bool {
@@ -81,7 +80,6 @@ type Channel struct {
 	frame.BaseModel
 
 	CounterChannelID string `gorm:"type:varchar(50)"`
-	ProductID        string `gorm:"type:varchar(50)"`
 	Name             string `gorm:"type:varchar(50)"`
 	Description      string `gorm:"type:text"`
 	Type             string `gorm:"type:varchar(10)"`

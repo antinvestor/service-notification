@@ -11,45 +11,54 @@ import (
 type NotificationServer struct {
 	Service    *frame.Service
 	ProfileCli *papi.ProfileClient
+	notificationBusiness business.NotificationBusiness
 
-	napi.NotificationServiceServer
+	napi.UnimplementedNotificationServiceServer
+}
+
+func (server *NotificationServer) newNotificationBusiness(ctx context.Context) business.NotificationBusiness {
+	return business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 }
 
 
-// Out method act after income request let out notification
-func (server *NotificationServer) Out(ctx context.Context, req *napi.MessageOut) (*napi.StatusResponse, error) {
-
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
-	return notificationBusiness.QueueOut(ctx, "#", req)
+//Send method for queueing massages as requested
+func (server *NotificationServer) Send(ctx context.Context, req *napi.Notification) (*napi.StatusResponse, error) {
+	
+	return server.notificationBusiness.QueueOut(ctx, req)
 
 }
 
-// Status
+//Status request to determine if notification is prepared or released
 func (server *NotificationServer) Status(ctx context.Context, req *napi.StatusRequest) (*napi.StatusResponse, error) {
-
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
-	return notificationBusiness.Status(ctx, "", req)
+	
+	return server.notificationBusiness.Status(ctx,  req)
 
 }
 
-//Release method that is called for messages queued for release
+//StatusUpdate request to allow continuation of notification processing
+func (server *NotificationServer) StatusUpdate(ctx context.Context, req *napi.StatusRequest) (*napi.StatusResponse, error) {
+
+	
+	return server.notificationBusiness.Status(ctx,  req)
+
+}
+
+//Release method for releasing queued massages and returns if notification status if released
 func (server *NotificationServer) Release(ctx context.Context, req *napi.ReleaseRequest) (*napi.StatusResponse, error) {
 
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
-	return notificationBusiness.Release(ctx, "", req)
+	return server.notificationBusiness.Release(ctx,  req)
 }
 
-//In method call for income rquest of any notification
-func (server *NotificationServer) In(ctx context.Context, req *napi.MessageIn) (*napi.StatusResponse, error) {
+//Receive method is for client request for particular notification responses from system
+func (server *NotificationServer) Receive(ctx context.Context, req *napi.Notification) (*napi.StatusResponse, error) {
 
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
-	return notificationBusiness.QueueIn(ctx, req)
+	
+	return server.notificationBusiness.QueueIn(ctx, req)
 }
 
+//Search method is for client request for particular notification details from system
 func (server *NotificationServer) Search(req *napi.SearchRequest, stream napi.NotificationService_SearchServer) error {
 
-	ctx := stream.Context()
-	notificationBusiness := business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
-	return notificationBusiness.Search(ctx, "", req, stream)
+	return server.notificationBusiness.Search( req, stream)
 
 }

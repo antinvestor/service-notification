@@ -1,11 +1,10 @@
 package main
 
 import (
-	n_api "github.com/antinvestor/service-notification-api"
+	napi "github.com/antinvestor/service-notification-api"
 	"log"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 
 	"context"
 	"io"
@@ -23,15 +22,8 @@ import (
 
 )
 
-// Test started when the test binary is started. Only calls main.
-func TestSystem(t *testing.T) {
 
-	// assert equality
-	assert.Equal(t, 123, 123, "Just ensuring we are testing something")
-
-}
-
-var client n_api.NotificationServiceClient
+var client napi.NotificationServiceClient
 var conn *grpc.ClientConn
 var serverCmd *exec.Cmd
 
@@ -96,7 +88,7 @@ func stopServer() {
 	con.Stop()
 }
 
-func startClient() (n_api.NotificationServiceClient, *grpc.ClientConn) {
+func startClient() (napi.NotificationServiceClient, *grpc.ClientConn) {
 	log.Printf("startClient()")
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
@@ -105,7 +97,7 @@ func startClient() (n_api.NotificationServiceClient, *grpc.ClientConn) {
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
-	client := n_api.NewNotificationServiceClient(conn)
+	client := napi.NewNotificationServiceClient(conn)
 
 	return client, conn
 }
@@ -118,9 +110,9 @@ func stopClient() {
 
 func TestSearch(t *testing.T) {
 
-	req := &n_api.SearchRequest{
+	req := &napi.SearchRequest{
 
-		NotificationID: "ntf_bn1ucplq29bhp57ik8kg",
+		ID: "ntf_bn1ucplq29bhp57ik8kg",
 		Query:        "Recieved",
 	}
 
@@ -147,9 +139,10 @@ func TestSearch(t *testing.T) {
 
 func TestRelease(t *testing.T) {
 
-	req := &n_api.ReleaseRequest{
+	req := &napi.ReleaseRequest{
 
-		ReleaseMessage: "send",
+		ID: "send",
+		Comment: "",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -159,14 +152,14 @@ func TestRelease(t *testing.T) {
 	if err != nil {
 		log.Fatalf("error while call send RPC %v", err)
 	}
-	log.Printf("Response from sender: %s", res.GetNotificationID())
+	log.Printf("Response from sender: %s", res.GetID())
 }
 
 func TestStatus(t *testing.T) {
 
-	req := &n_api.StatusRequest{
+	req := &napi.StatusRequest{
 
-		NotificationID: "ntf_bn1ucplq29bhp57ik8kg",
+		ID: "ntf_bn1ucplq29bhp57ik8kg",
 	}
 
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
@@ -176,18 +169,17 @@ func TestStatus(t *testing.T) {
 	if err != nil {
 		log.Fatalf("error while call send RPC %v", err)
 	}
-	log.Printf("Response from sender: %s", res.GetExternalStatus())
+	log.Printf("Response from sender: %+v", res)
 }
 
 func TestMessageOut(t *testing.T) {
 
-	req := &n_api.MessageOut{
+	req := &napi.Notification{
 		Language:        "English",
-		Channel:         "Email",
-		MessageTemplete: "Receveid_templete",
-		Autosend:        false,
+		Templete: "Receveid_templete",
+		AutoRelease:        false,
 		ProfileID:       "001isaac",
-		MessageVariables: map[string]string{
+		Payload: map[string]string{
 			"name":    "isa",
 			"Account": "AC100000",
 			"Amount":  "100000",
@@ -195,22 +187,20 @@ func TestMessageOut(t *testing.T) {
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-	res, err := client.Out(env2, req)
+	res, err := client.Send(env2, req)
 
 	if err != nil {
 		log.Fatalf("error while call send RPC %v", err)
 	}
-	log.Printf("Response from sender: %s", res.GetNotificationID())
+	log.Printf("Response from sender: %+v", res)
 }
 
 func TestMessageIn(t *testing.T) {
 
-	req := &n_api.MessageIn{
+	req := &napi.Notification{
 		Language:       "English",  //req.Language,
-		ProductID:      "Funds",    //req.Product,
-		MessageType:    "Recieved", //req.Massagetype,
 		ProfileID:      "001isaac",
-		PayLoad: map[string]string{
+		Payload: map[string]string{
 			"id":          "1",
 			"name":        "test entity 1",
 			"description": "Testing email service on the notification service part",
@@ -218,11 +208,11 @@ func TestMessageIn(t *testing.T) {
 	}
 	env2, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-	res, err := client.In(env2, req)
+	res, err := client.Receive(env2, req)
 
 	if err != nil {
 		log.Fatalf("error while call send RPC %v", err)
 	}
-	log.Printf("Response from sender: %s", res.GetNotificationID())
+	log.Printf("Response from sender: %+v", res)
 
 }
