@@ -4,10 +4,10 @@ go 1.17
 
 require (
 	github.com/antinvestor/apis v1.1.0
-	github.com/antinvestor/service-notification-api v1.1.0
+	github.com/antinvestor/service-notification-api v1.1.3
 	github.com/antinvestor/service-partition-api v1.0.5
 	github.com/antinvestor/service-profile-api v1.0.2
-	github.com/pitabwire/frame v1.4.2
+	github.com/pitabwire/frame v1.5.0
 	google.golang.org/grpc v1.40.0
 	gorm.io/datatypes v1.0.1
 	gorm.io/gorm v1.21.14

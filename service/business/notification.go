@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"github.com/antinvestor/apis/common"
 	napi "github.com/antinvestor/service-notification-api"
@@ -41,6 +40,26 @@ func (nb *notificationBusiness) getChannelRepo(ctx context.Context) repository.C
 	return repository.NewChannelRepository(ctx, nb.service)
 }
 
+func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessId string) (frame.BaseModel, error) {
+
+	access, err := nb.partitionCl.GetAccessById(ctx, accessId)
+	if err != nil {
+		return frame.BaseModel{}, err
+	}
+
+	if access == nil {
+		return frame.BaseModel{}, errors.New("access specified is invalid")
+	}
+
+	partition := access.GetPartition()
+
+	return frame.BaseModel{
+		TenantID:    partition.TenantId,
+		PartitionID: partition.PartitionId,
+		AccessID: accessId,
+	}, nil
+}
+
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Notification) (*napi.StatusResponse, error) {
 
 	err := message.Validate()
@@ -48,16 +67,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Noti
 		return nil, err
 	}
 
-	access, err := nb.partitionCl.GetAccessById(ctx, message.GetAccessID())
-	if err != nil {
-		return nil, err
-	}
-
-	if access == nil {
-		return nil, errors.New("access specified is invalid")
-	}
-
-	partition := access.GetPartition()
+	partition, err := nb.getPartitionData(ctx, message.GetAccessID())
 
 	var releaseDate time.Time
 	if message.AutoRelease {
@@ -74,7 +84,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Noti
 	}
 
 	template, err := nb.getTemplateRepo(ctx).GetByNamePartitionIDAndLanguageID(
-		message.GetTemplete(), access.GetPartition().GetPartitionId(), language.ID)
+		message.GetTemplete(), partition.PartitionID, language.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +92,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Noti
 	n := models.Notification{
 
 		AccessID: message.GetAccessID(),
-		BaseModel: frame.BaseModel{
-			TenantID:    partition.TenantId,
-			PartitionID: partition.PartitionId,
-		},
+		BaseModel: partition,
 		ContactID: message.GetContactID(),
 
 		LanguageID: language.GetID(),
@@ -122,26 +129,14 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *napi.Notif
 		return nil, err
 	}
 
-	access, err := nb.partitionCl.GetAccessById(ctx, message.GetAccessID())
-	if err != nil {
-		return nil, err
-	}
-
-	if access == nil {
-		return nil, errors.New("access specified is invalid")
-	}
-
-	partition := access.GetPartition()
+	partition, err := nb.getPartitionData(ctx, message.GetAccessID())
 
 	releaseDate := time.Now()
 
 	n := models.Notification{
 
 		AccessID: message.GetAccessID(),
-		BaseModel: frame.BaseModel{
-			TenantID:    partition.TenantId,
-			PartitionID: partition.PartitionId,
-		},
+		BaseModel: partition,
 
 		ContactID: message.GetContactID(),
 
@@ -167,7 +162,6 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *napi.Notif
 		return nil, err
 	}
 
-
 	status := napi.StatusResponse{
 		ID: n.ID,
 		State: common.STATE(n.State),
@@ -184,74 +178,58 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *napi.Stat
 		return nil, err
 	}
 
-	n, err := nb.getNotificationRepo(ctx).GetByIDAndProductID(statusReq.GetID(), productID)
+	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessID())
+
+	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
 	if err != nil {
 		return nil, err
 	}
 
-	status := napi.StatusResponse{
-		NotificationID: n.ID,
-		State:          n.State,
-		TransientID:    n.TransientID,
-		ExternalID:     n.ExternalID,
-		ExternalStatus: n.Extra,
-		Released:       n.IsReleased(),
-	}
-
-	return &status, nil
+	return n.ToStatusApi(), nil
 }
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *napi.ReleaseRequest) (*napi.StatusResponse, error) {
 
 
-
-
-	n, err := nb.getNotificationRepo(ctx).GetByIDAndProductID(releaseReq., productID)
+	err := releaseReq.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	status := napi.StatusResponse{
-		NotificationID: n.ID,
-		State:          n.State,
-		Released:       n.IsReleased(),
+	partition, err := nb.getPartitionData(ctx, releaseReq.GetAccessID())
+
+	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, releaseReq.GetID())
+	if err != nil {
+		return nil, err
 	}
 
-	return &status, nil
+	if  !n.IsReleased() {
+		releaseDate := time.Now()
+		n.ReleasedAt = &releaseDate
+	}
+
+	return n.ToStatusApi(), nil
+
 }
 
 func (nb *notificationBusiness) Search(search *napi.SearchRequest, stream napi.NotificationService_SearchServer) error {
 
-	notificationList, err := nb.getNotificationRepo(stream.Context()).Search(search.GetID(), productID)
+	err := search.Validate()
+	if err != nil {
+		return err
+	}
+
+	partition, err := nb.getPartitionData(stream.Context(), search.GetAccessID())
+
+	notificationList, err := nb.getNotificationRepo(stream.Context()).SearchByPartition(partition.PartitionID, search.GetQuery())
 	if err != nil {
 		return err
 	}
 
 	for _, n := range notificationList {
 
-		payload := make(map[string]string)
-		payloadValue, _ := n.Payload.MarshalJSON()
-		err = json.Unmarshal(payloadValue, &payload)
-		if err != nil {
-			log.Printf(" Search -- there is a problem : %+v ", err)
-		}
-		result := napi.SearchResponse{
-			NotificationID: n.ID,
-			ProfileID:      n.ProfileID,
-			ContactID:      n.ContactID,
-			ProductID:      n.ProductID,
-			Language:       n.LanguageID,
-			MessageType:    n.Type,
-			PayLoad:        payload,
-			Outbound:       n.OutBound,
-			State:          n.State,
-			Released:       n.IsReleased(),
-			TransientID:    n.TransientID,
-			ExternalID:     n.ExternalID,
-			ExternalStatus: n.Extra,
-		}
-
-		err = stream.Send(&result)
+		result := n.ToNotificationApi()
+		err = stream.Send(result)
 		if err != nil {
 			log.Printf(" Search -- unable to send a result see %v", err)
 		}

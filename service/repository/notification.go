@@ -9,8 +9,8 @@ import (
 
 type NotificationRepository interface {
 	GetByID(id string) (*models.Notification, error)
-	GetByIDAndProductID(id string, productId string) (*models.Notification, error)
-	Search(query string, productId string) ([]models.Notification, error)
+	GetByPartitionAndID(partitionId string, id string) (*models.Notification, error)
+	SearchByPartition(partitionId string, query string) ([]models.Notification, error)
 	Save(notification *models.Notification) error
 }
 
@@ -23,9 +23,9 @@ func NewNotificationRepository(ctx context.Context, service *frame.Service) Noti
 	return &notificationRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
 }
 
-func (repo *notificationRepository) GetByIDAndProductID(id string, productId string) (*models.Notification, error) {
+func (repo *notificationRepository) GetByPartitionAndID(partitionId string, id string) (*models.Notification, error) {
 	notification := models.Notification{}
-	err := repo.readDb.First(&notification, "id = ? and product_id = ?", id, productId).Error
+	err := repo.readDb.First(&notification, "partition_id = ? AND id = ?", partitionId, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -41,12 +41,12 @@ func (repo *notificationRepository) GetByID(id string) (*models.Notification, er
 	return &notification, nil
 }
 
-func (repo *notificationRepository) Search(query string, productId string) ([]models.Notification, error) {
+func (repo *notificationRepository) SearchByPartition(partitionId string, query string) ([]models.Notification, error) {
 	var notifications []models.Notification
 
 	err := repo.readDb.Find(&notifications,
-		"product_id = ? AND (id LIKE ? OR external_id LIKE ? OR transient_id LIKE ?)",
-		productId, query).Error
+		"partition_id = ? AND (id ILIKE ? OR external_id ILIKE ? OR transient_id ILIKE ?)",
+		partitionId, query, query, query).Error
 	if err != nil {
 		return nil, err
 	}

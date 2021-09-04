@@ -1,6 +1,8 @@
 package models
 
 import (
+	"github.com/antinvestor/apis/common"
+	napi "github.com/antinvestor/service-notification-api"
 	"github.com/pitabwire/frame"
 	"gorm.io/datatypes"
 	"time"
@@ -65,7 +67,7 @@ type Notification struct {
 
 	TransientID string `gorm:"type:varchar(50)"`
 	ExternalID  string `gorm:"type:varchar(50)"`
-	Extra       string `gorm:"type:text"`
+	Extra       datatypes.JSONMap
 	ReleasedAt  *time.Time
 	State       int32
 	Status      int32
@@ -73,6 +75,35 @@ type Notification struct {
 
 func (model *Notification) IsReleased() bool {
 	return model.ReleasedAt != nil && !model.ReleasedAt.IsZero()
+}
+
+func (model *Notification) ToNotificationApi()  *napi.Notification {
+	notification := napi.Notification{
+		ID: model.ID,
+
+		//State: model.ToStatusApi(),
+	}
+	return &notification
+}
+
+func (model *Notification) ToStatusApi()  *napi.StatusResponse {
+
+	releaseDate := ""
+	if model.IsReleased() {
+		releaseDate = model.ReleasedAt.String()
+	}
+
+	status := napi.StatusResponse{
+		ID:          model.ID,
+		State:       common.STATE(model.State),
+		Status:      common.STATUS(model.Status),
+		TransientID: model.TransientID,
+		ExternalID:  model.ExternalID,
+		Extras:      frame.DBPropertiesToMap(model.Extra),
+		ReleaseDate: releaseDate,
+	}
+
+	return &status
 }
 
 // Channel Our simple table holding all the payload of message in transit in and out of the system
