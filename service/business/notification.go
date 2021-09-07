@@ -5,9 +5,9 @@ import (
 	"errors"
 	"github.com/antinvestor/apis/common"
 	napi "github.com/antinvestor/service-notification-api"
-	"github.com/antinvestor/service-notification/config"
+	"github.com/antinvestor/service-notification/service/events"
+	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
-	"github.com/antinvestor/service-notification/service/repository/models"
 	partapi "github.com/antinvestor/service-partition-api"
 	papi "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
@@ -36,8 +36,8 @@ func (nb *notificationBusiness) getLanguageRepo(ctx context.Context) repository.
 	return repository.NewLanguageRepository(ctx, nb.service)
 }
 
-func (nb *notificationBusiness) getChannelRepo(ctx context.Context) repository.ChannelRepository {
-	return repository.NewChannelRepository(ctx, nb.service)
+func (nb *notificationBusiness) getChannelRepo(ctx context.Context) repository.RouteRepository {
+	return repository.NewRouteRepository(ctx, nb.service)
 }
 
 func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessId string) (frame.BaseModel, error) {
@@ -91,6 +91,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Noti
 
 	n := models.Notification{
 
+		TransientID: message.GetID(),
 		AccessID: message.GetAccessID(),
 		BaseModel: partition,
 		ContactID: message.GetContactID(),
@@ -102,24 +103,22 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Noti
 		Payload:    frame.DBPropertiesFromMap(message.Payload),
 		Message:    message.GetData(),
 
-		Type:       message.GetType(),
-		State:      int32(common.STATE_CREATED.Number()),
-		Status:     int32(common.STATUS_QUEUED.Number()),
-		ReleasedAt: &releaseDate,
+		NotificationType: message.GetType(),
+		State:            int32(common.STATE_CREATED.Number()),
+		Status:           int32(common.STATUS_QUEUED.Number()),
+		ReleasedAt:       &releaseDate,
 	}
 
 	n.GenID(ctx)
 
 	// Queue out message for further processing
-	err = nb.service.Publish(ctx, config.QueueMessageOutLoggedName, n)
+	event := events.NotificationSave{}
+	err = nb.service.Emit(ctx, event.Name(), n)
 	if err != nil {
-		log.Printf("Could not subscriptions message with id : %s - > %v", n.ID, err)
 		return nil, err
 	}
 
-	status := napi.StatusResponse{ID: n.ID, State: common.STATE(n.State), Status: common.STATUS(n.Status)}
-
-	return &status, nil
+	return n.ToStatusApi(), nil
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *napi.Notification) (*napi.StatusResponse, error) {
@@ -135,40 +134,35 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *napi.Notif
 
 	n := models.Notification{
 
+		ExternalID: message.GetID(),
 		AccessID: message.GetAccessID(),
 		BaseModel: partition,
 
 		ContactID: message.GetContactID(),
 
-		ChannelID: message.GetRouteID(),
+		RouteID: message.GetRouteID(),
 
 		LanguageID: message.GetLanguage(),
 		OutBound:   false,
 
-		Payload:    frame.DBPropertiesFromMap(message.GetPayload()),
-		Message:    message.GetData(),
-		Type:       message.GetType(),
-		ReleasedAt: &releaseDate,
-		ExternalID: message.GetID(),
+		Payload:          frame.DBPropertiesFromMap(message.GetPayload()),
+		Message:          message.GetData(),
+		NotificationType: message.GetType(),
+		ReleasedAt:       &releaseDate,
+
 
 		State:  int32(common.STATE_CREATED),
 		Status: int32(common.STATUS_QUEUED),
 	}
 
 	// Queue in message for further processing
-	err = nb.service.Publish(ctx, config.QueueMessageInLoggedName, n)
+	event := events.NotificationSave{}
+	err = nb.service.Emit(ctx, event.Name(), n)
 	if err != nil {
-		log.Printf("Could not queue message %s : -> %+v", n.ID, err)
 		return nil, err
 	}
 
-	status := napi.StatusResponse{
-		ID: n.ID,
-		State: common.STATE(n.State),
-		Status: common.STATUS(n.Status),
-		ExternalID: n.ExternalID}
-
-	return &status, nil
+	return n.ToStatusApi(), nil
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *napi.StatusRequest) (*napi.StatusResponse, error) {

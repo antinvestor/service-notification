@@ -8,7 +8,8 @@ import (
 	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service"
 	"github.com/antinvestor/service-notification/service/handlers"
-	"github.com/antinvestor/service-notification/service/repository/models"
+	"github.com/antinvestor/service-notification/service/models"
+	"github.com/antinvestor/service-notification/service/queue"
 	papi "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 	"google.golang.org/grpc"
@@ -36,20 +37,20 @@ func main() {
 
 
 
-	messageInLoggedHandler := &handlers.MessageInLoggedQueueHandler{}
+	messageInLoggedHandler := &queue.MessageInLoggedQueueHandler{}
 	//Setup queue subscribers
 	messageInLoggedQueueUrl := frame.GetEnv(config.EnvQueueMessageInLogged, fmt.Sprintf("mem://%s", config.QueueMessageInLoggedName))
 	messageInLoggedQueue := frame.RegisterSubscriber(config.QueueMessageInLoggedName, messageInLoggedQueueUrl, 5, messageInLoggedHandler)
 	messageInLoggedQueueP := frame.RegisterPublisher(config.QueueMessageInLoggedName, messageInLoggedQueueUrl)
 	serviceOptions = append(serviceOptions, messageInLoggedQueue, messageInLoggedQueueP)
 
-	messageOutLoggedHandler := &handlers.MessageOutLoggedQueueHandler{}
+	messageOutLoggedHandler := &queue.MessageOutLoggedQueueHandler{}
 	messageOutLoggedQueueUrl := frame.GetEnv(config.EnvQueueMessageOutLogged, fmt.Sprintf("mem://%s", config.QueueMessageOutLoggedName))
 	messageOutLoggedQueue := frame.RegisterSubscriber(config.QueueMessageOutLoggedName, messageOutLoggedQueueUrl, 5, messageOutLoggedHandler)
 	messageOutLoggedQueueP := frame.RegisterPublisher(config.QueueMessageOutLoggedName, messageOutLoggedQueueUrl)
 	serviceOptions = append(serviceOptions, messageOutLoggedQueue, messageOutLoggedQueueP)
 
-	messageInRouteHandler := &handlers.MessageInRoutedQueueHandler{}
+	messageInRouteHandler := &queue.MessageInRoutedQueueHandler{}
 	messageInRoutedIds := frame.GetEnv(config.EnvQueueMessageInRouteIds, "")
 	for _, routeId := range strings.Split(messageInRoutedIds, ",") {
 
@@ -67,7 +68,7 @@ func main() {
 		serviceOptions = append(serviceOptions, messageInRoutedQueueSub, messageInRoutedQueue)
 	}
 
-	messageOutRouteHandler := &handlers.MessageOutRouteQueueHandler{}
+	messageOutRouteHandler := &queue.MessageOutRouteQueueHandler{}
 	messageOutRoutedIds := frame.GetEnv(config.EnvQueueMessageOutRouteIds,
 		"9bsv0s23l8og00vgjq7g,9bsv0s23l8og00vgjq1g")
 	for _, routeId := range strings.Split(messageOutRoutedIds, ",") {
@@ -132,7 +133,7 @@ func main() {
 
 		migrationPath := frame.GetEnv(config.EnvMigrationPath, "./migrations/0001")
 		err := sysService.MigrateDatastore(ctx, migrationPath,
-			models.Channel{}, models.Language{}, models.Templete{},
+			models.Route{}, models.Language{}, models.Templete{},
 			models.TempleteData{}, models.Notification{})
 		if err != nil {
 			log.Printf("main -- Could not migrate successfully because : %v", err)

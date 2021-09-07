@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	ChannelModeTransmit   = "tx"
-	ChannelModeReceive    = "rx"
-	ChannelModeTransceive = "trx"
+	RouteModeTransmit = "tx"
+	RouteModeReceive  = "rx"
+	RouteModeTransceive = "trx"
 
-	ChannelTypeEmail = "email"
-	ChannelTypeSms   = "sms"
+	RouteTypeEmail = "email"
+	RouteTypeSms   = "sms"
 )
 
 // Templete Table holds the templete details
@@ -53,15 +53,15 @@ type Notification struct {
 	ProfileID string `gorm:"type:varchar(50)"`
 	ContactID string `gorm:"type:varchar(50)"`
 
-	ChannelID string `gorm:"type:varchar(50)"`
-	OutBound  bool
+	RouteID  string `gorm:"type:varchar(50)"`
+	OutBound bool
 
 	LanguageID string `gorm:"type:varchar(50)"`
 
 	TemplateID string `gorm:"type:varchar(50)"`
 	Payload    datatypes.JSONMap
 
-	Type string `gorm:"type:varchar(10)"`
+	NotificationType string `gorm:"type:varchar(10)"`
 
 	Message string `gorm:"type:text"`
 
@@ -80,8 +80,17 @@ func (model *Notification) IsReleased() bool {
 func (model *Notification) ToNotificationApi()  *napi.Notification {
 	notification := napi.Notification{
 		ID: model.ID,
-
-		//State: model.ToStatusApi(),
+		AccessID: model.AccessID,
+		ContactID: model.ContactID,
+		Type: model.NotificationType,
+		Templete: model.TemplateID,
+		Payload: frame.DBPropertiesToMap(model.Payload),
+		Data: model.Message,
+		Language: model.LanguageID,
+		OutBound: model.OutBound,
+		AutoRelease: model.IsReleased(),
+		RouteID: model.RouteID,
+		Status: model.ToStatusApi(),
 	}
 	return &notification
 }
@@ -106,13 +115,14 @@ func (model *Notification) ToStatusApi()  *napi.StatusResponse {
 	return &status
 }
 
-// Channel Our simple table holding all the payload of message in transit in and out of the system
-type Channel struct {
+// Route Our simple table holding all the payload of message in transit in and out of the system
+type Route struct {
 	frame.BaseModel
 
-	CounterChannelID string `gorm:"type:varchar(50)"`
-	Name             string `gorm:"type:varchar(50)"`
+	CounterID string `gorm:"type:varchar(50)"`
+	Name      string `gorm:"type:varchar(50)"`
 	Description      string `gorm:"type:text"`
-	Type             string `gorm:"type:varchar(10)"`
+	RouteType             string `gorm:"type:varchar(10)"`
 	Mode             string `gorm:"type:varchar(10)"`
+	Uri             string `gorm:"type:varchar(255)"`
 }

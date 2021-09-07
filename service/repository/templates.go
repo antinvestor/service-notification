@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"github.com/antinvestor/service-notification/service/repository/models"
+	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
