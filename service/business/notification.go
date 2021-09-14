@@ -11,7 +11,6 @@ import (
 	partapi "github.com/antinvestor/service-partition-api"
 	papi "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
-	"log"
 	"time"
 )
 
@@ -182,6 +181,23 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *napi.Stat
 	return n.ToStatusApi(), nil
 }
 
+func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *napi.StatusUpdateRequest) (*napi.StatusResponse, error){
+
+	err := statusReq.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessID())
+
+	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
+	if err != nil {
+		return nil, err
+	}
+
+	return n.ToStatusApi(), nil
+}
+
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *napi.ReleaseRequest) (*napi.StatusResponse, error) {
 
 
@@ -225,7 +241,7 @@ func (nb *notificationBusiness) Search(search *napi.SearchRequest, stream napi.N
 		result := n.ToNotificationApi()
 		err = stream.Send(result)
 		if err != nil {
-			log.Printf(" Search -- unable to send a result see %v", err)
+			nb.service.L().Info(" Search -- unable to send a result see %v", err)
 		}
 	}
 

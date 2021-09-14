@@ -8,6 +8,9 @@ const EnvReplicaDatabaseUrl = "REPLICA_DATABASE_URL"
 const EnvMigrate = "DO_MIGRATION"
 const EnvMigrationPath = "MIGRATION_PATH"
 
+const EnvOauth2JwtVerifyAudience = "OAUTH2_JWT_VERIFY_AUDIENCE"
+const EnvOauth2JwtVerifyIssuer = "OAUTH2_JWT_VERIFY_ISSUER"
+
 const EnvProfileServiceUri  = "PROFILE_SERVICE_URI"
 
 const EnvQueueMessageInLogged = "QUEUE_MESSAGE_IN_LOGGED"

@@ -11,7 +11,6 @@ import (
 	"github.com/antinvestor/service-notification/service/repository"
 	papi "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
-	"log"
 	"text/template"
 )
 
@@ -29,7 +28,7 @@ func filterContactFromProfileByID(profile *papi.ProfileObject, contactID string)
 
 
 type NotificationSave struct {
-	service *frame.Service
+	Service *frame.Service
 }
 
 func (e *NotificationSave) Name() string {
@@ -58,7 +57,7 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 	notification := payload.(models.Notification)
 	notification.State = int32(common.STATE_ACTIVE)
 	notification.Status = int32(common.STATUS_UNKNOWN)
-	err := e.service.DB(ctx, false).Save(notification).Error
+	err := e.Service.DB(ctx, false).Save(notification).Error
 
 	if err != nil {
 		return err
@@ -68,7 +67,7 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 
 
 		event := NotificationOutRoute{}
-		err = e.service.Emit(ctx, event.Name(), notification.GetID())
+		err = e.Service.Emit(ctx, event.Name(), notification.GetID())
 		if err != nil {
 			return err
 		}
@@ -76,7 +75,7 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 	}else{
 
 		event := NotificationInRoute{}
-		err = e.service.Emit(ctx, event.Name(), notification.GetID())
+		err = e.Service.Emit(ctx, event.Name(), notification.GetID())
 		if err != nil {
 			return err
 		}
@@ -87,8 +86,8 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 
 
 type NotificationOutRoute struct {
-	service *frame.Service
-	profileCli *papi.ProfileClient
+	Service    *frame.Service
+	ProfileCli *papi.ProfileClient
 }
 
 func (event *NotificationOutRoute) Name() string {
@@ -112,14 +111,14 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 
 	notificationId := payload.(string)
 
-	notificationRepo := repository.NewNotificationRepository(ctx, event.service)
+	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 
 	n, err := notificationRepo.GetByID(notificationId)
 	if err != nil {
 		return err
 	}
 
-	p, err := event.profileCli.GetProfileByID(ctx, n.ProfileID)
+	p, err := event.ProfileCli.GetProfileByID(ctx, n.ProfileID)
 	if err != nil {
 		return err
 	}
@@ -147,7 +146,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 	}
 
 	evt := NotificationOutQueue{}
-	err = event.service.Emit(ctx, evt.Name(), n.GetID())
+	err = event.Service.Emit(ctx, evt.Name(), n.GetID())
 	if err != nil {
 		return err
 	}
@@ -157,7 +156,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 
 func (event *NotificationOutRoute) routeNotification(ctx context.Context, notification *models.Notification) error {
 
-	routeRepository := repository.NewRouteRepository(ctx, event.service)
+	routeRepository := repository.NewRouteRepository(ctx, event.Service)
 
 	routes, err := routeRepository.GetByModeTypeAndPartitionID(
 		models.RouteModeTransmit, notification.NotificationType, notification.PartitionID)
@@ -181,8 +180,8 @@ func (event *NotificationOutRoute) routeNotification(ctx context.Context, notifi
 
 
 type NotificationOutQueue struct {
-	service *frame.Service
-	profileCli *papi.ProfileClient
+	Service    *frame.Service
+	ProfileCli *papi.ProfileClient
 }
 
 func (event *NotificationOutQueue) Name() string {
@@ -207,15 +206,15 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 
 	notificationId := payload.(string)
 
-	notificationRepo := repository.NewNotificationRepository(ctx, event.service)
-	routeRepository := repository.NewRouteRepository(ctx, event.service)
+	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
+	routeRepository := repository.NewRouteRepository(ctx, event.Service)
 
 	n, err := notificationRepo.GetByID(notificationId)
 	if err != nil {
 		return err
 	}
 
-	p, err := event.profileCli.GetProfileByID(ctx, n.ProfileID)
+	p, err := event.ProfileCli.GetProfileByID(ctx, n.ProfileID)
 	if err != nil {
 		return err
 	}
@@ -239,19 +238,19 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	}
 
 	// Queue a message for further processing by peripheral services
-	err = event.service.Publish(ctx, route.Uri, message)
+	err = event.Service.Publish(ctx, route.Uri, message)
 	if err != nil {
 		return err
 	}
 
 
-
-	log.Printf("===========================================================")
-	log.Printf(" We have successfully managed to get to post out ")
-	log.Printf(" Contact details : %s", contact.Detail)
-	log.Printf(" Notification details : %s", n.ID)
-	log.Printf(" Message details : %s", templateMap)
-	log.Printf("===========================================================")
+	log := event.Service.L()
+	log.Info("===========================================================")
+	log.Info(" We have successfully managed to get to post out ")
+	log.Info(" Contact details : %s", contact.Detail)
+	log.Info(" Notification details : %s", n.ID)
+	log.Info(" Message details : %s", templateMap)
+	log.Info("===========================================================")
 
 
 
@@ -267,7 +266,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 }
 
 func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, n *models.Notification) (map[string]string, error) {
-	templateRepository := repository.NewTemplateRepository(ctx, event.service)
+	templateRepository := repository.NewTemplateRepository(ctx, event.Service)
 
 	tmplDetail, err := templateRepository.GetByID(n.TemplateID)
 	if err != nil {
@@ -308,7 +307,7 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 
 
 type NotificationInRoute struct {
-	service *frame.Service
+	Service *frame.Service
 }
 
 func (event *NotificationInRoute) Name() string {
@@ -332,8 +331,8 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload interface
 
 	notificationId := payload.(string)
 
-	notificationRepo := repository.NewNotificationRepository(ctx, event.service)
-	routeRepository := repository.NewRouteRepository(ctx, event.service)
+	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
+	routeRepository := repository.NewRouteRepository(ctx, event.Service)
 
 	n, err := notificationRepo.GetByID(notificationId)
 	if err != nil {
@@ -346,7 +345,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload interface
 	}
 
 	// Queue a message out for further processing by peripheral services
-	err = event.service.Publish(ctx, route.Uri, n)
+	err = event.Service.Publish(ctx, route.Uri, n)
 	if err != nil {
 		return err
 	}
