@@ -26,13 +26,16 @@ clean:  ## go clean
 
 tools:  ## fetch and install all required tools
 	go get -d golang.org/x/tools/cmd/goimports
+	go get -d golang.org/x/lint/golint
 
 fmt:    ## format the go source files
 	go fmt ./...
-	goimports -w $(FILES)
 
 vet:    ## run go vet on the source files
 	go vet ./...
+
+lint:    ## run go vet on the source files
+	golint -set_exit_status=1 ./...
 
 doc:    ## generate godocs and start a local documentation webserver on port 8085
 	godoc -http=:8085 -index
@@ -54,4 +57,4 @@ tests: ## runs all system tests
 
 
 build: ## run all preliminary steps and tests the setup
-	clean tools fmt vet docker-setup tests docker-stop
+	clean tools fmt vet lint docker-setup tests docker-stop
