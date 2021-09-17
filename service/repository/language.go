@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm"
@@ -20,7 +21,7 @@ type languageRepository struct {
 }
 
 func NewLanguageRepository(ctx context.Context, service *frame.Service) LanguageRepository {
-	return &languageRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
+	return &languageRepository{readDb: service.DB(ctx, true), writeDb: service.DB(ctx, false)}
 }
 
 func (repo *languageRepository) GetByCode(code string) (*models.Language, error) {
@@ -49,7 +50,6 @@ func (repo *languageRepository) GetByID(id string) (*models.Language, error) {
 	}
 	return &language, nil
 }
-
 
 func (repo *languageRepository) Save(language *models.Language) error {
 	return repo.writeDb.Save(language).Error

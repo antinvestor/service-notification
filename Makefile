@@ -1,22 +1,57 @@
 
 ENV_LOCAL_TEST=\
-  POSTGRES_PASSWORD=mysecretpassword \
-  POSTGRES_DB=myawesomeproject \
-  POSTGRES_HOST=postgres \
-  POSTGRES_USER=postgres
+  POSTGRES_PASSWORD=secret \
+  POSTGRES_DB=service_notification \
+  POSTGRES_HOST=notification_db \
+  POSTGRES_USER=ant
+
+SERVICE		?= $(shell basename `go list`)
+VERSION		?= $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || cat $(PWD)/.version 2> /dev/null || echo v0)
+PACKAGE		?= $(shell go list)
+PACKAGES	?= $(shell go list ./...)
+FILES		?= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
+
+
+
+default: help
+
+help:   ## show this help
+	@echo 'usage: make [target] ...'
+	@echo ''
+	@echo 'targets:'
+	@egrep '^(.+)\:\ .*##\ (.+)' ${MAKEFILE_LIST} | sed 's/:.*##/#/' | column -t -c 2 -s '#'
+
+clean:  ## go clean
+	go clean
+
+tools:  ## fetch and install all required tools
+	go get -d golang.org/x/tools/cmd/goimports
+
+fmt:    ## format the go source files
+	go fmt ./...
+	goimports -w $(FILES)
+
+vet:    ## run go vet on the source files
+	go vet ./...
+
+doc:    ## generate godocs and start a local documentation webserver on port 8085
+	godoc -http=:8085 -index
 
 # this command will start docker components that we set in docker-compose.yml
-docker.setup:
-  docker-compose up -d --remove-orphans;
+docker-setup: ## sets up docker container images
+	docker-compose up -d --remove-orphans
 
 # shutting down docker components
-docker.stop:
-  docker-compose down;
+docker-stop: ## stops all docker containers
+	docker-compose down
 
 # this command will run all tests in the repo
 # INTEGRATION_TEST_SUITE_PATH is used to run specific tests in Golang,
 # if it's not specified it will run all tests
+tests: ## runs all system tests
+	$(ENV_LOCAL_TEST) \
+  	go test ./... -v -run=$(INTEGRATION_TEST_SUITE_PATH)
 
-tests:
-  $(ENV_LOCAL_TEST) \
-  go test ./... -count=1 -v -run=$(INTEGRATION_TEST_SUITE_PATH)
+
+build: ## run all preliminary steps and tests the setup
+	clean tools fmt vet docker-setup tests docker-stop

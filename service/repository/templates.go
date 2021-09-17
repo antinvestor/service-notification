@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm"
@@ -21,7 +22,7 @@ type templateRepository struct {
 }
 
 func NewTemplateRepository(ctx context.Context, service *frame.Service) TemplateRepository {
-	return &templateRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
+	return &templateRepository{readDb: service.DB(ctx, true), writeDb: service.DB(ctx, false)}
 }
 
 func (repo *templateRepository) GetByNameAndPartitionID(name string, partitionId string) ([]models.Templete, error) {
@@ -50,7 +51,6 @@ func (repo *templateRepository) GetByID(id string) (*models.Templete, error) {
 	}
 	return &template, nil
 }
-
 
 func (repo *templateRepository) Save(template *models.Templete) error {
 	return repo.writeDb.Save(template).Error

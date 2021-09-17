@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+
 	napi "github.com/antinvestor/service-notification-api"
 	"github.com/antinvestor/service-notification/service/business"
 	papi "github.com/antinvestor/service-profile-api"
@@ -19,10 +20,9 @@ func (server *NotificationServer) newNotificationBusiness(ctx context.Context) b
 	return business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
 }
 
-
 //Send method for queueing massages as requested
 func (server *NotificationServer) Send(ctx context.Context, req *napi.Notification) (*napi.StatusResponse, error) {
-	
+
 	notificationBusiness := server.newNotificationBusiness(ctx)
 	return notificationBusiness.QueueOut(ctx, req)
 
@@ -30,18 +30,17 @@ func (server *NotificationServer) Send(ctx context.Context, req *napi.Notificati
 
 //Status request to determine if notification is prepared or released
 func (server *NotificationServer) Status(ctx context.Context, req *napi.StatusRequest) (*napi.StatusResponse, error) {
-	
+
 	notificationBusiness := server.newNotificationBusiness(ctx)
-	return notificationBusiness.Status(ctx,  req)
+	return notificationBusiness.Status(ctx, req)
 
 }
 
 //StatusUpdate request to allow continuation of notification processing
 func (server *NotificationServer) StatusUpdate(ctx context.Context, req *napi.StatusUpdateRequest) (*napi.StatusResponse, error) {
 
-	
 	notificationBusiness := server.newNotificationBusiness(ctx)
-	return notificationBusiness.StatusUpdate(ctx,  req)
+	return notificationBusiness.StatusUpdate(ctx, req)
 
 }
 
@@ -49,13 +48,12 @@ func (server *NotificationServer) StatusUpdate(ctx context.Context, req *napi.St
 func (server *NotificationServer) Release(ctx context.Context, req *napi.ReleaseRequest) (*napi.StatusResponse, error) {
 
 	notificationBusiness := server.newNotificationBusiness(ctx)
-	return notificationBusiness.Release(ctx,  req)
+	return notificationBusiness.Release(ctx, req)
 }
 
 //Receive method is for client request for particular notification responses from system
 func (server *NotificationServer) Receive(ctx context.Context, req *napi.Notification) (*napi.StatusResponse, error) {
 
-	
 	notificationBusiness := server.newNotificationBusiness(ctx)
 	return notificationBusiness.QueueIn(ctx, req)
 }
@@ -64,6 +62,6 @@ func (server *NotificationServer) Receive(ctx context.Context, req *napi.Notific
 func (server *NotificationServer) Search(req *napi.SearchRequest, stream napi.NotificationService_SearchServer) error {
 
 	notificationBusiness := server.newNotificationBusiness(stream.Context())
-	return notificationBusiness.Search( req, stream)
+	return notificationBusiness.Search(req, stream)
 
 }

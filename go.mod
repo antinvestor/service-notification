@@ -4,9 +4,10 @@ go 1.17
 
 require (
 	github.com/antinvestor/apis v1.1.0
-	github.com/antinvestor/service-notification-api v1.1.4
+	github.com/antinvestor/service-notification-api v1.1.5
 	github.com/antinvestor/service-partition-api v1.0.5
 	github.com/antinvestor/service-profile-api v1.0.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
 	github.com/pitabwire/frame v1.6.1
 	google.golang.org/grpc v1.40.0
 	gorm.io/datatypes v1.0.1
@@ -47,11 +48,13 @@ require (
 	go.uber.org/zap v1.19.0 // indirect
 	gocloud.dev v0.24.0 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
+	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/net v0.0.0-20210825183410-e898025ed96a // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e // indirect
 	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.56.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

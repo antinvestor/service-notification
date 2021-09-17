@@ -1,16 +1,17 @@
 package models
 
 import (
+	"time"
+
 	"github.com/antinvestor/apis/common"
 	napi "github.com/antinvestor/service-notification-api"
 	"github.com/pitabwire/frame"
 	"gorm.io/datatypes"
-	"time"
 )
 
 const (
-	RouteModeTransmit = "tx"
-	RouteModeReceive  = "rx"
+	RouteModeTransmit   = "tx"
+	RouteModeReceive    = "rx"
 	RouteModeTransceive = "trx"
 
 	RouteTypeEmail = "email"
@@ -77,25 +78,25 @@ func (model *Notification) IsReleased() bool {
 	return model.ReleasedAt != nil && !model.ReleasedAt.IsZero()
 }
 
-func (model *Notification) ToNotificationApi()  *napi.Notification {
+func (model *Notification) ToNotificationApi() *napi.Notification {
 	notification := napi.Notification{
-		ID: model.ID,
-		AccessID: model.AccessID,
-		ContactID: model.ContactID,
-		Type: model.NotificationType,
-		Templete: model.TemplateID,
-		Payload: frame.DBPropertiesToMap(model.Payload),
-		Data: model.Message,
-		Language: model.LanguageID,
-		OutBound: model.OutBound,
+		ID:          model.ID,
+		AccessID:    model.AccessID,
+		ContactID:   model.ContactID,
+		Type:        model.NotificationType,
+		Templete:    model.TemplateID,
+		Payload:     frame.DBPropertiesToMap(model.Payload),
+		Data:        model.Message,
+		Language:    model.LanguageID,
+		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),
-		RouteID: model.RouteID,
-		Status: model.ToStatusApi(),
+		RouteID:     model.RouteID,
+		Status:      model.ToStatusApi(),
 	}
 	return &notification
 }
 
-func (model *Notification) ToStatusApi()  *napi.StatusResponse {
+func (model *Notification) ToStatusApi() *napi.StatusResponse {
 
 	releaseDate := ""
 	if model.IsReleased() {
@@ -119,10 +120,10 @@ func (model *Notification) ToStatusApi()  *napi.StatusResponse {
 type Route struct {
 	frame.BaseModel
 
-	CounterID string `gorm:"type:varchar(50)"`
-	Name      string `gorm:"type:varchar(50)"`
-	Description      string `gorm:"type:text"`
-	RouteType             string `gorm:"type:varchar(10)"`
-	Mode             string `gorm:"type:varchar(10)"`
-	Uri             string `gorm:"type:varchar(255)"`
+	CounterID   string `gorm:"type:varchar(50)"`
+	Name        string `gorm:"type:varchar(50)"`
+	Description string `gorm:"type:text"`
+	RouteType   string `gorm:"type:varchar(10)"`
+	Mode        string `gorm:"type:varchar(10)"`
+	Uri         string `gorm:"type:varchar(255)"`
 }

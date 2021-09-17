@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/antinvestor/apis"
 	napi "github.com/antinvestor/service-notification-api"
 	"github.com/antinvestor/service-notification/config"
@@ -11,14 +12,15 @@ import (
 	"github.com/antinvestor/service-notification/service/handlers"
 	"github.com/antinvestor/service-notification/service/models"
 
+	"os"
+	"strconv"
+
 	papi "github.com/antinvestor/service-profile-api"
-	"github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpcctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/pitabwire/frame"
 	"google.golang.org/grpc"
-	"os"
-	"strconv"
 )
 
 func main() {

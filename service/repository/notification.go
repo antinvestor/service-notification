@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm"
@@ -20,7 +21,7 @@ type notificationRepository struct {
 }
 
 func NewNotificationRepository(ctx context.Context, service *frame.Service) NotificationRepository {
-	return &notificationRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
+	return &notificationRepository{readDb: service.DB(ctx, true), writeDb: service.DB(ctx, false)}
 }
 
 func (repo *notificationRepository) GetByPartitionAndID(partitionId string, id string) (*models.Notification, error) {

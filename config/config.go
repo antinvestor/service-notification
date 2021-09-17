@@ -11,13 +11,12 @@ const EnvMigrationPath = "MIGRATION_PATH"
 const EnvOauth2JwtVerifyAudience = "OAUTH2_JWT_VERIFY_AUDIENCE"
 const EnvOauth2JwtVerifyIssuer = "OAUTH2_JWT_VERIFY_ISSUER"
 
-const EnvProfileServiceUri  = "PROFILE_SERVICE_URI"
+const EnvProfileServiceUri = "PROFILE_SERVICE_URI"
 
 const EnvQueueMessageInLogged = "QUEUE_MESSAGE_IN_LOGGED"
 const EnvQueueMessageInRouteIds = "QUEUE_MESSAGE_IN_ROUTE_IDS"
 const EnvQueueMessageOutLogged = "QUEUE_MESSAGE_OUT_LOGGED"
 const EnvQueueMessageOutRouteIds = "QUEUE_MESSAGE_OUT_ROUTE_IDS"
-
 
 const QueuesDurableName = "service_notification"
 const QueueMessageInLoggedName = "message_in_logged"

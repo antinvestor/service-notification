@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm"
@@ -20,7 +21,7 @@ type routeRepository struct {
 }
 
 func NewRouteRepository(ctx context.Context, service *frame.Service) RouteRepository {
-	return &routeRepository{readDb: service.DB(ctx,true), writeDb: service.DB(ctx,false)}
+	return &routeRepository{readDb: service.DB(ctx, true), writeDb: service.DB(ctx, false)}
 }
 
 func (repo *routeRepository) GetByID(id string) (*models.Route, error) {

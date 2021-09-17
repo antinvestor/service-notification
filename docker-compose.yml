@@ -1,27 +1,23 @@
 version: '3'
 services:
   
-    db1:
+    notification_db:
       image: postgres:latest
       environment:
-        FILLA_DB_DATABASE: service_notification
-        FILLA_DB_USER: ant
-        FILLA_DB_PASSWORD: ant-secret
-      ports:
-        - "5432:5432"
-                  
+        POSTGRES_DB: service_notification
+        POSTGRES_USER: ant
+        POSTGRES_PASSWORD: secret
 
-    app:
+    migrate:
       build: .
-      command: ["go", "run", "main.go"]
-      hostname: app
-    
-      ports:
-        - "7020:7020"
-      depends_on: 
-        - db1
-      links:
-        - db1
+
+      depends_on:
+        - notification_db
+      environment:
+        - LOG_LEVEL=debug
+        - DO_MIGRATION=true
+        - DATABASE_URL=postgres://ant:secret@notification_db:5432/service_notification?sslmode=disable
+      restart: on-failure
 
 
 

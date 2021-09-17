@@ -3,6 +3,8 @@ package business
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/antinvestor/apis/common"
 	napi "github.com/antinvestor/service-notification-api"
 	"github.com/antinvestor/service-notification/service/events"
@@ -11,7 +13,6 @@ import (
 	partapi "github.com/antinvestor/service-partition-api"
 	papi "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
-	"time"
 )
 
 const defaultLanguageCode = "en"
@@ -55,7 +56,7 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessId s
 	return frame.BaseModel{
 		TenantID:    partition.TenantId,
 		PartitionID: partition.PartitionId,
-		AccessID: accessId,
+		AccessID:    accessId,
 	}, nil
 }
 
@@ -91,9 +92,9 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Noti
 	n := models.Notification{
 
 		TransientID: message.GetID(),
-		AccessID: message.GetAccessID(),
-		BaseModel: partition,
-		ContactID: message.GetContactID(),
+		AccessID:    message.GetAccessID(),
+		BaseModel:   partition,
+		ContactID:   message.GetContactID(),
 
 		LanguageID: language.GetID(),
 		OutBound:   true,
@@ -134,8 +135,8 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *napi.Notif
 	n := models.Notification{
 
 		ExternalID: message.GetID(),
-		AccessID: message.GetAccessID(),
-		BaseModel: partition,
+		AccessID:   message.GetAccessID(),
+		BaseModel:  partition,
 
 		ContactID: message.GetContactID(),
 
@@ -148,7 +149,6 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *napi.Notif
 		Message:          message.GetData(),
 		NotificationType: message.GetType(),
 		ReleasedAt:       &releaseDate,
-
 
 		State:  int32(common.STATE_CREATED),
 		Status: int32(common.STATUS_QUEUED),
@@ -181,7 +181,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *napi.Stat
 	return n.ToStatusApi(), nil
 }
 
-func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *napi.StatusUpdateRequest) (*napi.StatusResponse, error){
+func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *napi.StatusUpdateRequest) (*napi.StatusResponse, error) {
 
 	err := statusReq.Validate()
 	if err != nil {
@@ -200,7 +200,6 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *nap
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *napi.ReleaseRequest) (*napi.StatusResponse, error) {
 
-
 	err := releaseReq.Validate()
 	if err != nil {
 		return nil, err
@@ -213,7 +212,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *napi.Re
 		return nil, err
 	}
 
-	if  !n.IsReleased() {
+	if !n.IsReleased() {
 		releaseDate := time.Now()
 		n.ReleasedAt = &releaseDate
 	}

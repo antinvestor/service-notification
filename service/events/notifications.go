@@ -6,14 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"text/template"
+
 	"github.com/antinvestor/apis/common"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	papi "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
-	"text/template"
 )
-
 
 func filterContactFromProfileByID(profile *papi.ProfileObject, contactID string) *papi.ContactObject {
 
@@ -26,7 +26,6 @@ func filterContactFromProfileByID(profile *papi.ProfileObject, contactID string)
 	return nil
 }
 
-
 type NotificationSave struct {
 	Service *frame.Service
 }
@@ -35,24 +34,24 @@ func (e *NotificationSave) Name() string {
 	return "notification.save"
 }
 
-func (e *NotificationSave) PayloadType() interface{}{
+func (e *NotificationSave) PayloadType() interface{} {
 	return models.Notification{}
 }
 
-func (e *NotificationSave) Validate(ctx context.Context, payload interface{}) error{
+func (e *NotificationSave) Validate(ctx context.Context, payload interface{}) error {
 	notification, ok := payload.(models.Notification)
 	if !ok {
 		return errors.New(" payload is not of type models.Notification")
 	}
 
-	if notification.GetID() == ""{
+	if notification.GetID() == "" {
 		return errors.New(" notification Id should already have been set ")
 	}
 
 	return nil
 }
 
-func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) error{
+func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) error {
 
 	notification := payload.(models.Notification)
 	notification.State = int32(common.STATE_ACTIVE)
@@ -65,14 +64,13 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 
 	if notification.OutBound {
 
-
 		event := NotificationOutRoute{}
 		err = e.Service.Emit(ctx, event.Name(), notification.GetID())
 		if err != nil {
 			return err
 		}
 
-	}else{
+	} else {
 
 		event := NotificationInRoute{}
 		err = e.Service.Emit(ctx, event.Name(), notification.GetID())
@@ -84,7 +82,6 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 	return nil
 }
 
-
 type NotificationOutRoute struct {
 	Service    *frame.Service
 	ProfileCli *papi.ProfileClient
@@ -94,11 +91,11 @@ func (event *NotificationOutRoute) Name() string {
 	return "notification.out.route"
 }
 
-func (event *NotificationOutRoute) PayloadType() interface{}{
+func (event *NotificationOutRoute) PayloadType() interface{} {
 	return ""
 }
 
-func (event *NotificationOutRoute) Validate(ctx context.Context, payload interface{}) error{
+func (event *NotificationOutRoute) Validate(ctx context.Context, payload interface{}) error {
 	_, ok := payload.(string)
 	if !ok {
 		return errors.New(" payload is not of type string")
@@ -178,7 +175,6 @@ func (event *NotificationOutRoute) routeNotification(ctx context.Context, notifi
 	return nil
 }
 
-
 type NotificationOutQueue struct {
 	Service    *frame.Service
 	ProfileCli *papi.ProfileClient
@@ -188,11 +184,11 @@ func (event *NotificationOutQueue) Name() string {
 	return "notification.out.queue"
 }
 
-func (event *NotificationOutQueue) PayloadType() interface{}{
+func (event *NotificationOutQueue) PayloadType() interface{} {
 	return ""
 }
 
-func (event *NotificationOutQueue) Validate(ctx context.Context, payload interface{}) error{
+func (event *NotificationOutQueue) Validate(ctx context.Context, payload interface{}) error {
 	_, ok := payload.(string)
 	if !ok {
 		return errors.New(" payload is not of type string")
@@ -200,7 +196,6 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload interfa
 
 	return nil
 }
-
 
 func (event *NotificationOutQueue) Execute(ctx context.Context, payload interface{}) error {
 
@@ -221,7 +216,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 
 	contact := filterContactFromProfileByID(p, n.ContactID)
 
-	templateMap, err := event.formatOutboundNotification( ctx, n)
+	templateMap, err := event.formatOutboundNotification(ctx, n)
 	if err != nil {
 		return err
 	}
@@ -234,7 +229,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	message := map[string]interface{}{
 		"profile": p,
 		"contact": contact,
-		"data": templateMap,
+		"data":    templateMap,
 	}
 
 	// Queue a message for further processing by peripheral services
@@ -243,7 +238,6 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 		return err
 	}
 
-
 	log := event.Service.L()
 	log.Info("===========================================================")
 	log.Info(" We have successfully managed to get to post out ")
@@ -251,8 +245,6 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	log.Info(" Notification details : %s", n.ID)
 	log.Info(" Message details : %s", templateMap)
 	log.Info("===========================================================")
-
-
 
 	n.State = int32(common.STATE_ACTIVE)
 	n.Status = int32(common.STATUS_IN_PROCESS)
@@ -303,9 +295,6 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 
 }
 
-
-
-
 type NotificationInRoute struct {
 	Service *frame.Service
 }
@@ -314,11 +303,11 @@ func (event *NotificationInRoute) Name() string {
 	return "notification.in.route"
 }
 
-func (event *NotificationInRoute) PayloadType() interface{}{
+func (event *NotificationInRoute) PayloadType() interface{} {
 	return ""
 }
 
-func (event *NotificationInRoute) Validate(ctx context.Context, payload interface{}) error{
+func (event *NotificationInRoute) Validate(ctx context.Context, payload interface{}) error {
 	_, ok := payload.(string)
 	if !ok {
 		return errors.New(" payload is not of type string")
