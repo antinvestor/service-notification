@@ -2,66 +2,86 @@ package handlers
 
 import (
 	"context"
+	partapi "github.com/antinvestor/service-partition-api"
 
-	napi "github.com/antinvestor/service-notification-api"
+	notificationV1 "github.com/antinvestor/service-notification-api"
 	"github.com/antinvestor/service-notification/service/business"
-	papi "github.com/antinvestor/service-profile-api"
+	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 )
 
 type NotificationServer struct {
 	Service    *frame.Service
-	ProfileCli *papi.ProfileClient
+	ProfileCli *profileV1.ProfileClient
+	PartitionCli *partapi.PartitionClient
 
-	napi.UnimplementedNotificationServiceServer
+	notificationV1.UnimplementedNotificationServiceServer
 }
 
-func (server *NotificationServer) newNotificationBusiness(ctx context.Context) business.NotificationBusiness {
-	return business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli)
+func (server *NotificationServer) newNotificationBusiness(ctx context.Context) (business.NotificationBusiness,error) {
+	return business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli, server.PartitionCli)
 }
 
 //Send method for queueing massages as requested
-func (server *NotificationServer) Send(ctx context.Context, req *napi.Notification) (*napi.StatusResponse, error) {
+func (server *NotificationServer) Send(ctx context.Context, req *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
 
-	notificationBusiness := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return notificationBusiness.QueueOut(ctx, req)
 
 }
 
 //Status request to determine if notification is prepared or released
-func (server *NotificationServer) Status(ctx context.Context, req *napi.StatusRequest) (*napi.StatusResponse, error) {
+func (server *NotificationServer) Status(ctx context.Context, req *notificationV1.StatusRequest) (*notificationV1.StatusResponse, error) {
 
-	notificationBusiness := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return notificationBusiness.Status(ctx, req)
 
 }
 
 //StatusUpdate request to allow continuation of notification processing
-func (server *NotificationServer) StatusUpdate(ctx context.Context, req *napi.StatusUpdateRequest) (*napi.StatusResponse, error) {
+func (server *NotificationServer) StatusUpdate(ctx context.Context, req *notificationV1.StatusUpdateRequest) (*notificationV1.StatusResponse, error) {
 
-	notificationBusiness := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return notificationBusiness.StatusUpdate(ctx, req)
 
 }
 
 //Release method for releasing queued massages and returns if notification status if released
-func (server *NotificationServer) Release(ctx context.Context, req *napi.ReleaseRequest) (*napi.StatusResponse, error) {
+func (server *NotificationServer) Release(ctx context.Context, req *notificationV1.ReleaseRequest) (*notificationV1.StatusResponse, error) {
 
-	notificationBusiness := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return notificationBusiness.Release(ctx, req)
 }
 
 //Receive method is for client request for particular notification responses from system
-func (server *NotificationServer) Receive(ctx context.Context, req *napi.Notification) (*napi.StatusResponse, error) {
+func (server *NotificationServer) Receive(ctx context.Context, req *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
 
-	notificationBusiness := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return notificationBusiness.QueueIn(ctx, req)
 }
 
 //Search method is for client request for particular notification details from system
-func (server *NotificationServer) Search(req *napi.SearchRequest, stream napi.NotificationService_SearchServer) error {
+func (server *NotificationServer) Search(req *notificationV1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error {
 
-	notificationBusiness := server.newNotificationBusiness(stream.Context())
+	notificationBusiness, err := server.newNotificationBusiness(stream.Context())
+	if err != nil {
+		return err
+	}
 	return notificationBusiness.Search(req, stream)
 
 }

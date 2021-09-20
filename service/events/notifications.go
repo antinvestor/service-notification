@@ -11,11 +11,11 @@ import (
 	"github.com/antinvestor/apis/common"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
-	papi "github.com/antinvestor/service-profile-api"
+	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 )
 
-func filterContactFromProfileByID(profile *papi.ProfileObject, contactID string) *papi.ContactObject {
+func filterContactFromProfileByID(profile *profileV1.ProfileObject, contactID string) *profileV1.ContactObject {
 
 	for _, contact := range profile.GetContacts() {
 		if contact.GetID() == contactID {
@@ -84,7 +84,7 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 
 type NotificationOutRoute struct {
 	Service    *frame.Service
-	ProfileCli *papi.ProfileClient
+	ProfileCli *profileV1.ProfileClient
 }
 
 func (event *NotificationOutRoute) Name() string {
@@ -122,9 +122,9 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 
 	contact := filterContactFromProfileByID(p, n.ContactID)
 	switch contact.Type {
-	case papi.ContactType_PHONE:
+	case profileV1.ContactType_PHONE:
 		n.NotificationType = models.RouteTypeSms
-	case papi.ContactType_EMAIL:
+	case profileV1.ContactType_EMAIL:
 		n.NotificationType = models.RouteTypeEmail
 	default:
 		n.NotificationType = models.RouteTypeEmail
@@ -164,20 +164,26 @@ func (event *NotificationOutRoute) routeNotification(ctx context.Context, notifi
 	if len(routes) > 0 {
 		route := routes[0]
 		if len(routes) > 1 {
-			//TODO: find a simple way of routing message mostly by settings
-			// or contact and profile preferences
+			route = event.selectRoute(ctx, routes)
 		}
 		notification.RouteID = route.ID
 	} else {
-		return errors.New(fmt.Sprintf("No routes matched for notification : %s", notification.GetID()))
+		return fmt.Errorf("no routes matched for notification : %s", notification.GetID())
 	}
 
 	return nil
 }
 
+func (event *NotificationOutRoute) selectRoute(ctx context.Context, routes []models.Route) models.Route {
+	//TODO: find a simple way of routing message mostly by settings
+	// or contact and profile preferences
+
+	return routes[0]
+}
+
 type NotificationOutQueue struct {
 	Service    *frame.Service
-	ProfileCli *papi.ProfileClient
+	ProfileCli *profileV1.ProfileClient
 }
 
 func (event *NotificationOutQueue) Name() string {
@@ -287,6 +293,9 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 
 		var tmplBytes bytes.Buffer
 		err = tmpl.Execute(&tmplBytes, payload)
+		if err != nil {
+			return nil, err
+		}
 		templateMap[data.Type] = tmplBytes.String()
 
 	}

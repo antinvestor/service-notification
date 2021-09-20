@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	partitionV1 "github.com/antinvestor/service-partition-api"
 
 	"github.com/antinvestor/apis"
-	napi "github.com/antinvestor/service-notification-api"
+	notificationV1 "github.com/antinvestor/service-notification-api"
 	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/events"
 
@@ -15,8 +16,8 @@ import (
 	"os"
 	"strconv"
 
-	papi "github.com/antinvestor/service-profile-api"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	profileV1 "github.com/antinvestor/service-profile-api"
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpcctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/pitabwire/frame"
@@ -59,9 +60,16 @@ func main() {
 	}
 
 	profileServiceUrl := frame.GetEnv(config.EnvProfileServiceUri, "127.0.0.1:7005")
-	profileCli, err := papi.NewProfileClient(ctx, apis.WithEndpoint(profileServiceUrl))
+	profileCli, err := profileV1.NewProfileClient(ctx, apis.WithEndpoint(profileServiceUrl))
 	if err != nil {
-		log.Info("main -- Could not setup profile server : %v", err)
+		log.Fatal("main -- Could not setup profile client : %v", err)
+	}
+
+
+	partitionServiceUrl := frame.GetEnv(config.EnvPartitionServiceUri, "127.0.0.1:7003")
+	partitionCli, err := partitionV1.NewPartitionsClient(ctx, apis.WithEndpoint(partitionServiceUrl))
+	if err != nil {
+		log.Fatal("main -- Could not setup partition client : %v", err)
 	}
 
 	var serviceOptions []frame.Option
@@ -70,7 +78,7 @@ func main() {
 	jwtIssuer := frame.GetEnv(config.EnvOauth2JwtVerifyIssuer, "")
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+		grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(
 			grpcctxtags.UnaryServerInterceptor(),
 			grpcrecovery.UnaryServerInterceptor(),
 			frame.UnaryAuthInterceptor(jwtAudience, jwtIssuer),
@@ -81,9 +89,10 @@ func main() {
 	implementation := &handlers.NotificationServer{
 		Service:    service,
 		ProfileCli: profileCli,
+		PartitionCli: partitionCli,
 	}
 
-	napi.RegisterNotificationServiceServer(grpcServer, implementation)
+	notificationV1.RegisterNotificationServiceServer(grpcServer, implementation)
 
 	grpcServerOpt := frame.GrpcServer(grpcServer)
 	serviceOptions = append(serviceOptions, grpcServerOpt)

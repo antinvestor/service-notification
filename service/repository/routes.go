@@ -45,7 +45,7 @@ func (repo *routeRepository) GetByMode(mode string) ([]models.Route, error) {
 }
 
 func (repo *routeRepository) GetByModeTypeAndPartitionID(mode string, routeType string, partitionId string) ([]models.Route, error) {
-	routes := []models.Route{}
+	var routes []models.Route
 	err := repo.readDb.Find(&routes,
 		"partition_id = ? AND route_type = ? AND (mode = ? OR ( mode = ?))",
 		partitionId, routeType, mode, models.RouteModeTransceive).Error

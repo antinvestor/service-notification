@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/antinvestor/apis/common"
-	napi "github.com/antinvestor/service-notification-api"
+	notificationV1 "github.com/antinvestor/service-notification-api"
 	"github.com/pitabwire/frame"
 	"gorm.io/datatypes"
 )
@@ -78,8 +78,8 @@ func (model *Notification) IsReleased() bool {
 	return model.ReleasedAt != nil && !model.ReleasedAt.IsZero()
 }
 
-func (model *Notification) ToNotificationApi() *napi.Notification {
-	notification := napi.Notification{
+func (model *Notification) ToNotificationApi() *notificationV1.Notification {
+	notification := notificationV1.Notification{
 		ID:          model.ID,
 		AccessID:    model.AccessID,
 		ContactID:   model.ContactID,
@@ -96,14 +96,14 @@ func (model *Notification) ToNotificationApi() *napi.Notification {
 	return &notification
 }
 
-func (model *Notification) ToStatusApi() *napi.StatusResponse {
+func (model *Notification) ToStatusApi() *notificationV1.StatusResponse {
 
 	releaseDate := ""
 	if model.IsReleased() {
 		releaseDate = model.ReleasedAt.String()
 	}
 
-	status := napi.StatusResponse{
+	status := notificationV1.StatusResponse{
 		ID:          model.ID,
 		State:       common.STATE(model.State),
 		Status:      common.STATUS(model.Status),

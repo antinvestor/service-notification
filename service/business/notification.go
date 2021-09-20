@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/antinvestor/apis/common"
-	napi "github.com/antinvestor/service-notification-api"
+	notificationV1 "github.com/antinvestor/service-notification-api"
 	"github.com/antinvestor/service-notification/service/events"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
-	partapi "github.com/antinvestor/service-partition-api"
-	papi "github.com/antinvestor/service-profile-api"
+	partitionV1 "github.com/antinvestor/service-partition-api"
+	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 )
 
@@ -19,8 +19,8 @@ const defaultLanguageCode = "en"
 
 type notificationBusiness struct {
 	service     *frame.Service
-	profileCli  *papi.ProfileClient
-	partitionCl *partapi.PartitionClient
+	profileCli   *profileV1.ProfileClient
+	partitionCli *partitionV1.PartitionClient
 }
 
 func (nb *notificationBusiness) getNotificationRepo(ctx context.Context) repository.NotificationRepository {
@@ -42,7 +42,7 @@ func (nb *notificationBusiness) getChannelRepo(ctx context.Context) repository.R
 
 func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessId string) (frame.BaseModel, error) {
 
-	access, err := nb.partitionCl.GetAccessById(ctx, accessId)
+	access, err := nb.partitionCli.GetAccessById(ctx, accessId)
 	if err != nil {
 		return frame.BaseModel{}, err
 	}
@@ -60,7 +60,7 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessId s
 	}, nil
 }
 
-func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Notification) (*napi.StatusResponse, error) {
+func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
 
 	err := message.Validate()
 	if err != nil {
@@ -68,6 +68,10 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Noti
 	}
 
 	partition, err := nb.getPartitionData(ctx, message.GetAccessID())
+	if err != nil {
+		return nil, err
+	}
+
 
 	var releaseDate time.Time
 	if message.AutoRelease {
@@ -121,7 +125,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *napi.Noti
 	return n.ToStatusApi(), nil
 }
 
-func (nb *notificationBusiness) QueueIn(ctx context.Context, message *napi.Notification) (*napi.StatusResponse, error) {
+func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
 
 	err := message.Validate()
 	if err != nil {
@@ -129,6 +133,9 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *napi.Notif
 	}
 
 	partition, err := nb.getPartitionData(ctx, message.GetAccessID())
+	if err != nil {
+		return nil, err
+	}
 
 	releaseDate := time.Now()
 
@@ -164,7 +171,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *napi.Notif
 	return n.ToStatusApi(), nil
 }
 
-func (nb *notificationBusiness) Status(ctx context.Context, statusReq *napi.StatusRequest) (*napi.StatusResponse, error) {
+func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificationV1.StatusRequest) (*notificationV1.StatusResponse, error) {
 
 	err := statusReq.Validate()
 	if err != nil {
@@ -172,6 +179,9 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *napi.Stat
 	}
 
 	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessID())
+	if err != nil {
+		return nil, err
+	}
 
 	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
 	if err != nil {
@@ -181,7 +191,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *napi.Stat
 	return n.ToStatusApi(), nil
 }
 
-func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *napi.StatusUpdateRequest) (*napi.StatusResponse, error) {
+func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *notificationV1.StatusUpdateRequest) (*notificationV1.StatusResponse, error) {
 
 	err := statusReq.Validate()
 	if err != nil {
@@ -189,6 +199,9 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *nap
 	}
 
 	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessID())
+	if err != nil {
+		return nil, err
+	}
 
 	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
 	if err != nil {
@@ -198,7 +211,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *nap
 	return n.ToStatusApi(), nil
 }
 
-func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *napi.ReleaseRequest) (*napi.StatusResponse, error) {
+func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*notificationV1.StatusResponse, error) {
 
 	err := releaseReq.Validate()
 	if err != nil {
@@ -206,6 +219,9 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *napi.Re
 	}
 
 	partition, err := nb.getPartitionData(ctx, releaseReq.GetAccessID())
+	if err != nil {
+		return nil, err
+	}
 
 	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, releaseReq.GetID())
 	if err != nil {
@@ -221,7 +237,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *napi.Re
 
 }
 
-func (nb *notificationBusiness) Search(search *napi.SearchRequest, stream napi.NotificationService_SearchServer) error {
+func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error {
 
 	err := search.Validate()
 	if err != nil {
@@ -229,6 +245,9 @@ func (nb *notificationBusiness) Search(search *napi.SearchRequest, stream napi.N
 	}
 
 	partition, err := nb.getPartitionData(stream.Context(), search.GetAccessID())
+	if err != nil {
+		return err
+	}
 
 	notificationList, err := nb.getNotificationRepo(stream.Context()).SearchByPartition(partition.PartitionID, search.GetQuery())
 	if err != nil {
