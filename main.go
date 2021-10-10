@@ -65,7 +65,6 @@ func main() {
 		log.Fatal("main -- Could not setup profile client : %v", err)
 	}
 
-
 	partitionServiceUrl := frame.GetEnv(config.EnvPartitionServiceUri, "127.0.0.1:7003")
 	partitionCli, err := partitionV1.NewPartitionsClient(ctx, apis.WithEndpoint(partitionServiceUrl))
 	if err != nil {
@@ -87,8 +86,8 @@ func main() {
 	)
 
 	implementation := &handlers.NotificationServer{
-		Service:    service,
-		ProfileCli: profileCli,
+		Service:      service,
+		ProfileCli:   profileCli,
 		PartitionCli: partitionCli,
 	}
 
@@ -98,16 +97,10 @@ func main() {
 	serviceOptions = append(serviceOptions, grpcServerOpt)
 
 	serviceOptions = append(serviceOptions,
-		frame.RegisterEvent(&events.NotificationSave{Service: service}))
-
-	serviceOptions = append(serviceOptions,
-		frame.RegisterEvent(&events.NotificationInRoute{Service: service}))
-
-	serviceOptions = append(serviceOptions,
-		frame.RegisterEvent(&events.NotificationOutRoute{Service: service, ProfileCli: profileCli}))
-
-	serviceOptions = append(serviceOptions,
-		frame.RegisterEvent(&events.NotificationOutQueue{Service: service, ProfileCli: profileCli}))
+		frame.RegisterEvents(&events.NotificationSave{Service: service},
+		&events.NotificationInRoute{Service: service},
+		&events.NotificationOutRoute{Service: service, ProfileCli: profileCli},
+		&events.NotificationOutQueue{Service: service, ProfileCli: profileCli}))
 
 	service.Init(serviceOptions...)
 

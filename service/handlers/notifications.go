@@ -11,14 +11,14 @@ import (
 )
 
 type NotificationServer struct {
-	Service    *frame.Service
-	ProfileCli *profileV1.ProfileClient
+	Service      *frame.Service
+	ProfileCli   *profileV1.ProfileClient
 	PartitionCli *partapi.PartitionClient
 
 	notificationV1.UnimplementedNotificationServiceServer
 }
 
-func (server *NotificationServer) newNotificationBusiness(ctx context.Context) (business.NotificationBusiness,error) {
+func (server *NotificationServer) newNotificationBusiness(ctx context.Context) (business.NotificationBusiness, error) {
 	return business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli, server.PartitionCli)
 }
 

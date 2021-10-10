@@ -2,12 +2,13 @@ version: '3'
 services:
   
     notification_db:
-      image: postgres:latest
+      image: postgres:14.0
       environment:
         POSTGRES_DB: service_notification
         POSTGRES_USER: ant
         POSTGRES_PASSWORD: secret
-
+      ports:
+        - 5436:5432
     migrate:
       build: .
 

@@ -18,7 +18,7 @@ import (
 const defaultLanguageCode = "en"
 
 type notificationBusiness struct {
-	service     *frame.Service
+	service      *frame.Service
 	profileCli   *profileV1.ProfileClient
 	partitionCli *partitionV1.PartitionClient
 }
@@ -72,7 +72,6 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-
 	var releaseDate time.Time
 	if message.AutoRelease {
 		releaseDate = time.Now()
@@ -87,12 +86,6 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-	template, err := nb.getTemplateRepo(ctx).GetByNamePartitionIDAndLanguageID(
-		message.GetTemplete(), partition.PartitionID, language.ID)
-	if err != nil {
-		return nil, err
-	}
-
 	n := models.Notification{
 
 		TransientID: message.GetID(),
@@ -103,9 +96,8 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		LanguageID: language.GetID(),
 		OutBound:   true,
 
-		TemplateID: template.GetID(),
-		Payload:    frame.DBPropertiesFromMap(message.Payload),
-		Message:    message.GetData(),
+		Payload: frame.DBPropertiesFromMap(message.Payload),
+		Message: message.GetData(),
 
 		NotificationType: message.GetType(),
 		State:            int32(common.STATE_CREATED.Number()),
@@ -113,7 +105,22 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		ReleasedAt:       &releaseDate,
 	}
 
-	n.GenID(ctx)
+	if message.GetTemplete() != "" {
+		template, err := nb.getTemplateRepo(ctx).GetByNamePartitionIDAndLanguageID(
+			message.GetTemplete(), partition.PartitionID, language.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		n.TemplateID = template.GetID()
+
+	}
+
+	if n.ValidXID(message.GetID()) {
+		n.ID = message.GetID()
+	} else {
+		n.GenID(ctx)
+	}
 
 	// Queue out message for further processing
 	event := events.NotificationSave{}
@@ -161,6 +168,12 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		Status: int32(common.STATUS_QUEUED),
 	}
 
+	if n.ValidXID(message.GetID()) {
+		n.ID = message.GetID()
+	} else {
+		n.GenID(ctx)
+	}
+
 	// Queue in message for further processing
 	event := events.NotificationSave{}
 	err = nb.service.Emit(ctx, event.Name(), n)
@@ -204,6 +217,35 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 	}
 
 	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
+	if err != nil {
+		return nil, err
+	}
+
+	if statusReq.GetState() != common.STATE_CREATED {
+		n.State = int32(statusReq.GetState())
+	}
+
+	if statusReq.GetStatus() != common.STATUS_UNKNOWN {
+		n.Status = int32(statusReq.GetStatus())
+	}
+
+	if statusReq.GetExternalID() != "" {
+		n.ExternalID = statusReq.GetExternalID()
+	}
+
+	if len(statusReq.GetExtras()) != 0 {
+
+		dbMap := frame.DBPropertiesToMap(n.Extra)
+
+		for k, v := range statusReq.GetExtras() {
+			dbMap[k] = v
+		}
+
+		n.Extra = frame.DBPropertiesFromMap(dbMap)
+	}
+
+	//TODO: create a ledger of status changes
+	err = nb.getNotificationRepo(ctx).Save(n)
 	if err != nil {
 		return nil, err
 	}
