@@ -9,7 +9,7 @@ require (
 	github.com/antinvestor/service-profile-api v1.0.4
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
-	github.com/pitabwire/frame v1.7.1
+	github.com/pitabwire/frame v1.7.2
 	google.golang.org/grpc v1.41.0
 	gorm.io/datatypes v1.0.2
 	gorm.io/gorm v1.21.16
@@ -19,8 +19,8 @@ require (
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
 	github.com/BurntSushi/toml v0.4.1 // indirect
 	github.com/cloudevents/sdk-go/v2 v2.5.0 // indirect
-	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.1 // indirect
+	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
