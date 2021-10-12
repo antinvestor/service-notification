@@ -1,6 +1,6 @@
 
 ENV_LOCAL_TEST=\
-  TEST_DATABASE_URL=postgres://ant:secret@localhost:5426/service_notification?sslmode=disable \
+  TEST_DATABASE_URL=postgres://ant:secret@localhost:5436/service_notification?sslmode=disable \
   POSTGRES_PASSWORD=secret \
   POSTGRES_DB=service_notification \
   POSTGRES_HOST=notification_db \

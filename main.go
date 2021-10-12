@@ -98,9 +98,9 @@ func main() {
 
 	serviceOptions = append(serviceOptions,
 		frame.RegisterEvents(&events.NotificationSave{Service: service},
-		&events.NotificationInRoute{Service: service},
-		&events.NotificationOutRoute{Service: service, ProfileCli: profileCli},
-		&events.NotificationOutQueue{Service: service, ProfileCli: profileCli}))
+			&events.NotificationInRoute{Service: service},
+			&events.NotificationOutRoute{Service: service, ProfileCli: profileCli},
+			&events.NotificationOutQueue{Service: service, ProfileCli: profileCli}))
 
 	service.Init(serviceOptions...)
 

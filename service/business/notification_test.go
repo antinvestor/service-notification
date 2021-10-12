@@ -217,7 +217,7 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					ID: "testingQueue_out",
+					ID:        "testingQueue_out",
 					ContactID: "epochTesting",
 					Data:      "Hello we are just testing things out",
 					AccessID:  "testingAccessData",
@@ -253,8 +253,6 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 				Status: common.STATUS_QUEUED,
 			},
 		},
-
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -308,16 +306,16 @@ func Test_notificationBusiness_Release(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				releaseReq: &notificationV1.ReleaseRequest{
-					ID: "testingQueue_out",
-					AccessID:  "testingAccessData",
-					Comment: "testing releasing messages",
+					ID:       "testingQueue_out",
+					AccessID: "testingAccessData",
+					Comment:  "testing releasing messages",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
-				ID:     "c2f4j7au6s7f91uqnojg",
-				State:  common.STATE_ACTIVE,
-				Status: common.STATUS_IN_PROCESS,
+				ID:         "c2f4j7au6s7f91uqnojg",
+				State:      common.STATE_ACTIVE,
+				Status:     common.STATUS_IN_PROCESS,
 				ExternalID: "total_externalization",
 			},
 		},
@@ -331,9 +329,9 @@ func Test_notificationBusiness_Release(t *testing.T) {
 			}
 
 			n := models.Notification{
-				ContactID: "epochTesting",
-				Message:      "Hello we are just testing statuses out",
-				AccessID:  "testingAccessData",
+				ContactID:        "epochTesting",
+				Message:          "Hello we are just testing statuses out",
+				AccessID:         "testingAccessData",
 				NotificationType: "email",
 				State:            int32(common.STATE_ACTIVE.Number()),
 				Status:           int32(common.STATUS_IN_PROCESS.Number()),
@@ -430,9 +428,9 @@ func Test_notificationBusiness_Status(t *testing.T) {
 			},
 			args: args{
 				ctx: ctx,
-				statusReq:  &notificationV1.StatusRequest{
-					ID: "testingQueue_out",
-					AccessID:  "testingAccessData",
+				statusReq: &notificationV1.StatusRequest{
+					ID:       "testingQueue_out",
+					AccessID: "testingAccessData",
 				},
 			},
 			wantErr: false,
@@ -442,7 +440,6 @@ func Test_notificationBusiness_Status(t *testing.T) {
 				Status: common.STATUS_SUCCESSFUL,
 			},
 		},
-
 	}
 	for _, tt := range tests {
 
@@ -456,14 +453,13 @@ func Test_notificationBusiness_Status(t *testing.T) {
 
 			releaseDate := time.Now()
 			n := models.Notification{
-				ContactID: "epochTesting",
-				Message:      "Hello we are just testing statuses out",
-				AccessID:  "testingAccessData",
+				ContactID:        "epochTesting",
+				Message:          "Hello we are just testing statuses out",
+				AccessID:         "testingAccessData",
 				NotificationType: "email",
 				State:            int32(common.STATE_DELETED.Number()),
 				Status:           int32(common.STATUS_SUCCESSFUL.Number()),
 				ReleasedAt:       &releaseDate,
-
 			}
 			n.PartitionID = "test_partition-id"
 
@@ -520,19 +516,19 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 			},
 			args: args{
 				ctx: ctx,
-				statusReq:  &notificationV1.StatusUpdateRequest{
-					ID: "testingQueue_out",
-					AccessID:  "testingAccessData",
-					State: common.STATE_INACTIVE,
-					Status: common.STATUS_SUCCESSFUL,
+				statusReq: &notificationV1.StatusUpdateRequest{
+					ID:         "testingQueue_out",
+					AccessID:   "testingAccessData",
+					State:      common.STATE_INACTIVE,
+					Status:     common.STATUS_SUCCESSFUL,
 					ExternalID: "total_externalization",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
-				ID:     "c2f4j7au6s7f91uqnojg",
-				State:  common.STATE_INACTIVE,
-				Status: common.STATUS_SUCCESSFUL,
+				ID:         "c2f4j7au6s7f91uqnojg",
+				State:      common.STATE_INACTIVE,
+				Status:     common.STATUS_SUCCESSFUL,
 				ExternalID: "total_externalization",
 			},
 		},
@@ -547,14 +543,13 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 
 			releaseDate := time.Now()
 			n := models.Notification{
-				ContactID: "epochTesting",
-				Message:      "Hello we are just testing statuses out",
-				AccessID:  "testingAccessData",
+				ContactID:        "epochTesting",
+				Message:          "Hello we are just testing statuses out",
+				AccessID:         "testingAccessData",
 				NotificationType: "email",
 				State:            int32(common.STATE_ACTIVE.Number()),
 				Status:           int32(common.STATUS_IN_PROCESS.Number()),
 				ReleasedAt:       &releaseDate,
-
 			}
 			n.PartitionID = "test_partition-id"
 
@@ -586,5 +581,3 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 		})
 	}
 }
-
-
