@@ -23,23 +23,6 @@ type notificationBusiness struct {
 	partitionCli *partitionV1.PartitionClient
 }
 
-func (nb *notificationBusiness) getNotificationRepo(ctx context.Context) repository.NotificationRepository {
-	return repository.NewNotificationRepository(ctx, nb.service)
-
-}
-
-func (nb *notificationBusiness) getTemplateRepo(ctx context.Context) repository.TemplateRepository {
-	return repository.NewTemplateRepository(ctx, nb.service)
-}
-
-func (nb *notificationBusiness) getLanguageRepo(ctx context.Context) repository.LanguageRepository {
-	return repository.NewLanguageRepository(ctx, nb.service)
-}
-
-func (nb *notificationBusiness) getChannelRepo(ctx context.Context) repository.RouteRepository {
-	return repository.NewRouteRepository(ctx, nb.service)
-}
-
 func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessId string) (frame.BaseModel, error) {
 
 	access, err := nb.partitionCli.GetAccessById(ctx, accessId)
@@ -81,7 +64,9 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	if languageCode == "" {
 		languageCode = defaultLanguageCode
 	}
-	language, err := nb.getLanguageRepo(ctx).GetByCode(languageCode)
+
+	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
+	language, err := languageRepo.GetByCode(languageCode)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +91,8 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	}
 
 	if message.GetTemplete() != "" {
-		template, err := nb.getTemplateRepo(ctx).GetByNamePartitionIDAndLanguageID(
+		templateRepo := repository.NewTemplateRepository(ctx, nb.service)
+		template, err := templateRepo.GetByNamePartitionIDAndLanguageID(
 			message.GetTemplete(), partition.PartitionID, language.ID)
 		if err != nil {
 			return nil, err
@@ -196,7 +182,8 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificat
 		return nil, err
 	}
 
-	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
+	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
+	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +203,8 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 		return nil, err
 	}
 
-	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
+	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
+	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +233,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 	}
 
 	//TODO: create a ledger of status changes
-	err = nb.getNotificationRepo(ctx).Save(n)
+	err = notificationRepo.Save(n)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +253,8 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		return nil, err
 	}
 
-	n, err := nb.getNotificationRepo(ctx).GetByPartitionAndID(partition.PartitionID, releaseReq.GetID())
+	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
+	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, releaseReq.GetID())
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +280,8 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest, str
 		return err
 	}
 
-	notificationList, err := nb.getNotificationRepo(stream.Context()).SearchByPartition(partition.PartitionID, search.GetQuery())
+	notificationRepo := repository.NewNotificationRepository(stream.Context(), nb.service)
+	notificationList, err := notificationRepo.SearchByPartition(partition.PartitionID, search.GetQuery())
 	if err != nil {
 		return err
 	}
