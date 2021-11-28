@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/antinvestor/apis v1.1.0
-	github.com/antinvestor/service-notification-api v1.1.7
+	github.com/antinvestor/service-notification-api v1.1.8
 	github.com/antinvestor/service-partition-api v1.0.9
 	github.com/antinvestor/service-profile-api v1.0.4
 	github.com/golang/mock v1.6.0

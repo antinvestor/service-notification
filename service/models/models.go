@@ -66,19 +66,25 @@ type Notification struct {
 
 	Message string `gorm:"type:text"`
 
+	ReleasedAt *time.Time
+	State      int32
 	TransientID string `gorm:"type:varchar(50)"`
 	ExternalID  string `gorm:"type:varchar(50)"`
-	Extra       datatypes.JSONMap
-	ReleasedAt  *time.Time
-	State       int32
-	Status      int32
+
+	StatusID string `gorm:"type:varchar(50)"`
 }
 
 func (model *Notification) IsReleased() bool {
 	return model.ReleasedAt != nil && !model.ReleasedAt.IsZero()
 }
 
-func (model *Notification) ToNotificationApi() *notificationV1.Notification {
+func (model *Notification) ToNotificationApi(status *NotificationStatus) *notificationV1.Notification {
+
+	extra := make(map[string]string)
+	if model.IsReleased() {
+		extra["ReleaseDate"] = model.ReleasedAt.String()
+	}
+
 	notification := notificationV1.Notification{
 		ID:          model.ID,
 		AccessID:    model.AccessID,
@@ -91,26 +97,38 @@ func (model *Notification) ToNotificationApi() *notificationV1.Notification {
 		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),
 		RouteID:     model.RouteID,
-		Status:      model.ToStatusApi(),
+		Status:      status.ToStatusApi(),
+		Extras:      extra,
 	}
 	return &notification
 }
 
-func (model *Notification) ToStatusApi() *notificationV1.StatusResponse {
+// NotificationStatus table holding all the statuses of notifications in our system
+type NotificationStatus struct {
+	frame.BaseModel
+	NotificationID string `gorm:"type:varchar(50)"`
 
-	releaseDate := ""
-	if model.IsReleased() {
-		releaseDate = model.ReleasedAt.String()
-	}
+	TransientID string `gorm:"type:varchar(50)"`
+	ExternalID  string `gorm:"type:varchar(50)"`
+	Extra       datatypes.JSONMap
+	State       int32
+	Status      int32
+}
+
+func (model *NotificationStatus) ToStatusApi() *notificationV1.StatusResponse {
+
+	extra := frame.DBPropertiesToMap(model.Extra)
+	extra["CreatedAt"] = model.CreatedAt.String()
+	extra["StatusID"] = model.ID
+
 
 	status := notificationV1.StatusResponse{
-		ID:          model.ID,
+		ID:          model.NotificationID,
 		State:       common.STATE(model.State),
 		Status:      common.STATUS(model.Status),
 		TransientID: model.TransientID,
 		ExternalID:  model.ExternalID,
-		Extras:      frame.DBPropertiesToMap(model.Extra),
-		ReleaseDate: releaseDate,
+		Extras:      extra,
 	}
 
 	return &status

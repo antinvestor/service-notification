@@ -54,8 +54,6 @@ func (e *NotificationSave) Validate(ctx context.Context, payload interface{}) er
 func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) error {
 
 	notification := payload.(*models.Notification)
-	notification.State = int32(common.STATE_ACTIVE)
-	notification.Status = int32(common.STATUS_UNKNOWN)
 	err := e.Service.DB(ctx, false).Save(notification).Error
 
 	if err != nil {
@@ -77,6 +75,61 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+type NotificationStatusSave struct {
+	Service *frame.Service
+}
+
+func (e *NotificationStatusSave) Name() string {
+	return "notificationStatus.save"
+}
+
+func (e *NotificationStatusSave) PayloadType() interface{} {
+	return &models.NotificationStatus{}
+}
+
+func (e *NotificationStatusSave) Validate(ctx context.Context, payload interface{}) error {
+	notificationStatus, ok := payload.(*models.NotificationStatus)
+	if !ok {
+		return errors.New(" payload is not of type models.NotificationStatus")
+	}
+
+	if notificationStatus.GetID() == "" {
+		return errors.New(" notificationStatus Id should already have been set ")
+	}
+
+	return nil
+}
+
+func (e *NotificationStatusSave) Execute(ctx context.Context, payload interface{}) error {
+
+	nStatus := payload.(*models.NotificationStatus)
+
+	err := e.Service.DB(ctx, false).Save(nStatus).Error
+
+	if err != nil {
+		return err
+	}
+
+	notificationRepo := repository.NewNotificationRepository(ctx, e.Service)
+	n, err := notificationRepo.GetByID(nStatus.NotificationID)
+	if err != nil {
+		return err
+	}
+
+	n.StatusID = nStatus.ID
+	n.State = nStatus.State
+	if n.TransientID == "" {
+		n.TransientID = nStatus.TransientID
+	}
+
+	err = notificationRepo.Save(n)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -135,8 +188,6 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 		return err
 	}
 
-	n.State = int32(common.STATE_ACTIVE)
-	n.Status = int32(common.STATUS_QUEUED)
 	err = notificationRepo.Save(n)
 	if err != nil {
 		return err
@@ -144,6 +195,21 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 
 	evt := NotificationOutQueue{}
 	err = event.Service.Emit(ctx, evt.Name(), n.GetID())
+	if err != nil {
+		return err
+	}
+
+	nStatus := models.NotificationStatus{
+		NotificationID: n.GetID(),
+		State:          int32(common.STATE_ACTIVE),
+		Status:         int32(common.STATUS_QUEUED),
+	}
+
+	nStatus.GenID(ctx)
+
+	// Queue out notification status for further processing
+	eventStatus := NotificationStatusSave{}
+	err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
 	if err != nil {
 		return err
 	}
@@ -252,10 +318,22 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	log.Info(" Message details : %s", templateMap)
 	log.Info("===========================================================")
 
-	n.State = int32(common.STATE_ACTIVE)
-	n.Status = int32(common.STATUS_IN_PROCESS)
-
 	err = notificationRepo.Save(n)
+	if err != nil {
+		return err
+	}
+
+	nStatus := models.NotificationStatus{
+		NotificationID: n.GetID(),
+		State:          int32(common.STATE_ACTIVE),
+		Status:         int32(common.STATUS_IN_PROCESS),
+	}
+
+	nStatus.GenID(ctx)
+
+	// Queue out notification status for further processing
+	eventStatus := NotificationStatusSave{}
+	err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
 	if err != nil {
 		return err
 	}
