@@ -49,8 +49,6 @@ type Language struct {
 type Notification struct {
 	frame.BaseModel
 
-	AccessID string `gorm:"type:varchar(50)"`
-
 	ProfileID string `gorm:"type:varchar(50)"`
 	ContactID string `gorm:"type:varchar(50)"`
 
@@ -66,8 +64,8 @@ type Notification struct {
 
 	Message string `gorm:"type:text"`
 
-	ReleasedAt *time.Time
-	State      int32
+	ReleasedAt  *time.Time
+	State       int32
 	TransientID string `gorm:"type:varchar(50)"`
 	ExternalID  string `gorm:"type:varchar(50)"`
 
@@ -120,7 +118,6 @@ func (model *NotificationStatus) ToStatusApi() *notificationV1.StatusResponse {
 	extra := frame.DBPropertiesToMap(model.Extra)
 	extra["CreatedAt"] = model.CreatedAt.String()
 	extra["StatusID"] = model.ID
-
 
 	status := notificationV1.StatusResponse{
 		ID:          model.NotificationID,

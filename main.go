@@ -50,7 +50,7 @@ func main() {
 		migrationPath := frame.GetEnv(config.EnvMigrationPath, "./migrations/0001")
 		err := service.MigrateDatastore(ctx, migrationPath,
 			models.Route{}, models.Language{}, models.Templete{},
-			models.TempleteData{}, models.Notification{})
+			models.TempleteData{}, models.Notification{}, models.NotificationStatus{})
 
 		if err != nil {
 			log.Fatal("main -- Could not migrate successfully because : %v", err)
@@ -97,7 +97,9 @@ func main() {
 	serviceOptions = append(serviceOptions, grpcServerOpt)
 
 	serviceOptions = append(serviceOptions,
-		frame.RegisterEvents(&events.NotificationSave{Service: service},
+		frame.RegisterEvents(
+			&events.NotificationSave{Service: service},
+			&events.NotificationStatusSave{Service: service},
 			&events.NotificationInRoute{Service: service},
 			&events.NotificationOutRoute{Service: service, ProfileCli: profileCli},
 			&events.NotificationOutQueue{Service: service, ProfileCli: profileCli}))

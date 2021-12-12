@@ -71,18 +71,9 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-	nStatus := models.NotificationStatus{
-		State : int32(common.STATE_CREATED.Number()),
-		Status : int32(common.STATUS_QUEUED.Number()),
-		TransientID: message.GetID(),
-	}
-
-	nStatus.GenID(ctx)
-
 	n := models.Notification{
 
 		TransientID: message.GetID(),
-		AccessID:    message.GetAccessID(),
 		BaseModel:   partition,
 		ContactID:   message.GetContactID(),
 
@@ -93,9 +84,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		Message: message.GetData(),
 
 		NotificationType: message.GetType(),
-		State:            nStatus.State,
 		ReleasedAt:       &releaseDate,
-		StatusID: nStatus.GetID(),
 	}
 
 	if message.GetTemplete() != "" {
@@ -115,6 +104,14 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	} else {
 		n.GenID(ctx)
 	}
+
+	nStatus := models.NotificationStatus{
+		NotificationID: n.GetID(),
+		State:          int32(common.STATE_CREATED.Number()),
+		Status:         int32(common.STATUS_QUEUED.Number()),
+	}
+
+	nStatus.GenID(ctx)
 
 	// Queue out message for further processing
 	event := events.NotificationSave{}
@@ -147,19 +144,10 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 
 	releaseDate := time.Now()
 
-	nStatus := models.NotificationStatus{
-		State : int32(common.STATE_CREATED.Number()),
-		Status : int32(common.STATUS_QUEUED.Number()),
-		TransientID: message.GetID(),
-	}
-	nStatus.GenID(ctx)
-
-
 	n := models.Notification{
 
-		ExternalID: message.GetID(),
-		AccessID:   message.GetAccessID(),
-		BaseModel:  partition,
+		TransientID: message.GetID(),
+		BaseModel:   partition,
 
 		ContactID: message.GetContactID(),
 
@@ -172,8 +160,6 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		Message:          message.GetData(),
 		NotificationType: message.GetType(),
 		ReleasedAt:       &releaseDate,
-
-		State:  nStatus.State,
 	}
 
 	if n.ValidXID(message.GetID()) {
@@ -182,13 +168,19 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		n.GenID(ctx)
 	}
 
+	nStatus := models.NotificationStatus{
+		NotificationID: n.GetID(),
+		State:          int32(common.STATE_CREATED.Number()),
+		Status:         int32(common.STATUS_QUEUED.Number()),
+	}
+	nStatus.GenID(ctx)
+
 	// Queue in message for further processing
 	event := events.NotificationSave{}
 	err = nb.service.Emit(ctx, event.Name(), n)
 	if err != nil {
 		return nil, err
 	}
-
 
 	// Queue out notification status for further processing
 	eventStatus := events.NotificationStatusSave{}
@@ -220,6 +212,9 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificat
 
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
 	nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
+	if err != nil {
+		return nil, err
+	}
 	return nStatus.ToStatusApi(), nil
 }
 
@@ -244,11 +239,10 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
-		State : int32(statusReq.GetState()),
-		Status : int32(statusReq.GetStatus()),
-		ExternalID : statusReq.GetExternalID(),
-		Extra: frame.DBPropertiesFromMap(statusReq.GetExtras()),
-
+		State:          int32(statusReq.GetState()),
+		Status:         int32(statusReq.GetStatus()),
+		ExternalID:     statusReq.GetExternalID(),
+		Extra:          frame.DBPropertiesFromMap(statusReq.GetExtras()),
 	}
 
 	nStatus.GenID(ctx)
@@ -284,12 +278,39 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	if !n.IsReleased() {
 		releaseDate := time.Now()
 		n.ReleasedAt = &releaseDate
+
+		event := events.NotificationSave{}
+		err = nb.service.Emit(ctx, event.Name(), n)
+		if err != nil {
+			return nil, err
+		}
+
+		nStatus := models.NotificationStatus{
+			NotificationID: n.GetID(),
+			State:          int32(common.STATE_ACTIVE.Number()),
+			Status:         int32(common.STATUS_QUEUED.Number()),
+		}
+
+		nStatus.GenID(ctx)
+
+		// Release notification status save for further processing
+		eventStatus := events.NotificationStatusSave{}
+		err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
+		if err != nil {
+			return nil, err
+		}
+
+		return nStatus.ToStatusApi(), nil
+	} else {
+
+		notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
+		nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
+		if err != nil {
+			return nil, err
+		}
+
+		return nStatus.ToStatusApi(), nil
 	}
-
-	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
-	nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
-	return nStatus.ToStatusApi(), nil
-
 }
 
 func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error {

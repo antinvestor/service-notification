@@ -21,7 +21,8 @@ func getService(ctx context.Context, serviceName string) *frame.Service {
 
 	service := frame.NewService(serviceName, testDb, frame.NoopHttpOptions())
 
-	eventList := frame.RegisterEvents(&events.NotificationSave{Service: service})
+	eventList := frame.RegisterEvents(&events.NotificationSave{Service: service},
+		&events.NotificationStatusSave{Service: service})
 	service.Init(eventList)
 	_ = service.Run(ctx, "")
 	return service
@@ -183,7 +184,7 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			}
 
 			if tt.name == "NormalWithIDQueueIn" && got.GetID() != tt.want.GetID() {
-				t.Errorf("QueueIn() expecting notification id to be reused")
+				t.Errorf("QueueIn() expecting id %s to be reused, got : %s", tt.want.GetID(), got.GetID())
 			}
 		})
 	}
@@ -271,7 +272,7 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			}
 
 			if tt.name == "NormalQueueOutWithXID" && got.GetID() != tt.want.GetID() {
-				t.Errorf("QueueOut() expecting notification id to be reused")
+				t.Errorf("QueueOut() expecting id %s to be reused, got : %s", tt.want.GetID(), got.GetID())
 			}
 		})
 	}
@@ -315,7 +316,7 @@ func Test_notificationBusiness_Release(t *testing.T) {
 			want: &notificationV1.StatusResponse{
 				ID:         "c2f4j7au6s7f91uqnojg",
 				State:      common.STATE_ACTIVE,
-				Status:     common.STATUS_IN_PROCESS,
+				Status:     common.STATUS_QUEUED,
 				ExternalID: "total_externalization",
 			},
 		},
@@ -331,11 +332,10 @@ func Test_notificationBusiness_Release(t *testing.T) {
 			n := models.Notification{
 				ContactID:        "epochTesting",
 				Message:          "Hello we are just testing statuses out",
-				AccessID:         "testingAccessData",
 				NotificationType: "email",
 				State:            int32(common.STATE_ACTIVE.Number()),
-				Status:           int32(common.STATUS_IN_PROCESS.Number()),
 			}
+			n.AccessID = "testingAccessData"
 			n.PartitionID = "test_partition-id"
 
 			nRepo := repository.NewNotificationRepository(ctx, nb.service)
@@ -358,10 +358,6 @@ func Test_notificationBusiness_Release(t *testing.T) {
 
 			if got.GetID() != n.GetID() {
 				t.Errorf("Release() expecting notification id to be reused")
-			}
-
-			if got.GetReleaseDate() == "" {
-				t.Errorf("Release() expecting notification was released, but got : %v", got.GetReleaseDate())
 			}
 
 		})
@@ -437,7 +433,7 @@ func Test_notificationBusiness_Status(t *testing.T) {
 			want: &notificationV1.StatusResponse{
 				ID:     "c2f4j7au6s7f91uqnojg",
 				State:  common.STATE_DELETED,
-				Status: common.STATUS_SUCCESSFUL,
+				Status: common.STATUS_FAILED,
 			},
 		},
 	}
@@ -451,22 +447,40 @@ func Test_notificationBusiness_Status(t *testing.T) {
 				partitionCli: tt.fields.partitionCl,
 			}
 
+			nStatus := models.NotificationStatus{
+				State:  int32(common.STATE_DELETED.Number()),
+				Status: int32(common.STATUS_FAILED.Number()),
+			}
+
+			nStatus.AccessID = "testingAccessData"
+			nStatus.PartitionID = "test_partition-id"
+			nStatus.GenID(ctx)
+
 			releaseDate := time.Now()
 			n := models.Notification{
 				ContactID:        "epochTesting",
 				Message:          "Hello we are just testing statuses out",
-				AccessID:         "testingAccessData",
 				NotificationType: "email",
-				State:            int32(common.STATE_DELETED.Number()),
-				Status:           int32(common.STATUS_SUCCESSFUL.Number()),
+				StatusID:         nStatus.GetID(),
 				ReleasedAt:       &releaseDate,
 			}
+
+			n.ID = "c2f4j7au6s7f91uqnojg"
+			n.AccessID = "testingAccessData"
 			n.PartitionID = "test_partition-id"
 
 			nRepo := repository.NewNotificationRepository(ctx, nb.service)
 			err := nRepo.Save(&n)
 			if err != nil {
 				t.Errorf("Status() error = %v could not store a notification for status checking", err)
+				return
+			}
+
+			nStatus.NotificationID = n.GetID()
+			nSRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
+			err = nSRepo.Save(&nStatus)
+			if err != nil {
+				t.Errorf("Status() error = %v could not store a notification Status for status checking", err)
 				return
 			}
 
@@ -545,12 +559,11 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 			n := models.Notification{
 				ContactID:        "epochTesting",
 				Message:          "Hello we are just testing statuses out",
-				AccessID:         "testingAccessData",
 				NotificationType: "email",
 				State:            int32(common.STATE_ACTIVE.Number()),
-				Status:           int32(common.STATUS_IN_PROCESS.Number()),
 				ReleasedAt:       &releaseDate,
 			}
+			n.AccessID = "testingAccessData"
 			n.PartitionID = "test_partition-id"
 
 			nRepo := repository.NewNotificationRepository(ctx, nb.service)
@@ -567,7 +580,7 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 				t.Errorf("StatusUpdate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got.GetStatus() != tt.want.GetStatus() || got.GetState() != tt.want.GetState() {
+			if got.GetState() != tt.want.GetState() {
 				t.Errorf("Status() got = %v, want %v", got, tt.want)
 			}
 
