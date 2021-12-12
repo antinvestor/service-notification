@@ -62,12 +62,30 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 
 	if notification.OutBound {
 
-		event := NotificationOutRoute{}
-		err = e.Service.Emit(ctx, event.Name(), notification.GetID())
-		if err != nil {
-			return err
-		}
+		if notification.IsReleased() {
 
+			event := NotificationOutRoute{}
+			err = e.Service.Emit(ctx, event.Name(), notification.GetID())
+			if err != nil {
+				return err
+			}
+		} else {
+			nStatus := models.NotificationStatus{
+				NotificationID: notification.GetID(),
+				State:          int32(common.STATE_CHECKED.Number()),
+				Status:         int32(common.STATUS_QUEUED.Number()),
+			}
+
+			nStatus.GenID(ctx)
+
+			// Queue out notification status for further processing
+			eventStatus := NotificationStatusSave{}
+			err = e.Service.Emit(ctx, eventStatus.Name(), nStatus)
+			if err != nil {
+				return err
+			}
+
+		}
 	} else {
 
 		event := NotificationInRoute{}
