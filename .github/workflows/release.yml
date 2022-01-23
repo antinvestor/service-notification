@@ -12,6 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - shell: bash
+        env:
+          SUPER_SECRET: ${{ secrets.CR_PAT }}
+        run: |
+            echo "$SUPER_SECRET"
       - name: Checkout code for performing a release
         uses: actions/checkout@v2
 
