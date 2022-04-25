@@ -11,8 +11,8 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/pitabwire/frame v1.7.10
 	google.golang.org/grpc v1.46.0
-	gorm.io/datatypes v1.0.2
-	gorm.io/gorm v1.21.16
+	gorm.io/datatypes v1.0.6
+	gorm.io/gorm v1.23.2
 )
 
 require (
@@ -22,6 +22,7 @@ require (
 	github.com/cloudevents/sdk-go/v2 v2.9.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.7 // indirect
+	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -38,7 +39,7 @@ require (
 	github.com/jackc/pgtype v1.10.0 // indirect
 	github.com/jackc/pgx/v4 v4.15.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.2 // indirect
+	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/lib/pq v1.10.4 // indirect
@@ -64,6 +65,7 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220401170504-314d38edb7de // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
-	gorm.io/driver/postgres v1.1.2 // indirect
+	gorm.io/driver/mysql v1.3.2 // indirect
+	gorm.io/driver/postgres v1.3.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
