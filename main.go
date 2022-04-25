@@ -65,7 +65,7 @@ func main() {
 	audienceList := make([]string, 0)
 	oauth2ServiceAudience := frame.GetEnv(config.EnvOauth2ServiceAudience, "")
 	if oauth2ServiceAudience != "" {
-		audienceList = strings.Split(oauth2ServiceAudience, "")
+		audienceList = strings.Split(oauth2ServiceAudience, ",")
 	}
 
 	profileServiceURL := frame.GetEnv(config.EnvProfileServiceURI, "127.0.0.1:7005")
