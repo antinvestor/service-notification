@@ -3,10 +3,10 @@ module github.com/antinvestor/service-notification
 go 1.17
 
 require (
-	github.com/antinvestor/apis v1.1.11
-	github.com/antinvestor/service-notification-api v1.1.15
-	github.com/antinvestor/service-partition-api v1.0.18
-	github.com/antinvestor/service-profile-api v1.0.12
+	github.com/antinvestor/apis v1.1.12
+	github.com/antinvestor/service-notification-api v1.1.16
+	github.com/antinvestor/service-partition-api v1.0.19
+	github.com/antinvestor/service-profile-api v1.0.13
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/pitabwire/frame v1.7.10
