@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	partitionV1 "github.com/antinvestor/service-partition-api"
+	"strings"
 
 	"github.com/antinvestor/apis"
 	notificationV1 "github.com/antinvestor/service-notification-api"
@@ -30,13 +31,13 @@ func main() {
 
 	ctx := context.Background()
 
-	datasource := frame.GetEnv(config.EnvDatabaseUrl, "postgres://ant:@nt@localhost/service_notification")
-	mainDb := frame.Datastore(ctx, datasource, false)
+	datasource := frame.GetEnv(config.EnvDatabaseURL, "postgres://ant:@nt@localhost/service_notification")
+	mainDB := frame.Datastore(ctx, datasource, false)
 
-	readOnlydatasource := frame.GetEnv(config.EnvReplicaDatabaseUrl, datasource)
-	readDb := frame.Datastore(ctx, readOnlydatasource, true)
+	readOnlydatasource := frame.GetEnv(config.EnvReplicaDatabaseURL, datasource)
+	readDB := frame.Datastore(ctx, readOnlydatasource, true)
 
-	service := frame.NewService(serviceName, mainDb, readDb)
+	service := frame.NewService(serviceName, mainDB, readDB)
 	log := service.L()
 
 	isMigration, err := strconv.ParseBool(frame.GetEnv(config.EnvMigrate, "false"))
@@ -46,7 +47,6 @@ func main() {
 
 	stdArgs := os.Args[1:]
 	if (len(stdArgs) > 0 && stdArgs[0] == "migrate") || isMigration {
-
 		migrationPath := frame.GetEnv(config.EnvMigrationPath, "./migrations/0001")
 		err := service.MigrateDatastore(ctx, migrationPath,
 			models.Route{}, models.Language{}, models.Templete{},
@@ -56,17 +56,37 @@ func main() {
 			log.Fatal("main -- Could not migrate successfully because : %v", err)
 		}
 		return
-
 	}
 
-	profileServiceUrl := frame.GetEnv(config.EnvProfileServiceUri, "127.0.0.1:7005")
-	profileCli, err := profileV1.NewProfileClient(ctx, apis.WithEndpoint(profileServiceUrl))
+	oauth2ServiceHost := frame.GetEnv(config.EnvOauth2ServiceURI, "")
+	oauth2ServiceURL := fmt.Sprintf("%s/oauth2/token", oauth2ServiceHost)
+	oauth2ServiceSecret := frame.GetEnv(config.EnvOauth2ServiceClientSecret, "")
+
+	audienceList := make([]string, 0)
+	oauth2ServiceAudience := frame.GetEnv(config.EnvOauth2ServiceAudience, "")
+	if oauth2ServiceAudience != "" {
+		audienceList = strings.Split(oauth2ServiceAudience, "")
+	}
+
+	profileServiceURL := frame.GetEnv(config.EnvProfileServiceURI, "127.0.0.1:7005")
+	profileCli, err := profileV1.NewProfileClient(ctx,
+		apis.WithEndpoint(profileServiceURL),
+		apis.WithTokenEndpoint(oauth2ServiceURL),
+		apis.WithTokenUsername(serviceName),
+		apis.WithTokenPassword(oauth2ServiceSecret),
+		apis.WithAudiences(audienceList...))
 	if err != nil {
 		log.Fatal("main -- Could not setup profile client : %v", err)
 	}
 
-	partitionServiceUrl := frame.GetEnv(config.EnvPartitionServiceUri, "127.0.0.1:7003")
-	partitionCli, err := partitionV1.NewPartitionsClient(ctx, apis.WithEndpoint(partitionServiceUrl))
+	partitionServiceURL := frame.GetEnv(config.EnvPartitionServiceURI, "127.0.0.1:7003")
+	partitionCli, err := partitionV1.NewPartitionsClient(
+		ctx,
+		apis.WithEndpoint(partitionServiceURL),
+		apis.WithTokenEndpoint(oauth2ServiceURL),
+		apis.WithTokenUsername(serviceName),
+		apis.WithTokenPassword(oauth2ServiceSecret),
+		apis.WithAudiences(audienceList...))
 	if err != nil {
 		log.Fatal("main -- Could not setup partition client : %v", err)
 	}
@@ -107,11 +127,9 @@ func main() {
 	service.Init(serviceOptions...)
 
 	serverPort := frame.GetEnv(config.EnvServerPort, "7020")
-
 	log.Info(" main -- Initiating server operations on : %s", serverPort)
 	err = implementation.Service.Run(ctx, fmt.Sprintf(":%v", serverPort))
 	if err != nil {
 		log.Fatal("main -- Could not run Server : %v", err)
 	}
-
 }
