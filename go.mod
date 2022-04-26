@@ -12,7 +12,7 @@ require (
 	github.com/pitabwire/frame v1.7.12
 	google.golang.org/grpc v1.46.0
 	gorm.io/datatypes v1.0.6
-	gorm.io/gorm v1.23.2
+	gorm.io/gorm v1.23.5
 )
 
 require (
