@@ -12,7 +12,6 @@ type NotificationStatusRepository interface {
 	GetByID(id string) (*models.NotificationStatus, error)
 	GetByNotificationID(notificationId string) ([]models.NotificationStatus, error)
 	Save(notification *models.NotificationStatus) error
-
 }
 
 type notificationStatusRepository struct {
@@ -23,7 +22,6 @@ type notificationStatusRepository struct {
 func NewNotificationStatusRepository(ctx context.Context, service *frame.Service) NotificationStatusRepository {
 	return &notificationStatusRepository{readDb: service.DB(ctx, true), writeDb: service.DB(ctx, false)}
 }
-
 
 func (repo *notificationStatusRepository) GetByID(id string) (*models.NotificationStatus, error) {
 	notificationStatus := models.NotificationStatus{}
@@ -38,7 +36,7 @@ func (repo *notificationStatusRepository) GetByNotificationID(notificationId str
 	var notificationStatusList []models.NotificationStatus
 
 	err := repo.readDb.Find(&notificationStatusList,
-		"notification_id = ? ",	notificationId).Error
+		"notification_id = ? ", notificationId).Error
 	if err != nil {
 		return nil, err
 	}

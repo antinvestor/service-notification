@@ -13,7 +13,6 @@ type NotificationRepository interface {
 	GetByPartitionAndID(partitionId string, id string) (*models.Notification, error)
 	SearchByPartition(partitionId string, query string) ([]models.Notification, error)
 	Save(notification *models.Notification) error
-
 }
 
 type notificationRepository struct {
