@@ -335,7 +335,6 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest, str
 	}
 
 	for _, n := range notificationList {
-
 		nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
 		if err != nil {
 			return err
