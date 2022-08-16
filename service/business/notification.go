@@ -23,9 +23,8 @@ type notificationBusiness struct {
 	partitionCli *partitionV1.PartitionClient
 }
 
-func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessId string) (frame.BaseModel, error) {
-
-	access, err := nb.partitionCli.GetAccessById(ctx, accessId)
+func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID string) (frame.BaseModel, error) {
+	access, err := nb.partitionCli.GetAccessById(ctx, accessID)
 	if err != nil {
 		return frame.BaseModel{}, err
 	}
@@ -39,7 +38,7 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessId s
 	return frame.BaseModel{
 		TenantID:    partition.TenantId,
 		PartitionID: partition.PartitionId,
-		AccessID:    accessId,
+		AccessID:    accessID,
 	}, nil
 }
 

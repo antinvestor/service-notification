@@ -42,18 +42,19 @@ func (repo *notificationRepository) GetByID(id string) (*models.Notification, er
 	return &notification, nil
 }
 
-func (repo *notificationRepository) SearchByPartition(partitionId string, query string) ([]models.Notification, error) {
+func (repo *notificationRepository) SearchByPartition(partitionID string, query string) ([]models.Notification, error) {
 	var notifications []models.Notification
-
-	err := repo.readDb.Find(&notifications,
-		"partition_id = ? AND (id ILIKE ? OR external_id ILIKE ? OR transient_id ILIKE ?)",
-		partitionId, query, query, query).Error
+	notificationQuery := repo.readDb.Where("partition_id = ?", partitionID)
+	if query != "" {
+		notificationQuery = notificationQuery.
+			Where(" id ILIKE ? OR external_id ILIKE ? OR transient_id ILIKE ?", query, query, query)
+	}
+	err := notificationQuery.Find(&notifications).Error
 	if err != nil {
 		return nil, err
 	}
 	return notifications, nil
 }
-
 func (repo *notificationRepository) Save(notification *models.Notification) error {
 	return repo.writeDb.Save(notification).Error
 }
