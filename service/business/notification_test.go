@@ -365,7 +365,15 @@ func Test_notificationBusiness_Release(t *testing.T) {
 }
 
 func Test_notificationBusiness_Search(t *testing.T) {
-	//ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+
+	nsSs := notificationV1.NewMockNotificationService_SearchServer(ctrl)
+	nsSs.EXPECT().Context().Return(ctx).AnyTimes()
+	nsSs.EXPECT().Send(gomock.Any()).AnyTimes()
 
 	type fields struct {
 		service     *frame.Service
@@ -382,7 +390,19 @@ func Test_notificationBusiness_Search(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Normal Search",
+			fields: fields{
+				service:     getService(ctx, "NormalSearchTest"),
+				profileCli:  getProfileCli(t),
+				partitionCl: getPartitionCli(t),
+			},
+			args: args{
+				search: &notificationV1.SearchRequest{Query: "", AccessID: "testingAccessData"},
+				stream: nsSs,
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -391,6 +411,22 @@ func Test_notificationBusiness_Search(t *testing.T) {
 				profileCli:   tt.fields.profileCli,
 				partitionCli: tt.fields.partitionCl,
 			}
+
+			n := models.Notification{
+				ContactID:        "epochTesting",
+				Message:          "Hello we are just testing statuses out",
+				NotificationType: "email",
+				State:            int32(common.STATE_ACTIVE.Number()),
+			}
+			n.AccessID = tt.args.search.GetAccessID()
+			n.PartitionID = "test_partition-id"
+			nRepo := repository.NewNotificationRepository(ctx, nb.service)
+			err := nRepo.Save(&n)
+			if err != nil {
+				t.Errorf("Search() error = %v could not store a notification", err)
+				return
+			}
+
 			if err := nb.Search(tt.args.search, tt.args.stream); (err != nil) != tt.wantErr {
 				t.Errorf("Search() error = %v, wantErr %v", err, tt.wantErr)
 			}

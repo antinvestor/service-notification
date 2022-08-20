@@ -312,8 +312,8 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	}
 }
 
-func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error {
-
+func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
+	stream notificationV1.NotificationService_SearchServer) error {
 	err := search.Validate()
 	if err != nil {
 		return err
@@ -334,9 +334,12 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest, str
 	}
 
 	for _, n := range notificationList {
-		nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
-		if err != nil {
-			return err
+		nStatus := &models.NotificationStatus{}
+		if n.StatusID != "" {
+			nStatus, err = notificationStatusRepo.GetByID(n.StatusID)
+			if err != nil {
+				return err
+			}
 		}
 
 		result := n.ToNotificationApi(nStatus)

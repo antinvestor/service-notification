@@ -10,8 +10,8 @@ import (
 
 type NotificationRepository interface {
 	GetByID(id string) (*models.Notification, error)
-	GetByPartitionAndID(partitionId string, id string) (*models.Notification, error)
-	SearchByPartition(partitionId string, query string) ([]models.Notification, error)
+	GetByPartitionAndID(partitionID string, id string) (*models.Notification, error)
+	SearchByPartition(partitionID string, query string) ([]models.Notification, error)
 	Save(notification *models.Notification) error
 }
 
