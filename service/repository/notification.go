@@ -49,6 +49,7 @@ func (repo *notificationRepository) SearchByPartition(partitionID string, query 
 		notificationQuery = notificationQuery.
 			Where(" id ILIKE ? OR external_id ILIKE ? OR transient_id ILIKE ?", query, query, query)
 	}
+
 	err := notificationQuery.Find(&notifications).Error
 	if err != nil {
 		return nil, err

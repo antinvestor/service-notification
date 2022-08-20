@@ -13,6 +13,7 @@ import (
 	partitionV1 "github.com/antinvestor/service-partition-api"
 	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
+	log "github.com/sirupsen/logrus"
 )
 
 const defaultLanguageCode = "en"
@@ -43,14 +44,18 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID s
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
+	logger := log.WithField("request", message)
+	logger.Info("handling request")
 
 	err := message.Validate()
 	if err != nil {
+		logger.WithError(err).Warn("failed validation")
 		return nil, err
 	}
 
 	partition, err := nb.getPartitionData(ctx, message.GetAccessID())
 	if err != nil {
+		logger.WithError(err).Warn("could not get partition data")
 		return nil, err
 	}
 
@@ -67,6 +72,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
 	language, err := languageRepo.GetByCode(languageCode)
 	if err != nil {
+		logger.WithError(err).Warn("could not get language")
 		return nil, err
 	}
 
@@ -91,6 +97,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		template, err := templateRepo.GetByNamePartitionIDAndLanguageID(
 			message.GetTemplete(), partition.PartitionID, language.ID)
 		if err != nil {
+			logger.WithError(err).Warn("could not get template")
 			return nil, err
 		}
 
@@ -116,6 +123,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	event := events.NotificationSave{}
 	err = nb.service.Emit(ctx, event.Name(), n)
 	if err != nil {
+		logger.WithError(err).Warn("could not emit event save")
 		return nil, err
 	}
 
@@ -123,6 +131,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	eventStatus := events.NotificationStatusSave{}
 	err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
 	if err != nil {
+		logger.WithError(err).Warn("could not save status")
 		return nil, err
 	}
 
@@ -130,14 +139,18 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
+	logger := log.WithField("request", message)
+	logger.Info("handling request")
 
 	err := message.Validate()
 	if err != nil {
+		logger.WithError(err).Warn("failed validation")
 		return nil, err
 	}
 
 	partition, err := nb.getPartitionData(ctx, message.GetAccessID())
 	if err != nil {
+		logger.WithError(err).Warn("could not get partition")
 		return nil, err
 	}
 
@@ -178,6 +191,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	event := events.NotificationSave{}
 	err = nb.service.Emit(ctx, event.Name(), n)
 	if err != nil {
+		logger.WithError(err).Warn("could not emit notification")
 		return nil, err
 	}
 
@@ -185,6 +199,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	eventStatus := events.NotificationStatusSave{}
 	err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
 	if err != nil {
+		logger.WithError(err).Warn("could not emit notification status")
 		return nil, err
 	}
 
@@ -192,40 +207,50 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificationV1.StatusRequest) (*notificationV1.StatusResponse, error) {
+	logger := log.WithField("request", statusReq)
+	logger.Info("handling request")
 
 	err := statusReq.Validate()
 	if err != nil {
+		logger.WithError(err).Warn("failed to validate request")
 		return nil, err
 	}
 
 	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessID())
 	if err != nil {
+		logger.WithError(err).Warn("could not get partition")
 		return nil, err
 	}
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
 	if err != nil {
+		logger.WithError(err).Warn("could not get by id")
 		return nil, err
 	}
 
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
 	nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
 	if err != nil {
+		logger.WithError(err).Warn("unable to get by status id")
 		return nil, err
 	}
 	return nStatus.ToStatusApi(), nil
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *notificationV1.StatusUpdateRequest) (*notificationV1.StatusResponse, error) {
+	logger := log.WithField("request", statusReq)
+	logger.Info("handling request")
 
 	err := statusReq.Validate()
 	if err != nil {
+		logger.WithError(err).Warn("could not validate request")
 		return nil, err
 	}
 
 	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessID())
 	if err != nil {
+		logger.WithError(err).Warn("could not get access partition")
 		return nil, err
 	}
 
@@ -233,6 +258,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 
 	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
 	if err != nil {
+		logger.WithError(err).Warn("could not get by id")
 		return nil, err
 	}
 
@@ -250,6 +276,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 	eventStatus := events.NotificationStatusSave{}
 	err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
 	if err != nil {
+		logger.WithError(err).Warn("could not save status")
 		return nil, err
 	}
 
@@ -258,19 +285,25 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*notificationV1.StatusResponse, error) {
 
+	logger := log.WithField("request", releaseReq)
+	logger.Info("handling request")
+
 	err := releaseReq.Validate()
 	if err != nil {
+		logger.WithError(err).Warn("failed request validation")
 		return nil, err
 	}
 
 	partition, err := nb.getPartitionData(ctx, releaseReq.GetAccessID())
 	if err != nil {
+		logger.WithError(err).Warn("could not get partition")
 		return nil, err
 	}
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, releaseReq.GetID())
 	if err != nil {
+		logger.WithError(err).Warn("could not fetch by id")
 		return nil, err
 	}
 
@@ -281,6 +314,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		event := events.NotificationSave{}
 		err = nb.service.Emit(ctx, event.Name(), n)
 		if err != nil {
+			logger.WithError(err).Warn("could not emit notification save")
 			return nil, err
 		}
 
@@ -296,6 +330,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		eventStatus := events.NotificationStatusSave{}
 		err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
 		if err != nil {
+			logger.WithError(err).Warn("could not emit notification status")
 			return nil, err
 		}
 
@@ -305,6 +340,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
 		nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
 		if err != nil {
+			logger.WithError(err).Warn("could not get notification status")
 			return nil, err
 		}
 
@@ -314,13 +350,20 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 
 func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 	stream notificationV1.NotificationService_SearchServer) error {
+
+	logger := log.WithField("request", search)
+
+	logger.Info("handling request")
+
 	err := search.Validate()
 	if err != nil {
+		logger.WithError(err).Warn("failed request validation")
 		return err
 	}
 
 	partition, err := nb.getPartitionData(stream.Context(), search.GetAccessID())
 	if err != nil {
+		logger.WithError(err).Warn("failed to obtain partition data")
 		return err
 	}
 
@@ -330,6 +373,7 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 
 	notificationList, err := notificationRepo.SearchByPartition(partition.PartitionID, search.GetQuery())
 	if err != nil {
+		logger.WithError(err).Warn("failed to search notifications")
 		return err
 	}
 
@@ -338,6 +382,7 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 		if n.StatusID != "" {
 			nStatus, err = notificationStatusRepo.GetByID(n.StatusID)
 			if err != nil {
+				logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status id for")
 				return err
 			}
 		}
@@ -345,7 +390,7 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 		result := n.ToNotificationApi(nStatus)
 		err = stream.Send(result)
 		if err != nil {
-			nb.service.L().Info(" Search -- unable to send a result see %v", err)
+			logger.WithError(err).Warn(" unable to send a result")
 		}
 	}
 
