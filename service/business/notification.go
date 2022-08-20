@@ -76,11 +76,44 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
+	profileId := ""
+	contactId := message.GetContactID()
+	contactData := message.GetDetail()
+	if contactData != "" {
+
+		profile, err := nb.profileCli.GetProfileByContact(ctx, contactData)
+		if err != nil {
+			logger.WithError(err).Warn("could not obtain contact")
+
+			profile, err = nb.profileCli.CreateProfileByContactAndName(ctx, contactData, "")
+			if err != nil {
+				logger.WithError(err).Warn("could not create contact")
+				return nil, err
+			}
+
+			//return nil, err
+		}
+
+		profileId = profile.GetID()
+		for _, contact := range profile.GetContacts() {
+			if contact.GetDetail() == contactData {
+				contactId = contact.GetID()
+				break
+			}
+		}
+
+	}
+
+	if err != nil {
+		logger.WithError(err).Warn("could not get/match contact")
+		return nil, err
+	}
 	n := models.Notification{
 
 		TransientID: message.GetID(),
 		BaseModel:   partition,
-		ContactID:   message.GetContactID(),
+		ContactID:   contactId,
+		ProfileID:   profileId,
 
 		LanguageID: language.GetID(),
 		OutBound:   true,

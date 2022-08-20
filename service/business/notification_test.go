@@ -130,11 +130,11 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					ID:        "justtestingId",
-					ContactID: "epochTesting",
-					OutBound:  true,
-					Data:      "Hello we are just testing things out",
-					AccessID:  "testingAccessData",
+					ID:       "justtestingId",
+					Contact:  &notificationV1.Notification_ContactID{ContactID: "epochTesting"},
+					OutBound: true,
+					Data:     "Hello we are just testing things out",
+					AccessID: "testingAccessData",
 				},
 			},
 			wantErr: false,
@@ -153,10 +153,10 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					ID:        "c2f4j7au6s7f91uqnojg",
-					ContactID: "epochTesting",
-					Data:      "Hello we are just testing things out",
-					AccessID:  "testingAccessData",
+					ID:       "c2f4j7au6s7f91uqnojg",
+					Contact:  &notificationV1.Notification_ContactID{ContactID: "epochTesting"},
+					Data:     "Hello we are just testing things out",
+					AccessID: "testingAccessData",
 				},
 			},
 			wantErr: false,
@@ -218,10 +218,10 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					ID:        "testingQueue_out",
-					ContactID: "epochTesting",
-					Data:      "Hello we are just testing things out",
-					AccessID:  "testingAccessData",
+					ID:       "testingQueue_out",
+					Contact:  &notificationV1.Notification_ContactID{ContactID: "epochTesting"},
+					Data:     "Hello we are just testing things out",
+					AccessID: "testingAccessData",
 				},
 			},
 			wantErr: false,
@@ -241,10 +241,10 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					ID:        "c2f4j7au6s7f91uqnojg",
-					ContactID: "epochTesting",
-					Data:      "Hello we are just testing things out",
-					AccessID:  "testingAccessData",
+					ID:       "c2f4j7au6s7f91uqnojg",
+					Contact:  &notificationV1.Notification_ContactID{ContactID: "epochTesting"},
+					Data:     "Hello we are just testing things out",
+					AccessID: "testingAccessData",
 				},
 			},
 			wantErr: false,

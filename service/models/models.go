@@ -86,7 +86,7 @@ func (model *Notification) ToNotificationApi(status *NotificationStatus) *notifi
 	notification := notificationV1.Notification{
 		ID:          model.ID,
 		AccessID:    model.AccessID,
-		ContactID:   model.ContactID,
+		Contact:     &notificationV1.Notification_ContactID{ContactID: model.ContactID},
 		Type:        model.NotificationType,
 		Templete:    model.TemplateID,
 		Payload:     frame.DBPropertiesToMap(model.Payload),
