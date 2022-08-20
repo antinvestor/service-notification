@@ -6,6 +6,7 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
+	"github.com/sirupsen/logrus"
 )
 
 type NotificationStatusSave struct {
@@ -34,12 +35,15 @@ func (e *NotificationStatusSave) Validate(ctx context.Context, payload interface
 }
 
 func (e *NotificationStatusSave) Execute(ctx context.Context, payload interface{}) error {
+	logger := logrus.WithField("payload", payload).WithField("type", e.Name())
+	logger.Info("handling event")
 
 	nStatus := payload.(*models.NotificationStatus)
 
 	err := e.Service.DB(ctx, false).Save(nStatus).Error
 
 	if err != nil {
+		logger.WithError(err).Warn("could not save notification status to db")
 		return err
 	}
 
@@ -57,6 +61,8 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload interface{
 
 	err = notificationRepo.Save(n)
 	if err != nil {
+		logger.WithError(err).Warn("could not save notification update to db")
+
 		return err
 	}
 

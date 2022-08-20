@@ -9,6 +9,7 @@ import (
 	"github.com/antinvestor/service-notification/service/repository"
 	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
+	"github.com/sirupsen/logrus"
 )
 
 type NotificationOutRoute struct {
@@ -35,17 +36,22 @@ func (event *NotificationOutRoute) Validate(ctx context.Context, payload interfa
 
 func (event *NotificationOutRoute) Execute(ctx context.Context, payload interface{}) error {
 
+	logger := logrus.WithField("payload", payload).WithField("type", event.Name())
+	logger.Info("handling event")
+
 	notificationId := payload.(string)
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 
 	n, err := notificationRepo.GetByID(notificationId)
 	if err != nil {
+		logger.WithError(err).Warn("could not get notification from db")
 		return err
 	}
 
 	p, err := event.ProfileCli.GetProfileByID(ctx, n.ProfileID)
 	if err != nil {
+		logger.WithError(err).Warn("could not get profile by id")
 		return err
 	}
 
@@ -61,17 +67,20 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 
 	err = event.routeNotification(ctx, n)
 	if err != nil {
+		logger.WithError(err).Warn("could not route notification")
 		return err
 	}
 
 	err = notificationRepo.Save(n)
 	if err != nil {
+		logger.WithError(err).Warn("could not save routed notification to db")
 		return err
 	}
 
 	evt := NotificationOutQueue{}
 	err = event.Service.Emit(ctx, evt.Name(), n.GetID())
 	if err != nil {
+		logger.WithError(err).Warn("could not queue out notification")
 		return err
 	}
 
@@ -87,6 +96,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 	eventStatus := NotificationStatusSave{}
 	err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
 	if err != nil {
+		logger.WithError(err).Warn("could not emit status for save")
 		return err
 	}
 
@@ -94,7 +104,6 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 }
 
 func (event *NotificationOutRoute) routeNotification(ctx context.Context, notification *models.Notification) error {
-
 	routeRepository := repository.NewRouteRepository(ctx, event.Service)
 
 	routes, err := routeRepository.GetByModeTypeAndPartitionID(

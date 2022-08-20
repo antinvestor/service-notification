@@ -13,7 +13,7 @@ import (
 	partitionV1 "github.com/antinvestor/service-partition-api"
 	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const defaultLanguageCode = "en"
@@ -44,8 +44,8 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID s
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
-	logger := log.WithField("request", message)
-	logger.Info("handling request")
+	logger := logrus.WithField("request", message)
+	logger.Info("handling queue out request")
 
 	err := message.Validate()
 	if err != nil {
@@ -139,8 +139,8 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
-	logger := log.WithField("request", message)
-	logger.Info("handling request")
+	logger := logrus.WithField("request", message)
+	logger.Info("handling queue in request")
 
 	err := message.Validate()
 	if err != nil {
@@ -207,8 +207,8 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificationV1.StatusRequest) (*notificationV1.StatusResponse, error) {
-	logger := log.WithField("request", statusReq)
-	logger.Info("handling request")
+	logger := logrus.WithField("request", statusReq)
+	logger.Info("handling status check request")
 
 	err := statusReq.Validate()
 	if err != nil {
@@ -239,8 +239,8 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificat
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *notificationV1.StatusUpdateRequest) (*notificationV1.StatusResponse, error) {
-	logger := log.WithField("request", statusReq)
-	logger.Info("handling request")
+	logger := logrus.WithField("request", statusReq)
+	logger.Info("handling status update request")
 
 	err := statusReq.Validate()
 	if err != nil {
@@ -285,8 +285,8 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*notificationV1.StatusResponse, error) {
 
-	logger := log.WithField("request", releaseReq)
-	logger.Info("handling request")
+	logger := logrus.WithField("request", releaseReq)
+	logger.Info("handling release request")
 
 	err := releaseReq.Validate()
 	if err != nil {
@@ -351,9 +351,9 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 	stream notificationV1.NotificationService_SearchServer) error {
 
-	logger := log.WithField("request", search)
+	logger := logrus.WithField("request", search)
 
-	logger.Info("handling request")
+	logger.Info("handling search request")
 
 	err := search.Validate()
 	if err != nil {
