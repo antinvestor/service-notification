@@ -22,12 +22,12 @@ func (event *NotificationOutRoute) Name() string {
 }
 
 func (event *NotificationOutRoute) PayloadType() interface{} {
-	return ""
+	pType := ""
+	return &pType
 }
 
 func (event *NotificationOutRoute) Validate(ctx context.Context, payload interface{}) error {
-	_, ok := payload.(string)
-	if !ok {
+	if _, ok := payload.(*string); !ok {
 		return errors.New(" payload is not of type string")
 	}
 
@@ -39,7 +39,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 	logger := logrus.WithField("payload", payload).WithField("type", event.Name())
 	logger.Info("handling event")
 
-	notificationId := payload.(string)
+	notificationId := *payload.(*string)
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 
