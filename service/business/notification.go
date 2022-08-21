@@ -427,5 +427,9 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 		}
 	}
 
+	logger.Info("_______________________________________________________")
+	logger.WithField("result count", len(notificationList)).Infof("_____  Sending out %d object   _______________", len(notificationList))
+	logger.Info("_______________________________________________________")
+
 	return nil
 }

@@ -373,12 +373,12 @@ func Test_notificationBusiness_Search(t *testing.T) {
 
 	nsSs := notificationV1.NewMockNotificationService_SearchServer(ctrl)
 	nsSs.EXPECT().Context().Return(ctx).AnyTimes()
-	nsSs.EXPECT().Send(gomock.Any()).AnyTimes()
 
 	type fields struct {
 		service     *frame.Service
 		profileCli  *profileV1.ProfileClient
 		partitionCl *partitionV1.PartitionClient
+		leastCount  int
 	}
 	type args struct {
 		search *notificationV1.SearchRequest
@@ -396,6 +396,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 				service:     getService(ctx, "NormalSearchTest"),
 				profileCli:  getProfileCli(t),
 				partitionCl: getPartitionCli(t),
+				leastCount:  1,
 			},
 			args: args{
 				search: &notificationV1.SearchRequest{Query: "", AccessID: "testingAccessData"},
@@ -406,6 +407,9 @@ func Test_notificationBusiness_Search(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			nsSs.EXPECT().Send(gomock.Any()).MinTimes(tt.fields.leastCount)
+
 			nb := &notificationBusiness{
 				service:      tt.fields.service,
 				profileCli:   tt.fields.profileCli,
@@ -420,6 +424,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 			}
 			n.AccessID = tt.args.search.GetAccessID()
 			n.PartitionID = "test_partition-id"
+
 			nRepo := repository.NewNotificationRepository(ctx, nb.service)
 			err := nRepo.Save(&n)
 			if err != nil {
@@ -430,6 +435,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 			if err := nb.Search(tt.args.search, tt.args.stream); (err != nil) != tt.wantErr {
 				t.Errorf("Search() error = %v, wantErr %v", err, tt.wantErr)
 			}
+
 		})
 	}
 }
