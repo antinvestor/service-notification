@@ -36,10 +36,10 @@ func (event *NotificationOutRoute) Validate(ctx context.Context, payload interfa
 
 func (event *NotificationOutRoute) Execute(ctx context.Context, payload interface{}) error {
 
-	logger := logrus.WithField("payload", payload).WithField("type", event.Name())
-	logger.Info("handling event")
-
 	notificationId := *payload.(*string)
+
+	logger := logrus.WithField("payload", notificationId).WithField("type", event.Name())
+	logger.Info("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 

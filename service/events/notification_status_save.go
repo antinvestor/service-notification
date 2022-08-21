@@ -35,10 +35,11 @@ func (e *NotificationStatusSave) Validate(ctx context.Context, payload interface
 }
 
 func (e *NotificationStatusSave) Execute(ctx context.Context, payload interface{}) error {
-	logger := logrus.WithField("payload", payload).WithField("type", e.Name())
-	logger.Info("handling event")
 
 	nStatus := payload.(*models.NotificationStatus)
+
+	logger := logrus.WithField("payload", nStatus).WithField("type", e.Name())
+	logger.Info("handling event")
 
 	err := e.Service.DB(ctx, false).Save(nStatus).Error
 
