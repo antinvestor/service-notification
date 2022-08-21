@@ -42,7 +42,7 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 	logger := logrus.WithField("payload", notification).WithField("type", e.Name())
 	logger.Info("handling event")
 
-	err := e.Service.DB(ctx, false).Clauses(clause.OnConflict{UpdateAll: true}).Create(notification).Error
+	err := e.Service.DB(ctx, false).Clauses(clause.OnConflict{DoNothing: true}).Create(notification).Error
 	if err != nil {
 		logger.WithError(err).Warn("could not save to db")
 		return err
