@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
@@ -24,9 +25,9 @@ func NewNotificationRepository(ctx context.Context, service *frame.Service) Noti
 	return &notificationRepository{readDb: service.DB(ctx, true), writeDb: service.DB(ctx, false)}
 }
 
-func (repo *notificationRepository) GetByPartitionAndID(partitionId string, id string) (*models.Notification, error) {
+func (repo *notificationRepository) GetByPartitionAndID(partitionID string, id string) (*models.Notification, error) {
 	notification := models.Notification{}
-	err := repo.readDb.First(&notification, "partition_id = ? AND id = ?", partitionId, id).Error
+	err := repo.readDb.First(&notification, "partition_id = ? AND id = ?", partitionID, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +47,10 @@ func (repo *notificationRepository) SearchByPartition(partitionID string, query 
 	var notifications []models.Notification
 	notificationQuery := repo.readDb.Where("partition_id = ?", partitionID)
 	if query != "" {
+		searchQ := fmt.Sprintf("%%%s%%", query)
+
 		notificationQuery = notificationQuery.
-			Where(" id ILIKE ? OR external_id ILIKE ? OR transient_id ILIKE ?", query, query, query)
+			Where(" id ILIKE ? OR external_id ILIKE ? OR transient_id ILIKE ?", searchQ, searchQ, searchQ)
 	}
 
 	err := notificationQuery.Find(&notifications).Error
