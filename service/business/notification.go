@@ -76,11 +76,10 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-	profileId := ""
-	contactId := message.GetContactID()
+	profileID := ""
+	contactID := message.GetContactID()
 	contactData := message.GetDetail()
 	if contactData != "" {
-
 		profile, err := nb.profileCli.GetProfileByContact(ctx, contactData)
 		if err != nil {
 			logger.WithError(err).Warn("could not obtain contact")
@@ -94,10 +93,10 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 			//return nil, err
 		}
 
-		profileId = profile.GetID()
+		profileID = profile.GetID()
 		for _, contact := range profile.GetContacts() {
 			if contact.GetDetail() == contactData {
-				contactId = contact.GetID()
+				contactID = contact.GetID()
 				break
 			}
 		}
@@ -112,8 +111,8 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 		TransientID: message.GetID(),
 		BaseModel:   partition,
-		ContactID:   contactId,
-		ProfileID:   profileId,
+		ContactID:   contactID,
+		ProfileID:   profileID,
 
 		LanguageID: language.GetID(),
 		OutBound:   true,

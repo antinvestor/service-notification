@@ -56,11 +56,15 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 
 	contact := filterContactFromProfileByID(p, n.ContactID)
 
-	templateMap, err := event.formatOutboundNotification(ctx, n)
-	if err != nil {
-		return err
+	var templateMap map[string]string
+	if n.TemplateID != "" {
+		templateMap, err = event.formatOutboundNotification(ctx, n)
+		if err != nil {
+			return err
+		}
+	} else {
+		templateMap = map[string]string{"en": n.Message}
 	}
-
 	route, err := routeRepository.GetByID(n.RouteID)
 	if err != nil {
 		return err
@@ -110,6 +114,11 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 }
 
 func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, n *models.Notification) (map[string]string, error) {
+
+	if n.TemplateID == "" {
+		return nil, errors.New("No template id specified")
+	}
+
 	templateRepository := repository.NewTemplateRepository(ctx, event.Service)
 
 	tmplDetail, err := templateRepository.GetByID(n.TemplateID)

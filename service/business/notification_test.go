@@ -16,12 +16,13 @@ import (
 )
 
 func getService(ctx context.Context, serviceName string) *frame.Service {
-	dbUrl := frame.GetEnv("TEST_DATABASE_URL", "postgres://ant:secret@localhost:5436/service_notification?sslmode=disable")
-	testDb := frame.Datastore(ctx, dbUrl, false)
+	dbURL := frame.GetEnv("TEST_DATABASE_URL", "postgres://ant:secret@localhost:5436/service_notification?sslmode=disable")
+	testDb := frame.Datastore(ctx, dbURL, false)
 
 	service := frame.NewService(serviceName, testDb, frame.NoopHttpOptions())
 
-	eventList := frame.RegisterEvents(&events.NotificationSave{Service: service},
+	eventList := frame.RegisterEvents(
+		&events.NotificationSave{Service: service},
 		&events.NotificationStatusSave{Service: service})
 	service.Init(eventList)
 	_ = service.Run(ctx, "")
@@ -359,7 +360,6 @@ func Test_notificationBusiness_Release(t *testing.T) {
 			if got.GetID() != n.GetID() {
 				t.Errorf("Release() expecting notification id to be reused")
 			}
-
 		})
 	}
 }

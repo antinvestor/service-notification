@@ -36,7 +36,6 @@ func (e *NotificationSave) Validate(ctx context.Context, payload interface{}) er
 }
 
 func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) error {
-
 	notification := payload.(*models.Notification)
 
 	logger := logrus.WithField("payload", notification).WithField("type", e.Name())
