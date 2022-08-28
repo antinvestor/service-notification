@@ -39,6 +39,12 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 	notification := payload.(*models.Notification)
 
 	logger := logrus.WithField("payload", notification).WithField("type", e.Name())
+
+	logger = logger.WithField("query", e.Service.DB(ctx, false).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		UpdateAll: true,
+	}).Create(notification).Statement.SQL.String())
+
 	logger.Info("handling event")
 
 	err := e.Service.DB(ctx, false).Clauses(clause.OnConflict{
