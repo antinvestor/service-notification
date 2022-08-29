@@ -108,9 +108,9 @@ func main() {
 		grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(
 			grpcctxtags.UnaryServerInterceptor(),
 			grpcrecovery.UnaryServerInterceptor(),
-			frame.UnaryAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer),
+			service.UnaryAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer),
 		)),
-		grpc.StreamInterceptor(frame.StreamAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer)),
+		grpc.StreamInterceptor(service.StreamAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer)),
 	)
 
 	implementation := &handlers.NotificationServer{
