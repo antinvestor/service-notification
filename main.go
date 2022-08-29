@@ -30,25 +30,28 @@ func main() {
 	serviceName := "service_notification"
 
 	ctx := context.Background()
+	var notificationConfig config.NotificationConfig
+	_ = frame.ConfigProcess("", notificationConfig)
 
-	datasource := frame.GetEnv(config.EnvDatabaseURL, "postgres://ant:@nt@localhost/service_notification")
-	mainDB := frame.Datastore(ctx, datasource, false)
-
-	readOnlydatasource := frame.GetEnv(config.EnvReplicaDatabaseURL, datasource)
-	readDB := frame.Datastore(ctx, readOnlydatasource, true)
+	mainDB := frame.Datastore(ctx, notificationConfig.DatabaseURL, false)
+	readOnlyDatasource := notificationConfig.ReplicaDatabaseURL
+	if notificationConfig.ReplicaDatabaseURL == "" {
+		readOnlyDatasource = notificationConfig.DatabaseURL
+	}
+	readDB := frame.Datastore(ctx, readOnlyDatasource, true)
 
 	service := frame.NewService(serviceName, mainDB, readDB)
+
 	log := service.L()
 
-	isMigration, err := strconv.ParseBool(frame.GetEnv(config.EnvMigrate, "false"))
+	isMigration, err := strconv.ParseBool(notificationConfig.Migrate)
 	if err != nil {
 		isMigration = false
 	}
 
 	stdArgs := os.Args[1:]
 	if (len(stdArgs) > 0 && stdArgs[0] == "migrate") || isMigration {
-		migrationPath := frame.GetEnv(config.EnvMigrationPath, "./migrations/0001")
-		err := service.MigrateDatastore(ctx, migrationPath,
+		err = service.MigrateDatastore(ctx, notificationConfig.MigrationPath,
 			models.Route{}, models.Language{}, models.Templete{},
 			models.TempleteData{}, models.Notification{}, models.NotificationStatus{})
 
@@ -58,19 +61,18 @@ func main() {
 		return
 	}
 
-	oauth2ServiceHost := frame.GetEnv(config.EnvOauth2ServiceURI, "")
+	oauth2ServiceHost := notificationConfig.Oauth2ServiceURI
 	oauth2ServiceURL := fmt.Sprintf("%s/oauth2/token", oauth2ServiceHost)
-	oauth2ServiceSecret := frame.GetEnv(config.EnvOauth2ServiceClientSecret, "")
+	oauth2ServiceSecret := notificationConfig.Oauth2ServiceClientSecret
 
 	audienceList := make([]string, 0)
-	oauth2ServiceAudience := frame.GetEnv(config.EnvOauth2ServiceAudience, "")
-	if oauth2ServiceAudience != "" {
-		audienceList = strings.Split(oauth2ServiceAudience, ",")
+
+	if notificationConfig.Oauth2ServiceAudience != "" {
+		audienceList = strings.Split(notificationConfig.Oauth2ServiceAudience, ",")
 	}
 
-	profileServiceURL := frame.GetEnv(config.EnvProfileServiceURI, "127.0.0.1:7005")
 	profileCli, err := profileV1.NewProfileClient(ctx,
-		apis.WithEndpoint(profileServiceURL),
+		apis.WithEndpoint(notificationConfig.ProfileServiceURI),
 		apis.WithTokenEndpoint(oauth2ServiceURL),
 		apis.WithTokenUsername(serviceName),
 		apis.WithTokenPassword(oauth2ServiceSecret),
@@ -79,10 +81,9 @@ func main() {
 		log.WithError(err).Fatal("could not setup profile client")
 	}
 
-	partitionServiceURL := frame.GetEnv(config.EnvPartitionServiceURI, "127.0.0.1:7003")
 	partitionCli, err := partitionV1.NewPartitionsClient(
 		ctx,
-		apis.WithEndpoint(partitionServiceURL),
+		apis.WithEndpoint(notificationConfig.PartitionServiceURI),
 		apis.WithTokenEndpoint(oauth2ServiceURL),
 		apis.WithTokenUsername(serviceName),
 		apis.WithTokenPassword(oauth2ServiceSecret),
@@ -93,16 +94,18 @@ func main() {
 
 	var serviceOptions []frame.Option
 
-	jwtAudience := frame.GetEnv(config.EnvOauth2JwtVerifyAudience, serviceName)
-	jwtIssuer := frame.GetEnv(config.EnvOauth2JwtVerifyIssuer, "")
+	jwtAudience := notificationConfig.Oauth2JwtVerifyAudience
+	if jwtAudience == "" {
+		jwtAudience = serviceName
+	}
 
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(
 			grpcctxtags.UnaryServerInterceptor(),
 			grpcrecovery.UnaryServerInterceptor(),
-			frame.UnaryAuthInterceptor(jwtAudience, jwtIssuer),
+			frame.UnaryAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer),
 		)),
-		grpc.StreamInterceptor(frame.StreamAuthInterceptor(jwtAudience, jwtIssuer)),
+		grpc.StreamInterceptor(frame.StreamAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer)),
 	)
 
 	implementation := &handlers.NotificationServer{
@@ -126,7 +129,11 @@ func main() {
 
 	service.Init(serviceOptions...)
 
-	serverPort := frame.GetEnv(config.EnvServerPort, "7020")
+	serverPort := notificationConfig.ServerPort
+	if serverPort == "" {
+		serverPort = "7020"
+	}
+
 	log.WithField("port", serverPort).Info(" initiating server operations")
 	defer implementation.Service.Stop(ctx)
 	err = implementation.Service.Run(ctx, fmt.Sprintf(":%v", serverPort))

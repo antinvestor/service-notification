@@ -47,7 +47,8 @@ docker-stop: ## stops all docker containers
 # if it's not specified it will run all tests
 tests: ## runs all system tests
 	$(ENV_LOCAL_TEST) \
-  	go test ./... -v -run=$(INTEGRATION_TEST_SUITE_PATH)
+	go test ./... -v -run=$(INTEGRATION_TEST_SUITE_PATH) \
+	returncode=$?; if [ $returncode -ne 0 ]; then echo "unit tests failed" && exit 1; fi
 
 
 build: clean fmt vet docker-setup tests docker-stop ## run all preliminary steps and tests the setup
