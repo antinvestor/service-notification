@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	partitionV1 "github.com/antinvestor/service-partition-api"
+	"github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/antinvestor/apis"
@@ -31,7 +32,11 @@ func main() {
 
 	ctx := context.Background()
 	var notificationConfig config.NotificationConfig
-	_ = frame.ConfigProcess("", notificationConfig)
+	err := frame.ConfigProcess("", &notificationConfig)
+	if err != nil {
+		logrus.WithError(err).Fatal("could not process configs")
+		return
+	}
 
 	mainDB := frame.Datastore(ctx, notificationConfig.DatabaseURL, false)
 	readOnlyDatasource := notificationConfig.ReplicaDatabaseURL
