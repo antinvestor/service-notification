@@ -19,7 +19,7 @@ func getService(ctx context.Context, serviceName string) *frame.Service {
 	dbURL := frame.GetEnv("TEST_DATABASE_URL", "postgres://ant:secret@localhost:5436/service_notification?sslmode=disable")
 	testDb := frame.Datastore(ctx, dbURL, false)
 
-	service := frame.NewService(serviceName, testDb, frame.NoopHttpOptions())
+	service := frame.NewService(serviceName, testDb, frame.NoopDriver())
 
 	eventList := frame.RegisterEvents(
 		&events.NotificationSave{Service: service},

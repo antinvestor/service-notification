@@ -53,7 +53,7 @@ func main() {
 			models.TempleteData{}, models.Notification{}, models.NotificationStatus{})
 
 		if err != nil {
-			log.Fatal("main -- Could not migrate successfully because : %v", err)
+			log.WithError(err).Fatal("could not migrate successfully")
 		}
 		return
 	}
@@ -76,7 +76,7 @@ func main() {
 		apis.WithTokenPassword(oauth2ServiceSecret),
 		apis.WithAudiences(audienceList...))
 	if err != nil {
-		log.Fatal("main -- Could not setup profile client : %v", err)
+		log.WithError(err).Fatal("could not setup profile client")
 	}
 
 	partitionServiceURL := frame.GetEnv(config.EnvPartitionServiceURI, "127.0.0.1:7003")
@@ -88,7 +88,7 @@ func main() {
 		apis.WithTokenPassword(oauth2ServiceSecret),
 		apis.WithAudiences(audienceList...))
 	if err != nil {
-		log.Fatal("main -- Could not setup partition client : %v", err)
+		log.WithError(err).Fatal("could not setup partition client")
 	}
 
 	var serviceOptions []frame.Option
@@ -127,9 +127,10 @@ func main() {
 	service.Init(serviceOptions...)
 
 	serverPort := frame.GetEnv(config.EnvServerPort, "7020")
-	log.Info(" main -- Initiating server operations on : %s", serverPort)
+	log.WithField("port", serverPort).Info(" initiating server operations")
+	defer implementation.Service.Stop(ctx)
 	err = implementation.Service.Run(ctx, fmt.Sprintf(":%v", serverPort))
 	if err != nil {
-		log.Fatal("main -- Could not run Server : %v", err)
+		log.WithError(err).Fatal("could not run Server ")
 	}
 }

@@ -85,9 +85,9 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	log := event.Service.L()
 	log.Info("===========================================================")
 	log.Info(" We have successfully managed to get to post out ")
-	log.Info(" Contact details : %s", contact.Detail)
-	log.Info(" Notification details : %s", n.ID)
-	log.Info(" Message details : %s", templateMap)
+	log.Infof(" Contact details : %s", contact.Detail)
+	log.Infof(" Notification details : %s", n.ID)
+	log.Infof(" Message details : %s", templateMap)
 	log.Info("===========================================================")
 
 	err = notificationRepo.Save(n)
