@@ -45,7 +45,7 @@ func main() {
 	}
 	readDB := frame.Datastore(ctx, readOnlyDatasource, true)
 
-	service := frame.NewService(serviceName, frame.Config(notificationConfig), mainDB, readDB)
+	service := frame.NewService(serviceName, frame.Config(&notificationConfig), mainDB, readDB)
 
 	log := service.L()
 
