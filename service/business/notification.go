@@ -167,7 +167,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-	return nStatus.ToStatusApi(), nil
+	return nStatus.ToStatusAPI(), nil
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
@@ -235,7 +235,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		return nil, err
 	}
 
-	return nStatus.ToStatusApi(), nil
+	return nStatus.ToStatusAPI(), nil
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificationV1.StatusRequest) (*notificationV1.StatusResponse, error) {
@@ -267,7 +267,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificat
 		logger.WithError(err).Warn("unable to get by status id")
 		return nil, err
 	}
-	return nStatus.ToStatusApi(), nil
+	return nStatus.ToStatusAPI(), nil
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *notificationV1.StatusUpdateRequest) (*notificationV1.StatusResponse, error) {
@@ -312,7 +312,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 		return nil, err
 	}
 
-	return nStatus.ToStatusApi(), nil
+	return nStatus.ToStatusAPI(), nil
 }
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*notificationV1.StatusResponse, error) {
@@ -366,7 +366,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 			return nil, err
 		}
 
-		return nStatus.ToStatusApi(), nil
+		return nStatus.ToStatusAPI(), nil
 	} else {
 
 		notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
@@ -376,13 +376,12 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 			return nil, err
 		}
 
-		return nStatus.ToStatusApi(), nil
+		return nStatus.ToStatusAPI(), nil
 	}
 }
 
 func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 	stream notificationV1.NotificationService_SearchServer) error {
-
 	logger := logrus.WithField("request", search)
 
 	logger.Info("handling search request")
@@ -412,10 +411,11 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 	for _, n := range notificationList {
 		nStatus := &models.NotificationStatus{}
 		if n.StatusID != "" {
-			nStatus, err = notificationStatusRepo.GetByID(n.StatusID)
+			resultStatus, err := notificationStatusRepo.GetByID(n.StatusID)
 			if err != nil {
 				logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status id for")
-				return err
+			} else {
+				nStatus = resultStatus
 			}
 		}
 
@@ -427,7 +427,8 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 	}
 
 	logger.Info("_______________________________________________________")
-	logger.WithField("result count", len(notificationList)).Infof("_____  Sending out %d object   _______________", len(notificationList))
+	logger.WithField("result count", len(notificationList)).
+		Infof("_____  Sending out %d object   _______________", len(notificationList))
 	logger.Info("_______________________________________________________")
 
 	return nil

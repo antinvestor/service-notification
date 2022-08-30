@@ -95,7 +95,7 @@ func (model *Notification) ToNotificationApi(status *NotificationStatus) *notifi
 		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),
 		RouteID:     model.RouteID,
-		Status:      status.ToStatusApi(),
+		Status:      status.ToStatusAPI(),
 		Extras:      extra,
 	}
 	return &notification
@@ -113,7 +113,7 @@ type NotificationStatus struct {
 	Status      int32
 }
 
-func (model *NotificationStatus) ToStatusApi() *notificationV1.StatusResponse {
+func (model *NotificationStatus) ToStatusAPI() *notificationV1.StatusResponse {
 
 	extra := frame.DBPropertiesToMap(model.Extra)
 	extra["CreatedAt"] = model.CreatedAt.String()

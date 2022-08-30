@@ -7,6 +7,7 @@ import (
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm/clause"
 )
 
 type NotificationStatusSave struct {
@@ -35,18 +36,22 @@ func (e *NotificationStatusSave) Validate(ctx context.Context, payload interface
 }
 
 func (e *NotificationStatusSave) Execute(ctx context.Context, payload interface{}) error {
-
 	nStatus := payload.(*models.NotificationStatus)
 
 	logger := logrus.WithField("payload", nStatus).WithField("type", e.Name())
 	logger.Info("handling event")
 
-	err := e.Service.DB(ctx, false).Save(nStatus).Error
+	result := e.Service.DB(ctx, false).Debug().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		UpdateAll: true,
+	}).Create(nStatus)
 
+	err := result.Error
 	if err != nil {
 		logger.WithError(err).Warn("could not save notification status to db")
 		return err
 	}
+	logger.WithField("rows affected", result.RowsAffected).Info("successfully saved record to db")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, e.Service)
 	n, err := notificationRepo.GetByID(nStatus.NotificationID)
