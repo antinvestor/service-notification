@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
@@ -44,6 +45,7 @@ func (repo *notificationRepository) GetByID(id string) (*models.Notification, er
 }
 
 func (repo *notificationRepository) SearchByPartition(partitionID string, query string) ([]models.Notification, error) {
+	query = strings.TrimSpace(query)
 	var notifications []models.Notification
 	notificationQuery := repo.readDb.Debug().Where("partition_id = ?", partitionID)
 	if query != "" {
