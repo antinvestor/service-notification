@@ -45,7 +45,7 @@ func (repo *notificationRepository) GetByID(id string) (*models.Notification, er
 
 func (repo *notificationRepository) SearchByPartition(partitionID string, query string) ([]models.Notification, error) {
 	var notifications []models.Notification
-	notificationQuery := repo.readDb.Where("partition_id = ?", partitionID)
+	notificationQuery := repo.readDb.Debug().Where("partition_id = ?", partitionID)
 	if query != "" {
 		searchQ := fmt.Sprintf("%%%s%%", query)
 

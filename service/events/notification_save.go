@@ -38,8 +38,8 @@ func (e *NotificationSave) Validate(ctx context.Context, payload interface{}) er
 func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) error {
 	notification := payload.(*models.Notification)
 
-	logger := logrus.WithField("payload", notification).WithField("type", e.Name())
-	logger.Info("handling event")
+	logger := logrus.WithField("type", e.Name())
+	logger.WithField("payload", notification).Info("handling event")
 
 	result := e.Service.DB(ctx, false).Debug().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
