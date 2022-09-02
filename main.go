@@ -15,9 +15,6 @@ import (
 	"github.com/antinvestor/service-notification/service/handlers"
 	"github.com/antinvestor/service-notification/service/models"
 
-	"os"
-	"strconv"
-
 	profileV1 "github.com/antinvestor/service-profile-api"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -38,25 +35,12 @@ func main() {
 		return
 	}
 
-	mainDB := frame.Datastore(ctx, notificationConfig.DatabaseURL, false)
-	readOnlyDatasource := notificationConfig.ReplicaDatabaseURL
-	if notificationConfig.ReplicaDatabaseURL == "" {
-		readOnlyDatasource = notificationConfig.DatabaseURL
-	}
-	readDB := frame.Datastore(ctx, readOnlyDatasource, true)
-
-	service := frame.NewService(serviceName, frame.Config(&notificationConfig), mainDB, readDB)
+	service := frame.NewService(serviceName, frame.Config(&notificationConfig), frame.Datastore(ctx))
 
 	log := service.L()
 
-	isMigration, err := strconv.ParseBool(notificationConfig.Migrate)
-	if err != nil {
-		isMigration = false
-	}
-
-	stdArgs := os.Args[1:]
-	if (len(stdArgs) > 0 && stdArgs[0] == "migrate") || isMigration {
-		err = service.MigrateDatastore(ctx, notificationConfig.MigrationPath,
+	if notificationConfig.DoDatabaseMigrate() {
+		err = service.MigrateDatastore(ctx, notificationConfig.GetDatabaseMigrationPath(),
 			models.Route{}, models.Language{}, models.Templete{},
 			models.TempleteData{}, models.Notification{}, models.NotificationStatus{})
 
