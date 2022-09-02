@@ -50,7 +50,7 @@ func main() {
 		return
 	}
 
-	oauth2ServiceHost := notificationConfig.Oauth2ServiceURI
+	oauth2ServiceHost := notificationConfig.GetOauth2ServiceURI()
 	oauth2ServiceURL := fmt.Sprintf("%s/oauth2/token", oauth2ServiceHost)
 	oauth2ServiceSecret := notificationConfig.Oauth2ServiceClientSecret
 
