@@ -25,6 +25,19 @@ type notificationBusiness struct {
 }
 
 func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID string) (frame.BaseModel, error) {
+	if accessID == "" {
+		authClaims := frame.ClaimsFromContext(ctx)
+		if authClaims != nil {
+			return frame.BaseModel{
+				TenantID:    authClaims.TenantID,
+				PartitionID: authClaims.PartitionID,
+				AccessID:    authClaims.AccessID,
+			}, nil
+		}
+
+		return frame.BaseModel{}, errors.New("access id is empty")
+	}
+
 	access, err := nb.partitionCli.GetAccessById(ctx, accessID)
 	if err != nil {
 		return frame.BaseModel{}, err
