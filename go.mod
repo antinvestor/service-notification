@@ -13,7 +13,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	google.golang.org/grpc v1.50.0
 	gorm.io/datatypes v1.0.7
-	gorm.io/gorm v1.23.10
+	gorm.io/gorm v1.24.0
 )
 
 require (
