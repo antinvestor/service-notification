@@ -11,7 +11,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/pitabwire/frame v1.8.8
 	github.com/sirupsen/logrus v1.9.0
-	google.golang.org/grpc v1.52.1
+	google.golang.org/grpc v1.52.3
 	gorm.io/datatypes v1.1.0
 	gorm.io/gorm v1.24.3
 )
