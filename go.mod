@@ -9,7 +9,7 @@ require (
 	github.com/antinvestor/service-profile-api v1.0.14
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/pitabwire/frame v1.8.8
+	github.com/pitabwire/frame v1.8.11
 	github.com/sirupsen/logrus v1.9.0
 	google.golang.org/grpc v1.52.3
 	gorm.io/datatypes v1.1.0
