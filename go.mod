@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/antinvestor/apis v1.1.14
 	github.com/antinvestor/service-notification-api v1.1.22
-	github.com/antinvestor/service-partition-api v1.0.21
+	github.com/antinvestor/service-partition-api v1.0.22
 	github.com/antinvestor/service-profile-api v1.0.14
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
