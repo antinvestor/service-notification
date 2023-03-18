@@ -42,14 +42,22 @@ docker-setup: ## sets up docker container images
 docker-stop: ## stops all docker containers
 	docker-compose down
 
+pg_wait:
+	@count=0; \
+	until  nc -z localhost 5436; do \
+	  if [ $$count -gt 30 ]; then echo "can't wait forever for pg"; exit 1; fi; \
+	    sleep 1; echo "waiting for postgresql" $$count; count=$$(($$count+1)); done; \
+	    sleep 5;
+
+
 # this command will run all tests in the repo
 # INTEGRATION_TEST_SUITE_PATH is used to run specific tests in Golang,
 # if it's not specified it will run all tests
 tests: ## runs all system tests
 	$(ENV_LOCAL_TEST) \
-	go test ./... -v -run=$(INTEGRATION_TEST_SUITE_PATH) \
+	go test ./...  -count=1 -v -run=$(INTEGRATION_TEST_SUITE_PATH) \
 	returncode=$?; if [ $returncode -ne 0 ]; then echo "unit tests failed" && exit 1; fi
 
 
-build: clean fmt vet docker-setup tests docker-stop ## run all preliminary steps and tests the setup
+build: clean fmt vet docker-setup pg_wait tests docker-stop ## run all preliminary steps and tests the setup
 
