@@ -11,7 +11,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/pitabwire/frame v1.8.13
 	github.com/sirupsen/logrus v1.9.0
-	google.golang.org/grpc v1.53.0
+	google.golang.org/grpc v1.54.0
 	gorm.io/datatypes v1.1.1
 	gorm.io/gorm v1.24.7-0.20230324020705-b444011d094d
 )
@@ -47,10 +47,10 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	gocloud.dev v0.29.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.110.0 // indirect
