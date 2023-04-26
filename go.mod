@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/antinvestor/apis v1.1.16
 	github.com/antinvestor/service-notification-api v1.1.22
-	github.com/antinvestor/service-partition-api v1.0.22
+	github.com/antinvestor/service-partition-api v1.0.25
 	github.com/antinvestor/service-profile-api v1.0.15
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
@@ -20,7 +20,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
-	github.com/envoyproxy/protoc-gen-validate v0.9.1 // indirect
+	github.com/envoyproxy/protoc-gen-validate v0.10.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect

@@ -527,6 +527,8 @@ github.com/antinvestor/service-notification-api v1.1.22 h1:84/47jxEFJvFAG8vObNhd
 github.com/antinvestor/service-notification-api v1.1.22/go.mod h1:II88YkJ7wMMk3Gh9E0uSgxD9URS2Ev9BHmgsPII1rps=
 github.com/antinvestor/service-partition-api v1.0.22 h1:YJjIALcNOSLJNY9H4G3huQxAlVebpB1eCcRg+HGBGJM=
 github.com/antinvestor/service-partition-api v1.0.22/go.mod h1:hgCPRE1KKZAgcwTM20NHj8ncMhULsnMn7yUUPKh4Vok=
+github.com/antinvestor/service-partition-api v1.0.25 h1:Tyq9rnwxB9PKfkUrpJQTVz1zTVjzn0lk26JmKAUk6sQ=
+github.com/antinvestor/service-partition-api v1.0.25/go.mod h1:D/xUEC5/nodX8q6uK3rRK7YYegV8d/LRkuvQQX5IOk8=
 github.com/antinvestor/service-profile-api v1.0.15 h1:Mhy3RRXJXLNDtLV/dRPfFzvGmD4ZPe6MxkgdGbN4qkI=
 github.com/antinvestor/service-profile-api v1.0.15/go.mod h1:skOu7J7T+PPGtGr88FEunFL/WSkKGr4rqoacffpU7sI=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
@@ -848,6 +850,8 @@ github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7
 github.com/envoyproxy/protoc-gen-validate v0.6.7/go.mod h1:dyJXwwfPK2VSqiB9Klm1J6romD608Ba7Hij42vrOBCo=
 github.com/envoyproxy/protoc-gen-validate v0.9.1 h1:PS7VIOgmSVhWUEeZwTe7z7zouA22Cr590PzXKbZHOVY=
 github.com/envoyproxy/protoc-gen-validate v0.9.1/go.mod h1:OKNgG7TCp5pF4d6XftA0++PMirau2/yoOwVac3AbF2w=
+github.com/envoyproxy/protoc-gen-validate v0.10.1 h1:c0g45+xCJhdgFGw7a5QAfdS4byAbud7miNWJ1WwEVf8=
+github.com/envoyproxy/protoc-gen-validate v0.10.1/go.mod h1:DRjgyB0I43LtJapqN6NiRwroiAU2PaFuvk/vjgh61ss=
 github.com/evanphx/json-patch v4.9.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/evanphx/json-patch v4.11.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/evanphx/json-patch v4.12.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
