@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/antinvestor/apis v1.1.16
-	github.com/antinvestor/service-notification-api v1.1.22
+	github.com/antinvestor/service-notification-api v1.1.24
 	github.com/antinvestor/service-partition-api v1.0.25
 	github.com/antinvestor/service-profile-api v1.0.15
 	github.com/golang/mock v1.6.0
@@ -20,7 +20,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
-	github.com/envoyproxy/protoc-gen-validate v0.10.1 // indirect
+	github.com/envoyproxy/protoc-gen-validate v1.0.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
@@ -47,11 +47,11 @@ require (
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	gocloud.dev v0.29.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.110.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
