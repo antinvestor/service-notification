@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	partitionV1 "github.com/antinvestor/service-partition-api"
 	"github.com/sirupsen/logrus"
@@ -27,7 +26,6 @@ func main() {
 
 	serviceName := "service_notification"
 
-	ctx := context.Background()
 	var notificationConfig config.NotificationConfig
 	err := frame.ConfigProcess("", &notificationConfig)
 	if err != nil {
@@ -35,11 +33,16 @@ func main() {
 		return
 	}
 
-	service := frame.NewService(serviceName, frame.Config(&notificationConfig), frame.Datastore(ctx))
+	ctx, service := frame.NewService(serviceName, frame.Config(&notificationConfig))
 
 	log := service.L()
 
+	serviceOptions := []frame.Option{frame.Datastore(ctx)}
+
 	if notificationConfig.DoDatabaseMigrate() {
+
+		service.Init(serviceOptions...)
+
 		err = service.MigrateDatastore(ctx, notificationConfig.GetDatabaseMigrationPath(),
 			models.Route{}, models.Language{}, models.Templete{},
 			models.TempleteData{}, models.Notification{}, models.NotificationStatus{})
@@ -80,8 +83,6 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("could not setup partition client")
 	}
-
-	var serviceOptions []frame.Option
 
 	jwtAudience := notificationConfig.Oauth2JwtVerifyAudience
 	if jwtAudience == "" {

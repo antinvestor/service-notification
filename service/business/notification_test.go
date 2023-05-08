@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/antinvestor/apis/common"
 	notificationV1 "github.com/antinvestor/service-notification-api"
+	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/events"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
@@ -15,18 +16,29 @@ import (
 	"time"
 )
 
-func getService(ctx context.Context, serviceName string) *frame.Service {
-	dbURL := frame.GetEnv("TEST_DATABASE_URL", "postgres://ant:secret@localhost:5436/service_notification?sslmode=disable")
-	testDb := frame.DatastoreCon(ctx, dbURL, false)
+func getService(serviceName string) *ctxSrv {
 
-	service := frame.NewService(serviceName, testDb, frame.NoopDriver())
+	dbURL := frame.GetEnv("TEST_DATABASE_URL", "postgres://ant:secret@localhost:5436/service_notification?sslmode=disable")
+	testDb := frame.DatastoreCon(dbURL, false)
+
+	var ncfg config.NotificationConfig
+	_ = frame.ConfigProcess("", &ncfg)
+
+	ctx, service := frame.NewService(serviceName, testDb, frame.Config(&ncfg), frame.NoopDriver())
 
 	eventList := frame.RegisterEvents(
 		&events.NotificationSave{Service: service},
 		&events.NotificationStatusSave{Service: service})
 	service.Init(eventList)
 	_ = service.Run(ctx, "")
-	return service
+	return &ctxSrv{
+		ctx, service,
+	}
+}
+
+type ctxSrv struct {
+	ctx context.Context
+	srv *frame.Service
 }
 
 func getProfileCli(t *testing.T) *profileV1.ProfileClient {
@@ -59,14 +71,11 @@ func getPartitionCli(t *testing.T) *partitionV1.PartitionClient {
 
 func TestNewNotificationBusiness(t *testing.T) {
 
-	ctx := context.Background()
-
 	profileCli := getProfileCli(t)
 	partitionCli := getPartitionCli(t)
 
 	type args struct {
-		ctx          context.Context
-		service      *frame.Service
+		ctxService   *ctxSrv
 		profileCli   *profileV1.ProfileClient
 		partitionCli *partitionV1.PartitionClient
 	}
@@ -79,23 +88,23 @@ func TestNewNotificationBusiness(t *testing.T) {
 
 		{name: "NewNotificationBusiness",
 			args: args{
-				ctx:          ctx,
-				service:      getService(ctx, "NewNotificationBusinessTest"),
+				ctxService:   getService("NewNotificationBusinessTest"),
 				profileCli:   profileCli,
 				partitionCli: partitionCli},
 			expectErr: false},
 
 		{name: "NewNotificationBusinessWithNils",
 			args: args{
-				ctx:        ctx,
-				service:    nil,
+				ctxService: &ctxSrv{
+					ctx: context.Background(),
+				},
 				profileCli: nil,
 			},
 			expectErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got, err := NewNotificationBusiness(tt.args.ctx, tt.args.service, tt.args.profileCli, tt.args.partitionCli); !tt.expectErr && (err != nil || got == nil) {
+			if got, err := NewNotificationBusiness(tt.args.ctxService.ctx, tt.args.ctxService.srv, tt.args.profileCli, tt.args.partitionCli); !tt.expectErr && (err != nil || got == nil) {
 				t.Errorf("NewNotificationBusiness() = could not get a valid notificationBusiness at %s", tt.name)
 			}
 		})
@@ -104,15 +113,12 @@ func TestNewNotificationBusiness(t *testing.T) {
 
 func Test_notificationBusiness_QueueIn(t *testing.T) {
 
-	ctx := context.Background()
-
 	type fields struct {
-		service     *frame.Service
+		ctxService  *ctxSrv
 		profileCli  *profileV1.ProfileClient
 		partitionCl *partitionV1.PartitionClient
 	}
 	type args struct {
-		ctx     context.Context
 		message *notificationV1.Notification
 	}
 	tests := []struct {
@@ -124,45 +130,43 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 	}{
 		{name: "NormalPassingQueueIn",
 			fields: fields{
-				service:     getService(ctx, "NormalQueueInTest"),
+				ctxService:  getService("NormalQueueInTest"),
 				profileCli:  getProfileCli(t),
 				partitionCl: getPartitionCli(t),
 			},
 			args: args{
-				ctx: ctx,
 				message: &notificationV1.Notification{
-					ID:       "justtestingId",
-					Contact:  &notificationV1.Notification_ContactID{ContactID: "epochTesting"},
+					Id:       "justtestingId",
+					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
 					OutBound: true,
 					Data:     "Hello we are just testing things out",
-					AccessID: "testingAccessData",
+					AccessId: "testingAccessData",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
-				ID:     "123456",
+				Id:     "123456",
 				State:  common.STATE_CREATED,
 				Status: common.STATUS_QUEUED,
 			},
 		},
 		{name: "NormalWithIDQueueIn",
 			fields: fields{
-				service:     getService(ctx, "NormalQueueInTest"),
+				ctxService:  getService("NormalQueueInTest"),
 				profileCli:  getProfileCli(t),
 				partitionCl: getPartitionCli(t),
 			},
 			args: args{
-				ctx: ctx,
 				message: &notificationV1.Notification{
-					ID:       "c2f4j7au6s7f91uqnojg",
-					Contact:  &notificationV1.Notification_ContactID{ContactID: "epochTesting"},
+					Id:       "c2f4j7au6s7f91uqnojg",
+					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
 					Data:     "Hello we are just testing things out",
-					AccessID: "testingAccessData",
+					AccessId: "testingAccessData",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
-				ID:     "c2f4j7au6s7f91uqnojg",
+				Id:     "c2f4j7au6s7f91uqnojg",
 				State:  common.STATE_CREATED,
 				Status: common.STATUS_QUEUED,
 			},
@@ -171,11 +175,11 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nb := &notificationBusiness{
-				service:      tt.fields.service,
+				service:      tt.fields.ctxService.srv,
 				profileCli:   tt.fields.profileCli,
 				partitionCli: tt.fields.partitionCl,
 			}
-			got, err := nb.QueueIn(tt.args.ctx, tt.args.message)
+			got, err := nb.QueueIn(tt.fields.ctxService.ctx, tt.args.message)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("QueueIn() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -184,8 +188,8 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 				t.Errorf("QueueIn() got = %v, want %v", got, tt.want)
 			}
 
-			if tt.name == "NormalWithIDQueueIn" && got.GetID() != tt.want.GetID() {
-				t.Errorf("QueueIn() expecting id %s to be reused, got : %s", tt.want.GetID(), got.GetID())
+			if tt.name == "NormalWithIDQueueIn" && got.GetId() != tt.want.GetId() {
+				t.Errorf("QueueIn() expecting id %s to be reused, got : %s", tt.want.GetId(), got.GetId())
 			}
 		})
 	}
@@ -195,7 +199,8 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 	ctx := context.Background()
 
 	type fields struct {
-		service     *frame.Service
+		ctxService *ctxSrv
+
 		profileCli  *profileV1.ProfileClient
 		partitionCl *partitionV1.PartitionClient
 	}
@@ -212,22 +217,23 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 	}{
 		{name: "NormalQueueOut",
 			fields: fields{
-				service:     getService(ctx, "NormalQueueOutTest"),
+				ctxService: getService(
+					"NormalQueueOutTest"),
 				profileCli:  getProfileCli(t),
 				partitionCl: getPartitionCli(t),
 			},
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					ID:       "testingQueue_out",
-					Contact:  &notificationV1.Notification_ContactID{ContactID: "epochTesting"},
+					Id:       "testingQueue_out",
+					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
 					Data:     "Hello we are just testing things out",
-					AccessID: "testingAccessData",
+					AccessId: "testingAccessData",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
-				ID:     "c2f4j7au6s7f91uqnojg",
+				Id:     "c2f4j7au6s7f91uqnojg",
 				State:  common.STATE_CREATED,
 				Status: common.STATUS_QUEUED,
 			},
@@ -235,22 +241,23 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 
 		{name: "NormalQueueOutWithXID",
 			fields: fields{
-				service:     getService(ctx, "NormalQueueOutWithXIDTest"),
+				ctxService: getService(
+					"NormalQueueOutWithXIDTest"),
 				profileCli:  getProfileCli(t),
 				partitionCl: getPartitionCli(t),
 			},
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					ID:       "c2f4j7au6s7f91uqnojg",
-					Contact:  &notificationV1.Notification_ContactID{ContactID: "epochTesting"},
+					Id:       "c2f4j7au6s7f91uqnojg",
+					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
 					Data:     "Hello we are just testing things out",
-					AccessID: "testingAccessData",
+					AccessId: "testingAccessData",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
-				ID:     "c2f4j7au6s7f91uqnojg",
+				Id:     "c2f4j7au6s7f91uqnojg",
 				State:  common.STATE_CREATED,
 				Status: common.STATUS_QUEUED,
 			},
@@ -259,7 +266,7 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nb := &notificationBusiness{
-				service:      tt.fields.service,
+				service:      tt.fields.ctxService.srv,
 				profileCli:   tt.fields.profileCli,
 				partitionCli: tt.fields.partitionCl,
 			}
@@ -272,8 +279,8 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 				t.Errorf("QueueOut() got = %v, want %v", got, tt.want)
 			}
 
-			if tt.name == "NormalQueueOutWithXID" && got.GetID() != tt.want.GetID() {
-				t.Errorf("QueueOut() expecting id %s to be reused, got : %s", tt.want.GetID(), got.GetID())
+			if tt.name == "NormalQueueOutWithXID" && got.GetId() != tt.want.GetId() {
+				t.Errorf("QueueOut() expecting id %s to be reused, got : %s", tt.want.GetId(), got.GetId())
 			}
 		})
 	}
@@ -284,12 +291,11 @@ func Test_notificationBusiness_Release(t *testing.T) {
 	ctx := context.Background()
 
 	type fields struct {
-		service     *frame.Service
+		ctxService  *ctxSrv
 		profileCli  *profileV1.ProfileClient
 		partitionCl *partitionV1.PartitionClient
 	}
 	type args struct {
-		ctx        context.Context
 		releaseReq *notificationV1.ReleaseRequest
 	}
 	tests := []struct {
@@ -301,31 +307,31 @@ func Test_notificationBusiness_Release(t *testing.T) {
 	}{
 		{name: "NormalRelease",
 			fields: fields{
-				service:     getService(ctx, "NormalReleaseTest"),
+				ctxService: getService(
+					"NormalReleaseTest"),
 				profileCli:  getProfileCli(t),
 				partitionCl: getPartitionCli(t),
 			},
 			args: args{
-				ctx: ctx,
 				releaseReq: &notificationV1.ReleaseRequest{
-					ID:       "testingQueue_out",
-					AccessID: "testingAccessData",
+					Id:       "testingQueue_out",
+					AccessId: "testingAccessData",
 					Comment:  "testing releasing messages",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
-				ID:         "c2f4j7au6s7f91uqnojg",
+				Id:         "c2f4j7au6s7f91uqnojg",
 				State:      common.STATE_ACTIVE,
 				Status:     common.STATUS_QUEUED,
-				ExternalID: "total_externalization",
+				ExternalId: "total_externalization",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nb := &notificationBusiness{
-				service:      tt.fields.service,
+				service:      tt.fields.ctxService.srv,
 				profileCli:   tt.fields.profileCli,
 				partitionCli: tt.fields.partitionCl,
 			}
@@ -345,9 +351,9 @@ func Test_notificationBusiness_Release(t *testing.T) {
 				t.Errorf("Status() error = %v could not store a notification for status checking", err)
 				return
 			}
-			tt.args.releaseReq.ID = n.GetID()
+			tt.args.releaseReq.Id = n.GetID()
 
-			got, err := nb.Release(tt.args.ctx, tt.args.releaseReq)
+			got, err := nb.Release(tt.fields.ctxService.ctx, tt.args.releaseReq)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Release() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -357,7 +363,7 @@ func Test_notificationBusiness_Release(t *testing.T) {
 				t.Errorf("Release() got = %v, want %v", got, tt.want)
 			}
 
-			if got.GetID() != n.GetID() {
+			if got.GetId() != n.GetID() {
 				t.Errorf("Release() expecting notification id to be reused")
 			}
 		})
@@ -375,7 +381,8 @@ func Test_notificationBusiness_Search(t *testing.T) {
 	nsSs.EXPECT().Context().Return(ctx).AnyTimes()
 
 	type fields struct {
-		service     *frame.Service
+		ctxService *ctxSrv
+
 		profileCli  *profileV1.ProfileClient
 		partitionCl *partitionV1.PartitionClient
 		leastCount  int
@@ -393,13 +400,14 @@ func Test_notificationBusiness_Search(t *testing.T) {
 		{
 			name: "Normal Search",
 			fields: fields{
-				service:     getService(ctx, "NormalSearchTest"),
+				ctxService: getService(
+					"NormalSearchTest"),
 				profileCli:  getProfileCli(t),
 				partitionCl: getPartitionCli(t),
 				leastCount:  1,
 			},
 			args: args{
-				search: &notificationV1.SearchRequest{Query: "", AccessID: "testingAccessData"},
+				search: &notificationV1.SearchRequest{Query: "", AccessId: "testingAccessData"},
 				stream: nsSs,
 			},
 			wantErr: false,
@@ -411,7 +419,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 			nsSs.EXPECT().Send(gomock.Any()).MinTimes(tt.fields.leastCount)
 
 			nb := &notificationBusiness{
-				service:      tt.fields.service,
+				service:      tt.fields.ctxService.srv,
 				profileCli:   tt.fields.profileCli,
 				partitionCli: tt.fields.partitionCl,
 			}
@@ -422,7 +430,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 				NotificationType: "email",
 				State:            int32(common.STATE_ACTIVE.Number()),
 			}
-			n.AccessID = tt.args.search.GetAccessID()
+			n.AccessID = tt.args.search.GetAccessId()
 			n.PartitionID = "test_partition-id"
 
 			nRepo := repository.NewNotificationRepository(ctx, nb.service)
@@ -443,7 +451,8 @@ func Test_notificationBusiness_Search(t *testing.T) {
 func Test_notificationBusiness_Status(t *testing.T) {
 	ctx := context.Background()
 	type fields struct {
-		service     *frame.Service
+		ctxService *ctxSrv
+
 		profileCli  *profileV1.ProfileClient
 		partitionCl *partitionV1.PartitionClient
 	}
@@ -460,20 +469,21 @@ func Test_notificationBusiness_Status(t *testing.T) {
 	}{
 		{name: "NormalStatus",
 			fields: fields{
-				service:     getService(ctx, "NormalStatusTest"),
+				ctxService: getService(
+					"NormalStatusTest"),
 				profileCli:  getProfileCli(t),
 				partitionCl: getPartitionCli(t),
 			},
 			args: args{
 				ctx: ctx,
 				statusReq: &notificationV1.StatusRequest{
-					ID:       "testingQueue_out",
-					AccessID: "testingAccessData",
+					Id:       "testingQueue_out",
+					AccessId: "testingAccessData",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
-				ID:     "c2f4j7au6s7f91uqnojg",
+				Id:     "c2f4j7au6s7f91uqnojg",
 				State:  common.STATE_DELETED,
 				Status: common.STATUS_FAILED,
 			},
@@ -484,7 +494,7 @@ func Test_notificationBusiness_Status(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			nb := &notificationBusiness{
-				service:      tt.fields.service,
+				service:      tt.fields.ctxService.srv,
 				profileCli:   tt.fields.profileCli,
 				partitionCli: tt.fields.partitionCl,
 			}
@@ -526,7 +536,7 @@ func Test_notificationBusiness_Status(t *testing.T) {
 				return
 			}
 
-			tt.args.statusReq.ID = n.GetID()
+			tt.args.statusReq.Id = n.GetID()
 
 			got, err := nb.Status(tt.args.ctx, tt.args.statusReq)
 			if (err != nil) != tt.wantErr {
@@ -537,7 +547,7 @@ func Test_notificationBusiness_Status(t *testing.T) {
 				t.Errorf("Status() got = %v, want %v", got, tt.want)
 			}
 
-			if got.GetID() != n.GetID() {
+			if got.GetId() != n.GetID() {
 				t.Errorf("Status() expecting notification id to be reused")
 			}
 		})
@@ -549,7 +559,8 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	type fields struct {
-		service     *frame.Service
+		ctxService *ctxSrv
+
 		profileCli  *profileV1.ProfileClient
 		partitionCl *partitionV1.PartitionClient
 	}
@@ -566,33 +577,34 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 	}{
 		{name: "NormalStatusUpdate",
 			fields: fields{
-				service:     getService(ctx, "NormalStatusUpdateTest"),
+				ctxService: getService(
+					"NormalStatusUpdateTest"),
 				profileCli:  getProfileCli(t),
 				partitionCl: getPartitionCli(t),
 			},
 			args: args{
 				ctx: ctx,
 				statusReq: &notificationV1.StatusUpdateRequest{
-					ID:         "testingQueue_out",
-					AccessID:   "testingAccessData",
+					Id:         "testingQueue_out",
+					AccessId:   "testingAccessData",
 					State:      common.STATE_INACTIVE,
 					Status:     common.STATUS_SUCCESSFUL,
-					ExternalID: "total_externalization",
+					ExternalId: "total_externalization",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
-				ID:         "c2f4j7au6s7f91uqnojg",
+				Id:         "c2f4j7au6s7f91uqnojg",
 				State:      common.STATE_INACTIVE,
 				Status:     common.STATUS_SUCCESSFUL,
-				ExternalID: "total_externalization",
+				ExternalId: "total_externalization",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nb := &notificationBusiness{
-				service:      tt.fields.service,
+				service:      tt.fields.ctxService.srv,
 				profileCli:   tt.fields.profileCli,
 				partitionCli: tt.fields.partitionCl,
 			}
@@ -615,7 +627,7 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 				return
 			}
 
-			tt.args.statusReq.ID = n.GetID()
+			tt.args.statusReq.Id = n.GetID()
 
 			got, err := nb.StatusUpdate(tt.args.ctx, tt.args.statusReq)
 			if (err != nil) != tt.wantErr {
@@ -626,11 +638,11 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 				t.Errorf("Status() got = %v, want %v", got, tt.want)
 			}
 
-			if got.GetExternalID() != tt.want.GetExternalID() {
-				t.Errorf("Status() got =%v, want %v", got.GetExternalID(), tt.want.GetExternalID())
+			if got.GetExternalId() != tt.want.GetExternalId() {
+				t.Errorf("Status() got =%v, want %v", got.GetExternalId(), tt.want.GetExternalId())
 			}
 
-			if got.GetID() != n.GetID() {
+			if got.GetId() != n.GetID() {
 				t.Errorf("Status() expecting notification id to be reused")
 			}
 		})

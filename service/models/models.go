@@ -70,6 +70,7 @@ type Notification struct {
 	ExternalID  string `gorm:"type:varchar(50)"`
 
 	StatusID string `gorm:"type:varchar(50)"`
+	Priority int32
 }
 
 func (model *Notification) IsReleased() bool {
@@ -84,19 +85,20 @@ func (model *Notification) ToNotificationApi(status *NotificationStatus) *notifi
 	}
 
 	notification := notificationV1.Notification{
-		ID:          model.ID,
-		AccessID:    model.AccessID,
-		Contact:     &notificationV1.Notification_ContactID{ContactID: model.ContactID},
+		Id:          model.ID,
+		AccessId:    model.AccessID,
+		Contact:     &notificationV1.Notification_ContactId{ContactId: model.ContactID},
 		Type:        model.NotificationType,
-		Templete:    model.TemplateID,
+		Template:    model.TemplateID,
 		Payload:     frame.DBPropertiesToMap(model.Payload),
 		Data:        model.Message,
 		Language:    model.LanguageID,
 		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),
-		RouteID:     model.RouteID,
+		RouteId:     model.RouteID,
 		Status:      status.ToStatusAPI(),
 		Extras:      extra,
+		Priority:    notificationV1.PRIORITY(model.Priority),
 	}
 	return &notification
 }
@@ -120,11 +122,11 @@ func (model *NotificationStatus) ToStatusAPI() *notificationV1.StatusResponse {
 	extra["StatusID"] = model.ID
 
 	status := notificationV1.StatusResponse{
-		ID:          model.NotificationID,
+		Id:          model.NotificationID,
 		State:       common.STATE(model.State),
 		Status:      common.STATUS(model.Status),
-		TransientID: model.TransientID,
-		ExternalID:  model.ExternalID,
+		TransientId: model.TransientID,
+		ExternalId:  model.ExternalID,
 		Extras:      extra,
 	}
 

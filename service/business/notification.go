@@ -66,7 +66,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-	partition, err := nb.getPartitionData(ctx, message.GetAccessID())
+	partition, err := nb.getPartitionData(ctx, message.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition data")
 		return nil, err
@@ -90,7 +90,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	}
 
 	profileID := ""
-	contactID := message.GetContactID()
+	contactID := message.GetContactId()
 	contactData := message.GetDetail()
 	if contactData != "" {
 		profile, err := nb.profileCli.GetProfileByContact(ctx, contactData)
@@ -122,7 +122,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	}
 	n := models.Notification{
 
-		TransientID: message.GetID(),
+		TransientID: message.GetId(),
 		BaseModel:   partition,
 		ContactID:   contactID,
 		ProfileID:   profileID,
@@ -135,12 +135,13 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 		NotificationType: message.GetType(),
 		ReleasedAt:       &releaseDate,
+		Priority:         int32(message.GetPriority()),
 	}
 
-	if message.GetTemplete() != "" {
+	if message.GetTemplate() != "" {
 		templateRepo := repository.NewTemplateRepository(ctx, nb.service)
 		template, err := templateRepo.GetByNamePartitionIDAndLanguageID(
-			message.GetTemplete(), partition.PartitionID, language.ID)
+			message.GetTemplate(), partition.PartitionID, language.ID)
 		if err != nil {
 			logger.WithError(err).Warn("could not get template")
 			return nil, err
@@ -150,8 +151,8 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 	}
 
-	if n.ValidXID(message.GetID()) {
-		n.ID = message.GetID()
+	if n.ValidXID(message.GetId()) {
+		n.ID = message.GetId()
 	} else {
 		n.GenID(ctx)
 	}
@@ -193,7 +194,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		return nil, err
 	}
 
-	partition, err := nb.getPartitionData(ctx, message.GetAccessID())
+	partition, err := nb.getPartitionData(ctx, message.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition")
 		return nil, err
@@ -203,12 +204,12 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 
 	n := models.Notification{
 
-		TransientID: message.GetID(),
+		TransientID: message.GetId(),
 		BaseModel:   partition,
 
-		ContactID: message.GetContactID(),
+		ContactID: message.GetContactId(),
 
-		RouteID: message.GetRouteID(),
+		RouteID: message.GetRouteId(),
 
 		LanguageID: message.GetLanguage(),
 		OutBound:   false,
@@ -217,10 +218,11 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		Message:          message.GetData(),
 		NotificationType: message.GetType(),
 		ReleasedAt:       &releaseDate,
+		Priority:         int32(message.GetPriority()),
 	}
 
-	if n.ValidXID(message.GetID()) {
-		n.ID = message.GetID()
+	if n.ValidXID(message.GetId()) {
+		n.ID = message.GetId()
 	} else {
 		n.GenID(ctx)
 	}
@@ -261,14 +263,14 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificat
 		return nil, err
 	}
 
-	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessID())
+	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition")
 		return nil, err
 	}
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
-	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
+	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, statusReq.GetId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get by id")
 		return nil, err
@@ -293,7 +295,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 		return nil, err
 	}
 
-	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessID())
+	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get access partition")
 		return nil, err
@@ -301,7 +303,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 
-	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, statusReq.GetID())
+	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, statusReq.GetId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get by id")
 		return nil, err
@@ -311,7 +313,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 		NotificationID: n.GetID(),
 		State:          int32(statusReq.GetState()),
 		Status:         int32(statusReq.GetStatus()),
-		ExternalID:     statusReq.GetExternalID(),
+		ExternalID:     statusReq.GetExternalId(),
 		Extra:          frame.DBPropertiesFromMap(statusReq.GetExtras()),
 	}
 
@@ -339,14 +341,14 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		return nil, err
 	}
 
-	partition, err := nb.getPartitionData(ctx, releaseReq.GetAccessID())
+	partition, err := nb.getPartitionData(ctx, releaseReq.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition")
 		return nil, err
 	}
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
-	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, releaseReq.GetID())
+	n, err := notificationRepo.GetByPartitionAndID(partition.PartitionID, releaseReq.GetId())
 	if err != nil {
 		logger.WithError(err).Warn("could not fetch by id")
 		return nil, err
@@ -405,7 +407,7 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 		return err
 	}
 
-	partition, err := nb.getPartitionData(stream.Context(), search.GetAccessID())
+	partition, err := nb.getPartitionData(stream.Context(), search.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("failed to obtain partition data")
 		return err

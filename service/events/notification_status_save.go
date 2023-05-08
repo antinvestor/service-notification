@@ -22,7 +22,7 @@ func (e *NotificationStatusSave) PayloadType() interface{} {
 	return &models.NotificationStatus{}
 }
 
-func (e *NotificationStatusSave) Validate(ctx context.Context, payload interface{}) error {
+func (e *NotificationStatusSave) Validate(_ context.Context, payload interface{}) error {
 	notificationStatus, ok := payload.(*models.NotificationStatus)
 	if !ok {
 		return errors.New(" payload is not of type models.NotificationStatus")

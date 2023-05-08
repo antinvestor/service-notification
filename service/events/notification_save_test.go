@@ -2,33 +2,43 @@ package events
 
 import (
 	"context"
+	notificationV1 "github.com/antinvestor/service-notification-api"
+	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
 	"testing"
 )
 
-func getService(ctx context.Context, serviceName string) *frame.Service {
+func getService(serviceName string) fields {
 	dbURL := frame.GetEnv("TEST_DATABASE_URL", "postgres://ant:secret@localhost:5436/service_notification?sslmode=disable")
-	testDb := frame.DatastoreCon(ctx, dbURL, false)
+	testDb := frame.DatastoreCon(dbURL, false)
 
-	service := frame.NewService(serviceName, testDb, frame.NoopDriver())
+	var ncfg config.NotificationConfig
+	_ = frame.ConfigProcess("", &ncfg)
+
+	ctx, service := frame.NewService(serviceName, testDb, frame.Config(&ncfg), frame.NoopDriver())
 
 	eventList := frame.RegisterEvents(
 		&NotificationSave{Service: service},
 		&NotificationStatusSave{Service: service})
 	service.Init(eventList)
 	_ = service.Run(ctx, "")
-	return service
+	return fields{
+		Ctx:     ctx,
+		Service: service,
+	}
+}
+
+type fields struct {
+	Ctx     context.Context
+	Service *frame.Service
 }
 
 func TestNotificationSave_Execute(t *testing.T) {
 
 	ctx := context.Background()
 
-	type fields struct {
-		Service *frame.Service
-	}
 	type args struct {
 		ctx     context.Context
 		payload interface{}
@@ -40,10 +50,8 @@ func TestNotificationSave_Execute(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Successful save",
-			fields: fields{
-				Service: getService(ctx, "NotificationSaveTest"),
-			},
+			name:   "Successful save",
+			fields: getService("NotificationSaveTest"),
 			args: args{
 				ctx: ctx,
 				payload: &models.Notification{
@@ -56,6 +64,7 @@ func TestNotificationSave_Execute(t *testing.T) {
 					ContactID: "epochTesting",
 					OutBound:  true,
 					Message:   "Hello we are just testing things out",
+					Priority:  int32(notificationV1.PRIORITY_LOW),
 				},
 			},
 			wantErr: false,
