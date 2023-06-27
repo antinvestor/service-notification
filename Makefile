@@ -47,7 +47,7 @@ pg_wait:
 	until  nc -z localhost 5436; do \
 	  if [ $$count -gt 30 ]; then echo "can't wait forever for pg"; exit 1; fi; \
 	    sleep 1; echo "waiting for postgresql" $$count; count=$$(($$count+1)); done; \
-	    sleep 5;
+	sleep 5;
 
 
 # this command will run all tests in the repo
