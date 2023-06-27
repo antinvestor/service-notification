@@ -107,7 +107,7 @@ func main() {
 	notificationV1.RegisterNotificationServiceServer(grpcServer, implementation)
 
 	grpcServerOpt := frame.GrpcServer(grpcServer)
-	serviceOptions = append(serviceOptions, grpcServerOpt)
+	serviceOptions = append(serviceOptions, grpcServerOpt, frame.EnableGrpcServerReflection())
 
 	serviceOptions = append(serviceOptions,
 		frame.RegisterEvents(
