@@ -33,6 +33,8 @@ github.com/antinvestor/service-partition-api v1.0.27 h1:NEDi+W3pS+Bh7Eo0VlbZgALP
 github.com/antinvestor/service-partition-api v1.0.27/go.mod h1:+w8oKZcCq/eXdvVg6Hpfrymbbm8bbk1iydDGB5OvWIY=
 github.com/antinvestor/service-profile-api v1.0.15 h1:Mhy3RRXJXLNDtLV/dRPfFzvGmD4ZPe6MxkgdGbN4qkI=
 github.com/antinvestor/service-profile-api v1.0.15/go.mod h1:skOu7J7T+PPGtGr88FEunFL/WSkKGr4rqoacffpU7sI=
+github.com/antinvestor/service-profile-api v1.0.17 h1:5boHnV/Wd6mwLTTIPk4conS2r0u7p//VnZCejSode0k=
+github.com/antinvestor/service-profile-api v1.0.17/go.mod h1:Uv1zmoorURRbLvPpY0twmGZ+CVFpb1gMXkZLwGgUD3Y=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
 github.com/apache/thrift v0.13.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
