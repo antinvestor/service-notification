@@ -756,6 +756,8 @@ github.com/antinvestor/service-notification-api v1.1.26 h1:+eJabnOVgCMmhuoYNibAW
 github.com/antinvestor/service-notification-api v1.1.26/go.mod h1:uE7uOUFHcMseX15pBAx5aSQJUdMpEzYEQsDHBx3FIOQ=
 github.com/antinvestor/service-partition-api v1.0.26 h1:VgaLxnqnLhLeqY+IFpI04WGbW7nmVziIYr0Y5TWkcEU=
 github.com/antinvestor/service-partition-api v1.0.26/go.mod h1:IIX2n5FCbtOUMiKw0QPbcRlkLZjq4dknPIjU6vGm8lw=
+github.com/antinvestor/service-partition-api v1.0.27 h1:NEDi+W3pS+Bh7Eo0VlbZgALPICuOuWbPhF0OMVnqDXg=
+github.com/antinvestor/service-partition-api v1.0.27/go.mod h1:+w8oKZcCq/eXdvVg6Hpfrymbbm8bbk1iydDGB5OvWIY=
 github.com/antinvestor/service-profile-api v1.0.15 h1:Mhy3RRXJXLNDtLV/dRPfFzvGmD4ZPe6MxkgdGbN4qkI=
 github.com/antinvestor/service-profile-api v1.0.15/go.mod h1:skOu7J7T+PPGtGr88FEunFL/WSkKGr4rqoacffpU7sI=
 github.com/apache/arrow/go/v10 v10.0.1/go.mod h1:YvhnlEePVnBS4+0z3fhPfUy7W1Ikj0Ih0vcRo/gZ1M0=
