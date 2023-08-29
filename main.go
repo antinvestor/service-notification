@@ -119,14 +119,12 @@ func main() {
 
 	service.Init(serviceOptions...)
 
-	serverPort := notificationConfig.ServerPort
-	if serverPort == "" {
-		serverPort = "7020"
-	}
+	log.WithField("server http port", notificationConfig.HttpServerPort).
+		WithField("server grpc port", notificationConfig.GrpcServerPort).
+		Info(" Initiating server operations")
 
-	log.WithField("port", serverPort).Info(" initiating server operations")
 	defer implementation.Service.Stop(ctx)
-	err = implementation.Service.Run(ctx, fmt.Sprintf(":%v", serverPort))
+	err = implementation.Service.Run(ctx, "")
 	if err != nil {
 		log.WithError(err).Fatal("could not run Server ")
 	}
