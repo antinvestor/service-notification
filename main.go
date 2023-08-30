@@ -53,6 +53,11 @@ func main() {
 		return
 	}
 
+	err = service.RegisterForJwt(ctx)
+	if err != nil {
+		log.WithError(err).Fatal("main -- could not register fo jwt")
+	}
+
 	oauth2ServiceHost := notificationConfig.GetOauth2ServiceURI()
 	oauth2ServiceURL := fmt.Sprintf("%s/oauth2/token", oauth2ServiceHost)
 	oauth2ServiceSecret := notificationConfig.Oauth2ServiceClientSecret
@@ -66,7 +71,7 @@ func main() {
 	profileCli, err := profileV1.NewProfileClient(ctx,
 		apis.WithEndpoint(notificationConfig.ProfileServiceURI),
 		apis.WithTokenEndpoint(oauth2ServiceURL),
-		apis.WithTokenUsername(serviceName),
+		apis.WithTokenUsername(service.JwtClientID()),
 		apis.WithTokenPassword(oauth2ServiceSecret),
 		apis.WithAudiences(audienceList...))
 	if err != nil {
@@ -77,7 +82,7 @@ func main() {
 		ctx,
 		apis.WithEndpoint(notificationConfig.PartitionServiceURI),
 		apis.WithTokenEndpoint(oauth2ServiceURL),
-		apis.WithTokenUsername(serviceName),
+		apis.WithTokenUsername(service.JwtClientID()),
 		apis.WithTokenPassword(oauth2ServiceSecret),
 		apis.WithAudiences(audienceList...))
 	if err != nil {
