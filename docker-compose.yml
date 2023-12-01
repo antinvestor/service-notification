@@ -2,7 +2,7 @@ version: '3'
 services:
   
     notification_db:
-      image: postgres:15.4
+      image: postgres:16.1
       environment:
         POSTGRES_DB: service_notification
         POSTGRES_USER: ant
