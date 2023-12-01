@@ -5,13 +5,13 @@ import (
 	"errors"
 	"time"
 
-	"github.com/antinvestor/apis/common"
-	notificationV1 "github.com/antinvestor/service-notification-api"
+	commonv1 "github.com/antinvestor/apis/common/v1"
+	notificationV1 "github.com/antinvestor/apis/notification/v1"
+	partitionV1 "github.com/antinvestor/apis/partition/v1"
+	profileV1 "github.com/antinvestor/apis/profile/v1"
 	"github.com/antinvestor/service-notification/service/events"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
-	partitionV1 "github.com/antinvestor/service-partition-api"
-	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 	"github.com/sirupsen/logrus"
 )
@@ -50,8 +50,8 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID s
 	partition := access.GetPartition()
 
 	return frame.BaseModel{
-		TenantID:    partition.TenantId,
-		PartitionID: partition.PartitionId,
+		TenantID:    partition.GetTenantId(),
+		PartitionID: partition.GetId(),
 		AccessID:    accessID,
 	}, nil
 }
@@ -59,12 +59,6 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID s
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
 	logger := logrus.WithField("request", message)
 	logger.Info("handling queue out request")
-
-	err := message.Validate()
-	if err != nil {
-		logger.WithError(err).Warn("failed validation")
-		return nil, err
-	}
 
 	partition, err := nb.getPartitionData(ctx, message.GetAccessId())
 	if err != nil {
@@ -106,10 +100,10 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 			//return nil, err
 		}
 
-		profileID = profile.GetID()
+		profileID = profile.GetId()
 		for _, contact := range profile.GetContacts() {
 			if contact.GetDetail() == contactData {
-				contactID = contact.GetID()
+				contactID = contact.GetId()
 				break
 			}
 		}
@@ -159,8 +153,8 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
-		State:          int32(common.STATE_CREATED.Number()),
-		Status:         int32(common.STATUS_QUEUED.Number()),
+		State:          int32(commonv1.STATE_CREATED.Number()),
+		Status:         int32(commonv1.STATUS_QUEUED.Number()),
 	}
 
 	nStatus.GenID(ctx)
@@ -187,12 +181,6 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
 	logger := logrus.WithField("request", message)
 	logger.Info("handling queue in request")
-
-	err := message.Validate()
-	if err != nil {
-		logger.WithError(err).Warn("failed validation")
-		return nil, err
-	}
 
 	partition, err := nb.getPartitionData(ctx, message.GetAccessId())
 	if err != nil {
@@ -229,8 +217,8 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
-		State:          int32(common.STATE_CREATED.Number()),
-		Status:         int32(common.STATUS_QUEUED.Number()),
+		State:          int32(commonv1.STATE_CREATED.Number()),
+		Status:         int32(commonv1.STATUS_QUEUED.Number()),
 	}
 	nStatus.GenID(ctx)
 
@@ -257,13 +245,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificat
 	logger := logrus.WithField("request", statusReq)
 	logger.Info("handling status check request")
 
-	err := statusReq.Validate()
-	if err != nil {
-		logger.WithError(err).Warn("failed to validate request")
-		return nil, err
-	}
-
-	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessId())
+	partition, err := nb.getPartitionData(ctx, statusReq.GetId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition")
 		return nil, err
@@ -288,12 +270,6 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificat
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *notificationV1.StatusUpdateRequest) (*notificationV1.StatusResponse, error) {
 	logger := logrus.WithField("request", statusReq)
 	logger.Info("handling status update request")
-
-	err := statusReq.Validate()
-	if err != nil {
-		logger.WithError(err).Warn("could not validate request")
-		return nil, err
-	}
 
 	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessId())
 	if err != nil {
@@ -335,12 +311,6 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	logger := logrus.WithField("request", releaseReq)
 	logger.Info("handling release request")
 
-	err := releaseReq.Validate()
-	if err != nil {
-		logger.WithError(err).Warn("failed request validation")
-		return nil, err
-	}
-
 	partition, err := nb.getPartitionData(ctx, releaseReq.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition")
@@ -367,8 +337,8 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 
 		nStatus := models.NotificationStatus{
 			NotificationID: n.GetID(),
-			State:          int32(common.STATE_ACTIVE.Number()),
-			Status:         int32(common.STATUS_QUEUED.Number()),
+			State:          int32(commonv1.STATE_ACTIVE.Number()),
+			Status:         int32(commonv1.STATUS_QUEUED.Number()),
 		}
 
 		nStatus.GenID(ctx)
@@ -401,28 +371,25 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 
 	logger.Info("handling search request")
 
-	err := search.Validate()
-	if err != nil {
-		logger.WithError(err).Warn("failed request validation")
-		return err
+	ctx := stream.Context()
+	authClaims := frame.ClaimsFromContext(ctx)
+
+	partition_id := ""
+	if authClaims != nil {
+		partition_id = authClaims.PartitionID
 	}
 
-	partition, err := nb.getPartitionData(stream.Context(), search.GetAccessId())
-	if err != nil {
-		logger.WithError(err).Warn("failed to obtain partition data")
-		return err
-	}
+	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 
-	notificationRepo := repository.NewNotificationRepository(stream.Context(), nb.service)
+	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
 
-	notificationStatusRepo := repository.NewNotificationStatusRepository(stream.Context(), nb.service)
-
-	notificationList, err := notificationRepo.SearchByPartition(partition.PartitionID, search.GetQuery())
+	notificationList, err := notificationRepo.SearchByPartition(partition_id, search.GetQuery())
 	if err != nil {
 		logger.WithError(err).Warn("failed to search notifications")
 		return err
 	}
 
+	var responsesList []*notificationV1.Notification
 	for _, n := range notificationList {
 		nStatus := &models.NotificationStatus{}
 		if n.StatusID != "" {
@@ -435,14 +402,16 @@ func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
 		}
 
 		result := n.ToNotificationApi(nStatus)
-		err = stream.Send(result)
-		if err != nil {
-			logger.WithError(err).Warn(" unable to send a result")
-		}
+		responsesList = append(responsesList, result)
+	}
+
+	err = stream.Send(&notificationV1.SearchResponse{Data: responsesList})
+	if err != nil {
+		logger.WithError(err).Warn(" unable to send a result")
 	}
 
 	logger.Info("_______________________________________________________")
-	logger.WithField("result count", len(notificationList)).
+	logger.WithField("result count", len(responsesList)).
 		Infof("_____  Sending out %d object   _______________", len(notificationList))
 	logger.Info("_______________________________________________________")
 

@@ -3,7 +3,7 @@ package events
 import (
 	"context"
 	"errors"
-	"github.com/antinvestor/apis/common"
+	commonv1 "github.com/antinvestor/apis/common/v1"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
 	"github.com/sirupsen/logrus"
@@ -71,8 +71,8 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 	} else {
 		nStatus := models.NotificationStatus{
 			NotificationID: notification.GetID(),
-			State:          int32(common.STATE_CHECKED.Number()),
-			Status:         int32(common.STATUS_QUEUED.Number()),
+			State:          int32(commonv1.STATE_CHECKED.Number()),
+			Status:         int32(commonv1.STATUS_QUEUED.Number()),
 		}
 
 		nStatus.GenID(ctx)

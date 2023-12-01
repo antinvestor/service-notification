@@ -2,18 +2,18 @@ package handlers
 
 import (
 	"context"
-	partapi "github.com/antinvestor/service-partition-api"
+	partitionv1 "github.com/antinvestor/apis/partition/v1"
 
-	notificationV1 "github.com/antinvestor/service-notification-api"
+	notificationV1 "github.com/antinvestor/apis/notification/v1"
+	profileV1 "github.com/antinvestor/apis/profile/v1"
 	"github.com/antinvestor/service-notification/service/business"
-	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 )
 
 type NotificationServer struct {
 	Service      *frame.Service
 	ProfileCli   *profileV1.ProfileClient
-	PartitionCli *partapi.PartitionClient
+	PartitionCli *partitionv1.PartitionClient
 
 	notificationV1.UnimplementedNotificationServiceServer
 }
@@ -23,13 +23,18 @@ func (server *NotificationServer) newNotificationBusiness(ctx context.Context) (
 }
 
 // Send method for queueing massages as requested
-func (server *NotificationServer) Send(ctx context.Context, req *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
+func (server *NotificationServer) Send(ctx context.Context, req *notificationV1.SendRequest) (*notificationV1.SendResponse, error) {
 
 	notificationBusiness, err := server.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return notificationBusiness.QueueOut(ctx, req)
+	response, err := notificationBusiness.QueueOut(ctx, req.GetData())
+	if err != nil {
+		return nil, err
+	}
+
+	return &notificationV1.SendResponse{Data: response}, nil
 
 }
 
@@ -44,34 +49,50 @@ func (server *NotificationServer) Status(ctx context.Context, req *notificationV
 }
 
 // StatusUpdate request to allow continuation of notification processing
-func (server *NotificationServer) StatusUpdate(ctx context.Context, req *notificationV1.StatusUpdateRequest) (*notificationV1.StatusResponse, error) {
+func (server *NotificationServer) StatusUpdate(ctx context.Context, req *notificationV1.StatusUpdateRequest) (*notificationV1.StatusUpdateResponse, error) {
 
 	notificationBusiness, err := server.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return notificationBusiness.StatusUpdate(ctx, req)
+	response, err := notificationBusiness.StatusUpdate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 
+	return &notificationV1.StatusUpdateResponse{Data: response}, nil
 }
 
 // Release method for releasing queued massages and returns if notification status if released
-func (server *NotificationServer) Release(ctx context.Context, req *notificationV1.ReleaseRequest) (*notificationV1.StatusResponse, error) {
+func (server *NotificationServer) Release(ctx context.Context, req *notificationV1.ReleaseRequest) (*notificationV1.ReleaseResponse, error) {
 
 	notificationBusiness, err := server.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return notificationBusiness.Release(ctx, req)
+	response, err := notificationBusiness.Release(ctx, req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &notificationV1.ReleaseResponse{Data: response}, nil
 }
 
 // Receive method is for client request for particular notification responses from system
-func (server *NotificationServer) Receive(ctx context.Context, req *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
+func (server *NotificationServer) Receive(ctx context.Context, req *notificationV1.ReceiveRequest) (*notificationV1.ReceiveResponse, error) {
 
 	notificationBusiness, err := server.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return notificationBusiness.QueueIn(ctx, req)
+	response, err := notificationBusiness.QueueIn(ctx, req.GetData())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &notificationV1.ReceiveResponse{Data: response}, nil
 }
 
 // Search method is for client request for particular notification details from system

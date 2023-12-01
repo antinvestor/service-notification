@@ -2,16 +2,16 @@ package business
 
 import (
 	"context"
-	"github.com/antinvestor/apis/common"
-	notificationV1 "github.com/antinvestor/service-notification-api"
+	commonv1 "github.com/antinvestor/apis/common/v1"
+	notificationV1 "github.com/antinvestor/apis/notification/v1"
+	partitionV1 "github.com/antinvestor/apis/partition/v1"
+	profileV1 "github.com/antinvestor/apis/profile/v1"
 	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/events"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
-	partitionV1 "github.com/antinvestor/service-partition-api"
-	profileV1 "github.com/antinvestor/service-profile-api"
-	"github.com/golang/mock/gomock"
 	"github.com/pitabwire/frame"
+	"go.uber.org/mock/gomock"
 	"testing"
 	"time"
 )
@@ -57,13 +57,13 @@ func getPartitionCli(t *testing.T) *partitionV1.PartitionClient {
 
 	mockPartitionService.EXPECT().
 		GetAccess(gomock.Any(), gomock.Any()).
-		Return(&partitionV1.AccessObject{
+		Return(&partitionV1.GetAccessResponse{Data: &partitionV1.AccessObject{
 			AccessId: "test_access-id",
 			Partition: &partitionV1.PartitionObject{
-				PartitionId: "test_partition-id",
-				TenantId:    "test_tenant-id",
+				Id:       "test_partition-id",
+				TenantId: "test_tenant-id",
 			},
-		}, nil).AnyTimes()
+		}}, nil).AnyTimes()
 
 	profileCli := partitionV1.InstantiatePartitionsClient(nil, mockPartitionService)
 	return profileCli
@@ -146,8 +146,8 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
 				Id:     "123456",
-				State:  common.STATE_CREATED,
-				Status: common.STATUS_QUEUED,
+				State:  commonv1.STATE_CREATED,
+				Status: commonv1.STATUS_QUEUED,
 			},
 		},
 		{name: "NormalWithIDQueueIn",
@@ -167,8 +167,8 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
 				Id:     "c2f4j7au6s7f91uqnojg",
-				State:  common.STATE_CREATED,
-				Status: common.STATUS_QUEUED,
+				State:  commonv1.STATE_CREATED,
+				Status: commonv1.STATUS_QUEUED,
 			},
 		},
 	}
@@ -234,8 +234,8 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
 				Id:     "c2f4j7au6s7f91uqnojg",
-				State:  common.STATE_CREATED,
-				Status: common.STATUS_QUEUED,
+				State:  commonv1.STATE_CREATED,
+				Status: commonv1.STATUS_QUEUED,
 			},
 		},
 
@@ -258,8 +258,8 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
 				Id:     "c2f4j7au6s7f91uqnojg",
-				State:  common.STATE_CREATED,
-				Status: common.STATUS_QUEUED,
+				State:  commonv1.STATE_CREATED,
+				Status: commonv1.STATUS_QUEUED,
 			},
 		},
 	}
@@ -322,8 +322,8 @@ func Test_notificationBusiness_Release(t *testing.T) {
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
 				Id:         "c2f4j7au6s7f91uqnojg",
-				State:      common.STATE_ACTIVE,
-				Status:     common.STATUS_QUEUED,
+				State:      commonv1.STATE_ACTIVE,
+				Status:     commonv1.STATUS_QUEUED,
 				ExternalId: "total_externalization",
 			},
 		},
@@ -340,7 +340,7 @@ func Test_notificationBusiness_Release(t *testing.T) {
 				ContactID:        "epochTesting",
 				Message:          "Hello we are just testing statuses out",
 				NotificationType: "email",
-				State:            int32(common.STATE_ACTIVE.Number()),
+				State:            int32(commonv1.STATE_ACTIVE.Number()),
 			}
 			n.AccessID = "testingAccessData"
 			n.PartitionID = "test_partition-id"
@@ -407,7 +407,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 				leastCount:  1,
 			},
 			args: args{
-				search: &notificationV1.SearchRequest{Query: "", AccessId: "testingAccessData"},
+				search: &notificationV1.SearchRequest{Query: ""},
 				stream: nsSs,
 			},
 			wantErr: false,
@@ -428,9 +428,8 @@ func Test_notificationBusiness_Search(t *testing.T) {
 				ContactID:        "epochTesting",
 				Message:          "Hello we are just testing statuses out",
 				NotificationType: "email",
-				State:            int32(common.STATE_ACTIVE.Number()),
+				State:            int32(commonv1.STATE_ACTIVE.Number()),
 			}
-			n.AccessID = tt.args.search.GetAccessId()
 			n.PartitionID = "test_partition-id"
 
 			nRepo := repository.NewNotificationRepository(ctx, nb.service)
@@ -477,15 +476,14 @@ func Test_notificationBusiness_Status(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				statusReq: &notificationV1.StatusRequest{
-					Id:       "testingQueue_out",
-					AccessId: "testingAccessData",
+					Id: "testingQueue_out",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
 				Id:     "c2f4j7au6s7f91uqnojg",
-				State:  common.STATE_DELETED,
-				Status: common.STATUS_FAILED,
+				State:  commonv1.STATE_DELETED,
+				Status: commonv1.STATUS_FAILED,
 			},
 		},
 	}
@@ -500,8 +498,8 @@ func Test_notificationBusiness_Status(t *testing.T) {
 			}
 
 			nStatus := models.NotificationStatus{
-				State:  int32(common.STATE_DELETED.Number()),
-				Status: int32(common.STATUS_FAILED.Number()),
+				State:  int32(commonv1.STATE_DELETED.Number()),
+				Status: int32(commonv1.STATUS_FAILED.Number()),
 			}
 
 			nStatus.AccessID = "testingAccessData"
@@ -587,16 +585,16 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 				statusReq: &notificationV1.StatusUpdateRequest{
 					Id:         "testingQueue_out",
 					AccessId:   "testingAccessData",
-					State:      common.STATE_INACTIVE,
-					Status:     common.STATUS_SUCCESSFUL,
+					State:      commonv1.STATE_INACTIVE,
+					Status:     commonv1.STATUS_SUCCESSFUL,
 					ExternalId: "total_externalization",
 				},
 			},
 			wantErr: false,
 			want: &notificationV1.StatusResponse{
 				Id:         "c2f4j7au6s7f91uqnojg",
-				State:      common.STATE_INACTIVE,
-				Status:     common.STATUS_SUCCESSFUL,
+				State:      commonv1.STATE_INACTIVE,
+				Status:     commonv1.STATUS_SUCCESSFUL,
 				ExternalId: "total_externalization",
 			},
 		},
@@ -614,7 +612,7 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 				ContactID:        "epochTesting",
 				Message:          "Hello we are just testing statuses out",
 				NotificationType: "email",
-				State:            int32(common.STATE_ACTIVE.Number()),
+				State:            int32(commonv1.STATE_ACTIVE.Number()),
 				ReleasedAt:       &releaseDate,
 			}
 			n.AccessID = "testingAccessData"

@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/antinvestor/apis/common"
+	commonv1 "github.com/antinvestor/apis/common/v1"
+	profileV1 "github.com/antinvestor/apis/profile/v1"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
-	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 	"github.com/sirupsen/logrus"
 	"text/template"
@@ -97,8 +97,8 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
-		State:          int32(common.STATE_ACTIVE),
-		Status:         int32(common.STATUS_IN_PROCESS),
+		State:          int32(commonv1.STATE_ACTIVE),
+		Status:         int32(commonv1.STATUS_IN_PROCESS),
 	}
 
 	nStatus.GenID(ctx)

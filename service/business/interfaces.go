@@ -2,10 +2,10 @@ package business
 
 import (
 	"context"
-	partapi "github.com/antinvestor/service-partition-api"
+	partitionv1 "github.com/antinvestor/apis/partition/v1"
 
-	notificationV1 "github.com/antinvestor/service-notification-api"
-	profileV1 "github.com/antinvestor/service-profile-api"
+	notificationV1 "github.com/antinvestor/apis/notification/v1"
+	profileV1 "github.com/antinvestor/apis/profile/v1"
 	"github.com/pitabwire/frame"
 )
 
@@ -18,7 +18,7 @@ type NotificationBusiness interface {
 	Search(search *notificationV1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error
 }
 
-func NewNotificationBusiness(ctx context.Context, service *frame.Service, profileCli *profileV1.ProfileClient, partitionCli *partapi.PartitionClient) (NotificationBusiness, error) {
+func NewNotificationBusiness(ctx context.Context, service *frame.Service, profileCli *profileV1.ProfileClient, partitionCli *partitionv1.PartitionClient) (NotificationBusiness, error) {
 
 	if service == nil || profileCli == nil || partitionCli == nil {
 		return nil, ErrorInitializationFail

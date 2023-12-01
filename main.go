@@ -2,22 +2,23 @@ package main
 
 import (
 	"fmt"
-	partitionV1 "github.com/antinvestor/service-partition-api"
+	partitionV1 "github.com/antinvestor/apis/partition/v1"
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/antinvestor/apis"
-	notificationV1 "github.com/antinvestor/service-notification-api"
+	notificationV1 "github.com/antinvestor/apis/notification/v1"
 	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/events"
 
 	"github.com/antinvestor/service-notification/service/handlers"
 	"github.com/antinvestor/service-notification/service/models"
 
-	profileV1 "github.com/antinvestor/service-profile-api"
-	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpcctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	profileV1 "github.com/antinvestor/apis/profile/v1"
+	protovalidateinterceptor "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+
 	"github.com/pitabwire/frame"
 	"google.golang.org/grpc"
 )
@@ -94,13 +95,22 @@ func main() {
 		jwtAudience = serviceName
 	}
 
+	validator, err := protovalidate.New()
+	if err != nil {
+		log.WithError(err).Fatal("could not load validator for proto messages")
+	}
+
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(
-			grpcctxtags.UnaryServerInterceptor(),
-			grpcrecovery.UnaryServerInterceptor(),
+		grpc.ChainUnaryInterceptor(
 			service.UnaryAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer),
-		)),
-		grpc.StreamInterceptor(service.StreamAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer)),
+			protovalidateinterceptor.UnaryServerInterceptor(validator),
+			recovery.UnaryServerInterceptor(),
+		),
+		grpc.ChainStreamInterceptor(
+			service.StreamAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer),
+			protovalidateinterceptor.StreamServerInterceptor(validator),
+			recovery.StreamServerInterceptor(),
+		),
 	)
 
 	implementation := &handlers.NotificationServer{

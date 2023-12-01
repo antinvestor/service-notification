@@ -3,8 +3,8 @@ package models
 import (
 	"time"
 
-	"github.com/antinvestor/apis/common"
-	notificationV1 "github.com/antinvestor/service-notification-api"
+	commonv1 "github.com/antinvestor/apis/common/v1"
+	notificationV1 "github.com/antinvestor/apis/notification/v1"
 	"github.com/pitabwire/frame"
 	"gorm.io/datatypes"
 )
@@ -123,8 +123,8 @@ func (model *NotificationStatus) ToStatusAPI() *notificationV1.StatusResponse {
 
 	status := notificationV1.StatusResponse{
 		Id:          model.NotificationID,
-		State:       common.STATE(model.State),
-		Status:      common.STATUS(model.Status),
+		State:       commonv1.STATE(model.State),
+		Status:      commonv1.STATUS(model.Status),
 		TransientId: model.TransientID,
 		ExternalId:  model.ExternalID,
 		Extras:      extra,

@@ -3,8 +3,8 @@ package events
 import (
 	"context"
 	"errors"
+	profileV1 "github.com/antinvestor/apis/profile/v1"
 	"github.com/antinvestor/service-notification/service/repository"
-	profileV1 "github.com/antinvestor/service-profile-api"
 	"github.com/pitabwire/frame"
 	"github.com/sirupsen/logrus"
 )
@@ -12,7 +12,7 @@ import (
 func filterContactFromProfileByID(profile *profileV1.ProfileObject, contactID string) *profileV1.ContactObject {
 
 	for _, contact := range profile.GetContacts() {
-		if contact.GetID() == contactID {
+		if contact.GetId() == contactID {
 			return contact
 		}
 	}

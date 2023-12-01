@@ -36,11 +36,11 @@ doc:    ## generate godocs and start a local documentation webserver on port 808
 
 # this command will start docker components that we set in docker-compose.yml
 docker-setup: ## sets up docker container images
-	docker-compose up -d --remove-orphans --build
+	docker compose up -d --remove-orphans --build
 
 # shutting down docker components
 docker-stop: ## stops all docker containers
-	docker-compose down
+	docker compose down
 
 pg_wait:
 	@count=0; \
