@@ -8,7 +8,7 @@ require (
 	github.com/antinvestor/apis v1.4.5
 	github.com/antinvestor/apis/notification v0.0.0-20231201182900-909b2d1c1640
 	github.com/antinvestor/apis/partition v0.0.0-20231201182900-909b2d1c1640
-	github.com/antinvestor/apis/profile v0.0.0-20231201182900-909b2d1c1640
+	github.com/antinvestor/apis/profile v0.0.0-20231202031032-e240a0a6ba31
 	github.com/bufbuild/protovalidate-go v0.2.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/pitabwire/frame v1.15.10
