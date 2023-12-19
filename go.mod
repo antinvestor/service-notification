@@ -14,7 +14,7 @@ require (
 	github.com/pitabwire/frame v1.15.10
 	github.com/sirupsen/logrus v1.9.3
 	go.uber.org/mock v0.3.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.1
 	gorm.io/datatypes v1.2.0
 	gorm.io/gorm v1.25.5
 )
@@ -58,13 +58,13 @@ require (
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
-	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.134.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231127180814-3a041ad873d4 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gorm.io/driver/mysql v1.4.7 // indirect
