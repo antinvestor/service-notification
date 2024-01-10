@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"context"
-	partitionv1 "github.com/antinvestor/apis/partition/v1"
+	commonv1 "github.com/antinvestor/apis/go/common/v1"
+	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
 
-	notificationV1 "github.com/antinvestor/apis/notification/v1"
-	profileV1 "github.com/antinvestor/apis/profile/v1"
+	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/service/business"
 	"github.com/pitabwire/frame"
 )
@@ -39,7 +40,7 @@ func (server *NotificationServer) Send(ctx context.Context, req *notificationV1.
 }
 
 // Status request to determine if notification is prepared or released
-func (server *NotificationServer) Status(ctx context.Context, req *notificationV1.StatusRequest) (*notificationV1.StatusResponse, error) {
+func (server *NotificationServer) Status(ctx context.Context, req *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
 
 	notificationBusiness, err := server.newNotificationBusiness(ctx)
 	if err != nil {
@@ -49,7 +50,7 @@ func (server *NotificationServer) Status(ctx context.Context, req *notificationV
 }
 
 // StatusUpdate request to allow continuation of notification processing
-func (server *NotificationServer) StatusUpdate(ctx context.Context, req *notificationV1.StatusUpdateRequest) (*notificationV1.StatusUpdateResponse, error) {
+func (server *NotificationServer) StatusUpdate(ctx context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusUpdateResponse, error) {
 
 	notificationBusiness, err := server.newNotificationBusiness(ctx)
 	if err != nil {
@@ -60,7 +61,7 @@ func (server *NotificationServer) StatusUpdate(ctx context.Context, req *notific
 		return nil, err
 	}
 
-	return &notificationV1.StatusUpdateResponse{Data: response}, nil
+	return &commonv1.StatusUpdateResponse{Data: response}, nil
 }
 
 // Release method for releasing queued massages and returns if notification status if released
@@ -96,7 +97,7 @@ func (server *NotificationServer) Receive(ctx context.Context, req *notification
 }
 
 // Search method is for client request for particular notification details from system
-func (server *NotificationServer) Search(req *notificationV1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error {
+func (server *NotificationServer) Search(req *commonv1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error {
 
 	notificationBusiness, err := server.newNotificationBusiness(stream.Context())
 	if err != nil {

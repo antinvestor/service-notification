@@ -2,7 +2,7 @@ package events
 
 import (
 	"context"
-	notificationV1 "github.com/antinvestor/apis/notification/v1"
+	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"

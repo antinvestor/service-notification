@@ -3,8 +3,8 @@ package models
 import (
 	"time"
 
-	commonv1 "github.com/antinvestor/apis/common/v1"
-	notificationV1 "github.com/antinvestor/apis/notification/v1"
+	commonv1 "github.com/antinvestor/apis/go/common/v1"
+	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	"github.com/pitabwire/frame"
 	"gorm.io/datatypes"
 )
@@ -115,13 +115,13 @@ type NotificationStatus struct {
 	Status      int32
 }
 
-func (model *NotificationStatus) ToStatusAPI() *notificationV1.StatusResponse {
+func (model *NotificationStatus) ToStatusAPI() *commonv1.StatusResponse {
 
 	extra := frame.DBPropertiesToMap(model.Extra)
 	extra["CreatedAt"] = model.CreatedAt.String()
 	extra["StatusID"] = model.ID
 
-	status := notificationV1.StatusResponse{
+	status := commonv1.StatusResponse{
 		Id:          model.NotificationID,
 		State:       commonv1.STATE(model.State),
 		Status:      commonv1.STATUS(model.Status),

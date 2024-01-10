@@ -5,10 +5,10 @@ import (
 	"errors"
 	"time"
 
-	commonv1 "github.com/antinvestor/apis/common/v1"
-	notificationV1 "github.com/antinvestor/apis/notification/v1"
-	partitionV1 "github.com/antinvestor/apis/partition/v1"
-	profileV1 "github.com/antinvestor/apis/profile/v1"
+	commonv1 "github.com/antinvestor/apis/go/common/v1"
+	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
+	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/service/events"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
@@ -56,7 +56,7 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID s
 	}, nil
 }
 
-func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
+func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
 	logger := logrus.WithField("request", message)
 	logger.Info("handling queue out request")
 
@@ -178,7 +178,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	return nStatus.ToStatusAPI(), nil
 }
 
-func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*notificationV1.StatusResponse, error) {
+func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
 	logger := logrus.WithField("request", message)
 	logger.Info("handling queue in request")
 
@@ -241,7 +241,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	return nStatus.ToStatusAPI(), nil
 }
 
-func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificationV1.StatusRequest) (*notificationV1.StatusResponse, error) {
+func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
 	logger := logrus.WithField("request", statusReq)
 	logger.Info("handling status check request")
 
@@ -267,7 +267,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *notificat
 	return nStatus.ToStatusAPI(), nil
 }
 
-func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *notificationV1.StatusUpdateRequest) (*notificationV1.StatusResponse, error) {
+func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error) {
 	logger := logrus.WithField("request", statusReq)
 	logger.Info("handling status update request")
 
@@ -306,7 +306,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *not
 	return nStatus.ToStatusAPI(), nil
 }
 
-func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*notificationV1.StatusResponse, error) {
+func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*commonv1.StatusResponse, error) {
 
 	logger := logrus.WithField("request", releaseReq)
 	logger.Info("handling release request")
@@ -365,7 +365,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	}
 }
 
-func (nb *notificationBusiness) Search(search *notificationV1.SearchRequest,
+func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 	stream notificationV1.NotificationService_SearchServer) error {
 	logger := logrus.WithField("request", search)
 

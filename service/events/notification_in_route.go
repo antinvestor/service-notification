@@ -3,7 +3,7 @@ package events
 import (
 	"context"
 	"errors"
-	profileV1 "github.com/antinvestor/apis/profile/v1"
+	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
 	"github.com/sirupsen/logrus"

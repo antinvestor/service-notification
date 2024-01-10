@@ -2,10 +2,10 @@ package business
 
 import (
 	"context"
-	commonv1 "github.com/antinvestor/apis/common/v1"
-	notificationV1 "github.com/antinvestor/apis/notification/v1"
-	partitionV1 "github.com/antinvestor/apis/partition/v1"
-	profileV1 "github.com/antinvestor/apis/profile/v1"
+	commonv1 "github.com/antinvestor/apis/go/common/v1"
+	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
+	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/events"
 	"github.com/antinvestor/service-notification/service/models"
@@ -125,7 +125,7 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *notificationV1.StatusResponse
+		want    *commonv1.StatusResponse
 		wantErr bool
 	}{
 		{name: "NormalPassingQueueIn",
@@ -144,7 +144,7 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			want: &notificationV1.StatusResponse{
+			want: &commonv1.StatusResponse{
 				Id:     "123456",
 				State:  commonv1.STATE_CREATED,
 				Status: commonv1.STATUS_QUEUED,
@@ -165,7 +165,7 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			want: &notificationV1.StatusResponse{
+			want: &commonv1.StatusResponse{
 				Id:     "c2f4j7au6s7f91uqnojg",
 				State:  commonv1.STATE_CREATED,
 				Status: commonv1.STATUS_QUEUED,
@@ -212,7 +212,7 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *notificationV1.StatusResponse
+		want    *commonv1.StatusResponse
 		wantErr bool
 	}{
 		{name: "NormalQueueOut",
@@ -232,7 +232,7 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			want: &notificationV1.StatusResponse{
+			want: &commonv1.StatusResponse{
 				Id:     "c2f4j7au6s7f91uqnojg",
 				State:  commonv1.STATE_CREATED,
 				Status: commonv1.STATUS_QUEUED,
@@ -256,7 +256,7 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			want: &notificationV1.StatusResponse{
+			want: &commonv1.StatusResponse{
 				Id:     "c2f4j7au6s7f91uqnojg",
 				State:  commonv1.STATE_CREATED,
 				Status: commonv1.STATUS_QUEUED,
@@ -302,7 +302,7 @@ func Test_notificationBusiness_Release(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *notificationV1.StatusResponse
+		want    *commonv1.StatusResponse
 		wantErr bool
 	}{
 		{name: "NormalRelease",
@@ -320,7 +320,7 @@ func Test_notificationBusiness_Release(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			want: &notificationV1.StatusResponse{
+			want: &commonv1.StatusResponse{
 				Id:         "c2f4j7au6s7f91uqnojg",
 				State:      commonv1.STATE_ACTIVE,
 				Status:     commonv1.STATUS_QUEUED,
@@ -388,7 +388,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 		leastCount  int
 	}
 	type args struct {
-		search *notificationV1.SearchRequest
+		search *commonv1.SearchRequest
 		stream notificationV1.NotificationService_SearchServer
 	}
 	tests := []struct {
@@ -407,7 +407,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 				leastCount:  1,
 			},
 			args: args{
-				search: &notificationV1.SearchRequest{Query: ""},
+				search: &commonv1.SearchRequest{Query: ""},
 				stream: nsSs,
 			},
 			wantErr: false,
@@ -457,13 +457,13 @@ func Test_notificationBusiness_Status(t *testing.T) {
 	}
 	type args struct {
 		ctx       context.Context
-		statusReq *notificationV1.StatusRequest
+		statusReq *commonv1.StatusRequest
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    *notificationV1.StatusResponse
+		want    *commonv1.StatusResponse
 		wantErr bool
 	}{
 		{name: "NormalStatus",
@@ -475,12 +475,12 @@ func Test_notificationBusiness_Status(t *testing.T) {
 			},
 			args: args{
 				ctx: ctx,
-				statusReq: &notificationV1.StatusRequest{
+				statusReq: &commonv1.StatusRequest{
 					Id: "testingQueue_out",
 				},
 			},
 			wantErr: false,
-			want: &notificationV1.StatusResponse{
+			want: &commonv1.StatusResponse{
 				Id:     "c2f4j7au6s7f91uqnojg",
 				State:  commonv1.STATE_DELETED,
 				Status: commonv1.STATUS_FAILED,
@@ -564,13 +564,13 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 	}
 	type args struct {
 		ctx       context.Context
-		statusReq *notificationV1.StatusUpdateRequest
+		statusReq *commonv1.StatusUpdateRequest
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    *notificationV1.StatusResponse
+		want    *commonv1.StatusResponse
 		wantErr bool
 	}{
 		{name: "NormalStatusUpdate",
@@ -582,7 +582,7 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 			},
 			args: args{
 				ctx: ctx,
-				statusReq: &notificationV1.StatusUpdateRequest{
+				statusReq: &commonv1.StatusUpdateRequest{
 					Id:         "testingQueue_out",
 					AccessId:   "testingAccessData",
 					State:      commonv1.STATE_INACTIVE,
@@ -591,7 +591,7 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			want: &notificationV1.StatusResponse{
+			want: &commonv1.StatusResponse{
 				Id:         "c2f4j7au6s7f91uqnojg",
 				State:      commonv1.STATE_INACTIVE,
 				Status:     commonv1.STATUS_SUCCESSFUL,
