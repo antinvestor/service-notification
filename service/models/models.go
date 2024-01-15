@@ -14,8 +14,9 @@ const (
 	RouteModeReceive    = "rx"
 	RouteModeTransceive = "trx"
 
-	RouteTypeEmail = "email"
-	RouteTypeSms   = "sms"
+	RouteTypeAny       = "any"
+	RouteTypeLongForm  = "long"
+	RouteTypeShortForm = "short"
 )
 
 // Templete Table holds the templete details

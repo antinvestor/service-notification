@@ -10,8 +10,8 @@ import (
 
 type RouteRepository interface {
 	GetByID(id string) (*models.Route, error)
-	GetByModeTypeAndPartitionID(mode string, routeType string, partitionId string) ([]models.Route, error)
-	GetByMode(mode string) ([]models.Route, error)
+	GetByModeTypeAndPartitionID(mode string, routeType string, partitionId string) ([]*models.Route, error)
+	GetByMode(mode string) ([]*models.Route, error)
 	Save(channel *models.Route) error
 }
 
@@ -33,8 +33,8 @@ func (repo *routeRepository) GetByID(id string) (*models.Route, error) {
 	return &route, nil
 }
 
-func (repo *routeRepository) GetByMode(mode string) ([]models.Route, error) {
-	var routes []models.Route
+func (repo *routeRepository) GetByMode(mode string) ([]*models.Route, error) {
+	var routes []*models.Route
 
 	err := repo.readDb.Find(&routes,
 		"mode = ? OR ( mode = ?)", mode, models.RouteModeTransceive).Error
@@ -44,8 +44,8 @@ func (repo *routeRepository) GetByMode(mode string) ([]models.Route, error) {
 	return routes, nil
 }
 
-func (repo *routeRepository) GetByModeTypeAndPartitionID(mode string, routeType string, partitionId string) ([]models.Route, error) {
-	var routes []models.Route
+func (repo *routeRepository) GetByModeTypeAndPartitionID(mode string, routeType string, partitionId string) ([]*models.Route, error) {
+	var routes []*models.Route
 	err := repo.readDb.Find(&routes,
 		"partition_id = ? AND route_type = ? AND (mode = ? OR ( mode = ?))",
 		partitionId, routeType, mode, models.RouteModeTransceive).Error

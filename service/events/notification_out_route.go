@@ -58,11 +58,11 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 	contact := filterContactFromProfileByID(p, n.ContactID)
 	switch contact.Type {
 	case profileV1.ContactType_PHONE:
-		n.NotificationType = models.RouteTypeSms
+		n.NotificationType = models.RouteTypeShortForm
 	case profileV1.ContactType_EMAIL:
-		n.NotificationType = models.RouteTypeEmail
+		n.NotificationType = models.RouteTypeLongForm
 	default:
-		n.NotificationType = models.RouteTypeEmail
+		n.NotificationType = models.RouteTypeLongForm
 	}
 
 	err = event.routeNotification(ctx, n)
@@ -125,7 +125,7 @@ func (event *NotificationOutRoute) routeNotification(ctx context.Context, notifi
 	return nil
 }
 
-func (event *NotificationOutRoute) selectRoute(ctx context.Context, routes []models.Route) models.Route {
+func (event *NotificationOutRoute) selectRoute(ctx context.Context, routes []*models.Route) *models.Route {
 	//TODO: find a simple way of routing message mostly by settings
 	// or contact and profile preferences
 
