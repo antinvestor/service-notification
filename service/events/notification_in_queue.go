@@ -1,9 +1,7 @@
 package events
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
@@ -11,7 +9,6 @@ import (
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
 	"github.com/sirupsen/logrus"
-	"text/template"
 )
 
 type NotificationInQueue struct {
@@ -75,50 +72,4 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload interface
 	}
 
 	return nil
-}
-
-func (event *NotificationInQueue) formatOutboundNotification(ctx context.Context, n *models.Notification) (map[string]string, error) {
-
-	if n.TemplateID == "" {
-		return nil, errors.New("No template id specified")
-	}
-
-	templateRepository := repository.NewTemplateRepository(ctx, event.Service)
-
-	tmplDetail, err := templateRepository.GetByID(n.TemplateID)
-	if err != nil {
-		return nil, err
-	}
-
-	payload := make(map[string]string)
-	data, err := n.Payload.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(data, &payload)
-	if err != nil {
-		return nil, err
-	}
-
-	templateMap := make(map[string]string)
-
-	for _, data := range tmplDetail.DataList {
-
-		tmpl, err := template.New("message_out").Parse(data.Detail)
-		if err != nil {
-			return nil, err
-		}
-
-		var tmplBytes bytes.Buffer
-		err = tmpl.Execute(&tmplBytes, payload)
-		if err != nil {
-			return nil, err
-		}
-		templateMap[data.Type] = tmplBytes.String()
-
-	}
-
-	return templateMap, nil
-
 }
