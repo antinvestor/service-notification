@@ -14,21 +14,21 @@ import (
 	"text/template"
 )
 
-type NotificationOutQueue struct {
+type NotificationInQueue struct {
 	Service    *frame.Service
 	ProfileCli *profileV1.ProfileClient
 }
 
-func (event *NotificationOutQueue) Name() string {
-	return "notification.out.queue"
+func (event *NotificationInQueue) Name() string {
+	return "notification.in.queue"
 }
 
-func (event *NotificationOutQueue) PayloadType() interface{} {
+func (event *NotificationInQueue) PayloadType() interface{} {
 	pType := ""
 	return &pType
 }
 
-func (event *NotificationOutQueue) Validate(ctx context.Context, payload interface{}) error {
+func (event *NotificationInQueue) Validate(ctx context.Context, payload interface{}) error {
 	if _, ok := payload.(*string); !ok {
 		return errors.New(" payload is not of type string")
 	}
@@ -36,7 +36,7 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload interfa
 	return nil
 }
 
-func (event *NotificationOutQueue) Execute(ctx context.Context, payload interface{}) error {
+func (event *NotificationInQueue) Execute(ctx context.Context, payload interface{}) error {
 	notificationID := *payload.(*string)
 	logger := logrus.WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Info("handling event")
@@ -48,47 +48,16 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 		return err
 	}
 
-	p, err := event.ProfileCli.GetProfileByID(ctx, n.ProfileID)
-	if err != nil {
-		return err
-	}
-
-	contact := filterContactFromProfileByID(p, n.ContactID)
-
-	var templateMap map[string]string
-	if n.TemplateID != "" {
-		templateMap, err = event.formatOutboundNotification(ctx, n)
-		if err != nil {
-			return err
-		}
-	} else {
-		templateMap = map[string]string{"en": n.Message}
-	}
-
-	message := map[string]interface{}{
-		"profile": p,
-		"contact": contact,
-		"data":    templateMap,
-	}
-
 	// Queue a message for further processing by peripheral services
-	err = event.Service.Publish(ctx, n.RouteID, message)
+	err = event.Service.Publish(ctx, n.RouteID, n)
 	if err != nil {
 		return err
 	}
 
 	log := event.Service.L()
-	log.Info("===========================================================")
-	log.Info(" We have successfully managed to get to post out ")
-	log.Infof(" Contact details : %s", contact.Detail)
-	log.Infof(" Notification details : %s", n.ID)
-	log.Infof(" Message details : %s", templateMap)
-	log.Info("===========================================================")
-
-	err = notificationRepo.Save(n)
-	if err != nil {
-		return err
-	}
+	log.
+		WithField("notification", n.ID).
+		Info(" Successfully routed in message ")
 
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
@@ -108,7 +77,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	return nil
 }
 
-func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, n *models.Notification) (map[string]string, error) {
+func (event *NotificationInQueue) formatOutboundNotification(ctx context.Context, n *models.Notification) (map[string]string, error) {
 
 	if n.TemplateID == "" {
 		return nil, errors.New("No template id specified")

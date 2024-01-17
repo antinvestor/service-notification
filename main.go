@@ -129,6 +129,7 @@ func main() {
 			&events.NotificationSave{Service: service},
 			&events.NotificationStatusSave{Service: service},
 			&events.NotificationInRoute{Service: service},
+			&events.NotificationInQueue{Service: service, ProfileCli: profileCli},
 			&events.NotificationOutRoute{Service: service, ProfileCli: profileCli},
 			&events.NotificationOutQueue{Service: service, ProfileCli: profileCli}))
 

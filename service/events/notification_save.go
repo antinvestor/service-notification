@@ -59,6 +59,8 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 		if err != nil {
 			return err
 		}
+
+		return nil
 	}
 
 	if notification.IsReleased() {

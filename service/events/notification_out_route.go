@@ -62,15 +62,16 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 	case profileV1.ContactType_EMAIL:
 		n.NotificationType = models.RouteTypeLongForm
 	default:
-		n.NotificationType = models.RouteTypeLongForm
+		n.NotificationType = models.RouteTypeAny
 	}
 
-	err = event.routeNotification(ctx, n)
+	route, err := event.routeNotification(ctx, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not route notification")
 		return err
 	}
 
+	n.RouteID = route.ID
 	err = notificationRepo.Save(n)
 	if err != nil {
 		logger.WithError(err).Warn("could not save routed notification to db")
@@ -103,13 +104,26 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 	return nil
 }
 
-func (event *NotificationOutRoute) routeNotification(ctx context.Context, notification *models.Notification) error {
+func (event *NotificationOutRoute) routeNotification(ctx context.Context, notification *models.Notification) (*models.Route, error) {
 	routeRepository := repository.NewRouteRepository(ctx, event.Service)
+
+	if notification.RouteID != "" {
+
+		route, err := routeRepository.GetByID(notification.RouteID)
+		if err != nil {
+			return nil, err
+		}
+
+		event.Service.AddPublisher(ctx, route.ID, route.Uri)
+
+		return route, nil
+
+	}
 
 	routes, err := routeRepository.GetByModeTypeAndPartitionID(
 		models.RouteModeTransmit, notification.NotificationType, notification.PartitionID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(routes) > 0 {
@@ -117,12 +131,14 @@ func (event *NotificationOutRoute) routeNotification(ctx context.Context, notifi
 		if len(routes) > 1 {
 			route = event.selectRoute(ctx, routes)
 		}
-		notification.RouteID = route.ID
-	} else {
-		return fmt.Errorf("no routes matched for notification : %s", notification.GetID())
-	}
 
-	return nil
+		event.Service.AddPublisher(ctx, route.ID, route.Uri)
+
+		return route, nil
+
+	} else {
+		return nil, fmt.Errorf("no routes matched for notification : %s", notification.GetID())
+	}
 }
 
 func (event *NotificationOutRoute) selectRoute(ctx context.Context, routes []*models.Route) *models.Route {

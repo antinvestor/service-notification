@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
@@ -61,15 +62,34 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload interface
 		return err
 	}
 
+	n.RouteID = route.ID
+
 	err = notificationRepo.Save(n)
 	if err != nil {
 		logger.WithError(err).Warn("could not save routed notification to db")
 		return err
 	}
 
-	// Queue a message out for further processing by peripheral services
-	err = event.Service.Publish(ctx, route.Uri, n)
+	evt := NotificationInQueue{}
+	err = event.Service.Emit(ctx, evt.Name(), n.GetID())
 	if err != nil {
+		logger.WithError(err).Warn("could not queue out notification")
+		return err
+	}
+
+	nStatus := models.NotificationStatus{
+		NotificationID: n.GetID(),
+		State:          int32(commonv1.STATE_ACTIVE),
+		Status:         int32(commonv1.STATUS_QUEUED),
+	}
+
+	nStatus.GenID(ctx)
+
+	// Queue out notification status for further processing
+	eventStatus := NotificationStatusSave{}
+	err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
+	if err != nil {
+		logger.WithError(err).Warn("could not emit status for save")
 		return err
 	}
 
@@ -86,6 +106,8 @@ func (event *NotificationInRoute) routeNotification(ctx context.Context, notific
 			return nil, err
 		}
 
+		event.Service.AddPublisher(ctx, route.ID, route.Uri)
+
 		return route, nil
 
 	}
@@ -101,7 +123,9 @@ func (event *NotificationInRoute) routeNotification(ctx context.Context, notific
 		if len(routes) > 1 {
 			route = event.selectRoute(ctx, routes)
 		}
-		notification.RouteID = route.ID
+
+		event.Service.AddPublisher(ctx, route.ID, route.Uri)
+
 		return route, nil
 	} else {
 		return nil, fmt.Errorf("no routes matched for notification : %s", notification.GetID())

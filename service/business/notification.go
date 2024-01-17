@@ -218,7 +218,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
 		State:          int32(commonv1.STATE_CREATED.Number()),
-		Status:         int32(commonv1.STATUS_QUEUED.Number()),
+		Status:         int32(commonv1.STATUS_UNKNOWN.Number()),
 	}
 	nStatus.GenID(ctx)
 
