@@ -114,7 +114,10 @@ func (event *NotificationOutRoute) routeNotification(ctx context.Context, notifi
 			return nil, err
 		}
 
-		event.Service.AddPublisher(ctx, route.ID, route.Uri)
+		err = event.Service.AddPublisher(ctx, route.ID, route.Uri)
+		if err != nil {
+			return nil, err
+		}
 
 		return route, nil
 

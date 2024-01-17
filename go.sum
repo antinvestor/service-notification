@@ -345,8 +345,8 @@ github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtP
 github.com/performancecopilot/speed v3.0.0+incompatible/go.mod h1:/CLtqpZ5gBg1M9iaPbIdPPGyKcA8hKdoy6hAWba7Yac=
 github.com/pierrec/lz4 v1.0.2-0.20190131084431-473cd7ce01a1/go.mod h1:3/3N9NVKO0jef7pBehbT1qWhCMrIgbYNnFAZCqQ5LRc=
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
-github.com/pitabwire/frame v1.16.2 h1:Hd7/ZX0N5S0CAh/qR2uVwfbGsMYu4uYT7uwKRBuFnbQ=
-github.com/pitabwire/frame v1.16.2/go.mod h1:3g0UCvQQMSLzMefdyoZO2uZrD3c3YK3nTN1t3pYy/PA=
+github.com/pitabwire/frame v1.16.3 h1:HYGPZlPFUUl4SvA67mUUD2Xa0fxMhEVVki33xi9xWS8=
+github.com/pitabwire/frame v1.16.3/go.mod h1:3g0UCvQQMSLzMefdyoZO2uZrD3c3YK3nTN1t3pYy/PA=
 github.com/pitabwire/natspubsub v0.1.0 h1:Vq9Mz+1gFta/IPqdA9EfP4Lit59diMEZvA4nNPgz5Bc=
 github.com/pitabwire/natspubsub v0.1.0/go.mod h1:a4CSWieivcOhMM8FEirqXyGc1HGQb6jHO+u8c88Im1Q=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
