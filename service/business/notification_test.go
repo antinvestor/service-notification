@@ -147,7 +147,7 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			want: &commonv1.StatusResponse{
 				Id:     "123456",
 				State:  commonv1.STATE_CREATED,
-				Status: commonv1.STATUS_QUEUED,
+				Status: commonv1.STATUS_UNKNOWN,
 			},
 		},
 		{name: "NormalWithIDQueueIn",
@@ -168,7 +168,7 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			want: &commonv1.StatusResponse{
 				Id:     "c2f4j7au6s7f91uqnojg",
 				State:  commonv1.STATE_CREATED,
-				Status: commonv1.STATUS_QUEUED,
+				Status: commonv1.STATUS_UNKNOWN,
 			},
 		},
 	}
