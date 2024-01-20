@@ -29,9 +29,9 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID s
 		authClaims := frame.ClaimsFromContext(ctx)
 		if authClaims != nil {
 			return frame.BaseModel{
-				TenantID:    authClaims.TenantID,
-				PartitionID: authClaims.PartitionID,
-				AccessID:    authClaims.AccessID,
+				TenantID:    authClaims.TenantId(),
+				PartitionID: authClaims.PartitionId(),
+				AccessID:    authClaims.AccessId(),
 			}, nil
 		}
 
@@ -374,16 +374,16 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 	ctx := stream.Context()
 	authClaims := frame.ClaimsFromContext(ctx)
 
-	partition_id := ""
+	partitionId := ""
 	if authClaims != nil {
-		partition_id = authClaims.PartitionID
+		partitionId = authClaims.PartitionId()
 	}
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
 
-	notificationList, err := notificationRepo.SearchByPartition(partition_id, search.GetQuery())
+	notificationList, err := notificationRepo.SearchByPartition(partitionId, search.GetQuery())
 	if err != nil {
 		logger.WithError(err).Warn("failed to search notifications")
 		return err
