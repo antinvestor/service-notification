@@ -9,7 +9,6 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
-	"github.com/sirupsen/logrus"
 )
 
 func filterContactFromProfileByID(profile *profileV1.ProfileObject, contactID string) *profileV1.ContactObject {
@@ -46,7 +45,7 @@ func (event *NotificationInRoute) Validate(ctx context.Context, payload interfac
 
 func (event *NotificationInRoute) Execute(ctx context.Context, payload interface{}) error {
 	notificationID := *payload.(*string)
-	logger := logrus.WithField("payload", notificationID).WithField("type", event.Name())
+	logger := event.Service.L().WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Info("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)

@@ -9,7 +9,6 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
-	"github.com/sirupsen/logrus"
 )
 
 type NotificationOutRoute struct {
@@ -38,7 +37,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 
 	notificationId := *payload.(*string)
 
-	logger := logrus.WithField("payload", notificationId).WithField("type", event.Name())
+	logger := event.Service.L().WithField("payload", notificationId).WithField("type", event.Name())
 	logger.Info("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)

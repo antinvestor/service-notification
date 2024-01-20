@@ -6,7 +6,6 @@ import (
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm/clause"
 )
 
@@ -38,7 +37,7 @@ func (e *NotificationSave) Validate(ctx context.Context, payload interface{}) er
 func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) error {
 	notification := payload.(*models.Notification)
 
-	logger := logrus.WithField("type", e.Name())
+	logger := e.Service.L().WithField("type", e.Name())
 	logger.WithField("payload", notification).Info("handling event")
 
 	result := e.Service.DB(ctx, false).Debug().Clauses(clause.OnConflict{

@@ -13,7 +13,6 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
-	"github.com/sirupsen/logrus"
 )
 
 const defaultLanguageCode = "en"
@@ -57,7 +56,7 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID s
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
-	logger := logrus.WithField("request", message)
+	logger := nb.service.L().WithField("request", message)
 	logger.Info("handling queue out request")
 
 	partition, err := nb.getPartitionData(ctx, message.GetAccessId())
@@ -179,7 +178,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
-	logger := logrus.WithField("request", message)
+	logger := nb.service.L().WithField("request", message)
 	logger.Info("handling queue in request")
 
 	partition, err := nb.getPartitionData(ctx, message.GetAccessId())
@@ -242,7 +241,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
-	logger := logrus.WithField("request", statusReq)
+	logger := nb.service.L().WithField("request", statusReq)
 	logger.Info("handling status check request")
 
 	partition, err := nb.getPartitionData(ctx, statusReq.GetId())
@@ -268,7 +267,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error) {
-	logger := logrus.WithField("request", statusReq)
+	logger := nb.service.L().WithField("request", statusReq)
 	logger.Info("handling status update request")
 
 	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessId())
@@ -308,7 +307,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*commonv1.StatusResponse, error) {
 
-	logger := logrus.WithField("request", releaseReq)
+	logger := nb.service.L().WithField("request", releaseReq)
 	logger.Info("handling release request")
 
 	partition, err := nb.getPartitionData(ctx, releaseReq.GetAccessId())
@@ -367,7 +366,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 
 func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 	stream notificationV1.NotificationService_SearchServer) error {
-	logger := logrus.WithField("request", search)
+	logger := nb.service.L().WithField("request", search)
 
 	logger.Info("handling search request")
 
@@ -381,8 +380,6 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 
-	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
-
 	query := search.GetIdQuery()
 	if query == "" {
 		query = search.GetQuery()
@@ -392,6 +389,8 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 		logger.WithError(err).Warn("failed to search notifications")
 		return err
 	}
+
+	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
 
 	var responsesList []*notificationV1.Notification
 	for _, n := range notificationList {

@@ -10,7 +10,6 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
-	"github.com/sirupsen/logrus"
 	"text/template"
 )
 
@@ -38,7 +37,7 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload interfa
 
 func (event *NotificationOutQueue) Execute(ctx context.Context, payload interface{}) error {
 	notificationID := *payload.(*string)
-	logger := logrus.WithField("payload", notificationID).WithField("type", event.Name())
+	logger := event.Service.L().WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Info("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
