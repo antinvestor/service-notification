@@ -383,7 +383,11 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
 
-	notificationList, err := notificationRepo.SearchByPartition(partitionId, search.GetQuery())
+	query := search.GetIdQuery()
+	if query == "" {
+		query = search.GetQuery()
+	}
+	notificationList, err := notificationRepo.SearchByPartition(partitionId, query)
 	if err != nil {
 		logger.WithError(err).Warn("failed to search notifications")
 		return err
