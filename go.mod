@@ -5,13 +5,13 @@ go 1.21
 toolchain go1.21.1
 
 require (
-	github.com/antinvestor/apis/go/common v1.7.13
-	github.com/antinvestor/apis/go/notification v1.7.13
-	github.com/antinvestor/apis/go/partition v1.7.13
-	github.com/antinvestor/apis/go/profile v1.7.13
+	github.com/antinvestor/apis/go/common v1.7.16
+	github.com/antinvestor/apis/go/notification v1.7.16
+	github.com/antinvestor/apis/go/partition v1.7.16
+	github.com/antinvestor/apis/go/profile v1.7.16
 	github.com/bufbuild/protovalidate-go v0.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
-	github.com/pitabwire/frame v1.16.4
+	github.com/pitabwire/frame v1.16.5
 	github.com/sirupsen/logrus v1.9.3
 	go.uber.org/mock v0.4.0
 	google.golang.org/grpc v1.60.1
@@ -27,7 +27,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
-	github.com/go-logr/logr v1.3.0 // indirect
+	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
@@ -54,10 +54,10 @@ require (
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/otel v1.21.0 // indirect
-	go.opentelemetry.io/otel/metric v1.21.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.21.0 // indirect
-	go.opentelemetry.io/otel/trace v1.21.0 // indirect
+	go.opentelemetry.io/otel v1.22.0 // indirect
+	go.opentelemetry.io/otel/metric v1.22.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.22.0 // indirect
+	go.opentelemetry.io/otel/trace v1.22.0 // indirect
 	gocloud.dev v0.36.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
