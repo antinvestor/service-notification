@@ -373,21 +373,34 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 	ctx := stream.Context()
 	authClaims := frame.ClaimsFromContext(ctx)
 
+	logger.WithField("authclaims", authClaims).Info("auth claims supplied are")
+
 	partitionId := ""
 	if authClaims != nil {
 		partitionId = authClaims.PartitionId()
 	}
 
+	var notificationList []*models.Notification
+	var err error
+
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 
-	query := search.GetIdQuery()
-	if query == "" {
-		query = search.GetQuery()
-	}
-	notificationList, err := notificationRepo.SearchByPartition(partitionId, query)
-	if err != nil {
-		logger.WithError(err).Warn("failed to search notifications")
-		return err
+	if search.GetIdQuery() != "" {
+		notification, err0 := notificationRepo.GetByPartitionAndID(partitionId, search.GetIdQuery())
+		if err0 != nil {
+			return err0
+		}
+
+		notificationList = append(notificationList, notification)
+
+	} else {
+
+		notificationList, err = notificationRepo.SearchByPartition(partitionId, search.GetQuery())
+		if err != nil {
+			logger.WithError(err).Warn("failed to search notifications")
+			return err
+		}
+
 	}
 
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)

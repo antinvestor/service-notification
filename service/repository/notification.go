@@ -13,7 +13,7 @@ import (
 type NotificationRepository interface {
 	GetByID(id string) (*models.Notification, error)
 	GetByPartitionAndID(partitionID string, id string) (*models.Notification, error)
-	SearchByPartition(partitionID string, query string) ([]models.Notification, error)
+	SearchByPartition(partitionID string, query string) ([]*models.Notification, error)
 	Save(notification *models.Notification) error
 }
 
@@ -44,9 +44,9 @@ func (repo *notificationRepository) GetByID(id string) (*models.Notification, er
 	return &notification, nil
 }
 
-func (repo *notificationRepository) SearchByPartition(partitionID string, query string) ([]models.Notification, error) {
+func (repo *notificationRepository) SearchByPartition(partitionID string, query string) ([]*models.Notification, error) {
 	query = strings.TrimSpace(query)
-	var notifications []models.Notification
+	var notifications []*models.Notification
 	notificationQuery := repo.readDb.Debug().Where("partition_id = ?", partitionID)
 	if query != "" {
 		searchQ := fmt.Sprintf("%%%s%%", query)
