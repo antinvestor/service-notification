@@ -19,7 +19,7 @@ type NotificationBusiness interface {
 	Search(search *commonv1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error
 }
 
-func NewNotificationBusiness(ctx context.Context, service *frame.Service, profileCli *profileV1.ProfileClient, partitionCli *partitionv1.PartitionClient) (NotificationBusiness, error) {
+func NewNotificationBusiness(_ context.Context, service *frame.Service, profileCli *profileV1.ProfileClient, partitionCli *partitionv1.PartitionClient) (NotificationBusiness, error) {
 
 	if service == nil || profileCli == nil || partitionCli == nil {
 		return nil, ErrorInitializationFail

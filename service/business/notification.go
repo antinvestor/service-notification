@@ -372,8 +372,9 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 
 	ctx := stream.Context()
 	authClaims := frame.ClaimsFromContext(ctx)
+	jwtToken := frame.JwtFromContext(ctx)
 
-	logger.WithField("authclaims", authClaims).Info("auth claims supplied are")
+	logger.WithField("jwt", jwtToken).Info("auth jwt supplied")
 
 	partitionId := ""
 	if authClaims != nil {
