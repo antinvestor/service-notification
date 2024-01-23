@@ -38,6 +38,8 @@ github.com/antinvestor/apis/go/notification v1.7.19 h1:/QxIdK0SjNBmTuYP6Man9iKOJ
 github.com/antinvestor/apis/go/notification v1.7.19/go.mod h1:oJOKs9OdcMvwb62PMPhGxGovlvbaf+Iq3C4Ab9JAFZA=
 github.com/antinvestor/apis/go/partition v1.7.18 h1:y6G3GrtPapwpDwJVQaV5BNa1XYrVGotodEdXvkNId6Y=
 github.com/antinvestor/apis/go/partition v1.7.18/go.mod h1:jciJgZbqGelvuBMJZn8jhOzbarzGoPLGCtpFDEDVi9Y=
+github.com/antinvestor/apis/go/partition v1.7.19 h1:NFBTi6HsSedJQtbgmMKV5TwyFHpiV9wfq7H3DUI5Jt8=
+github.com/antinvestor/apis/go/partition v1.7.19/go.mod h1:ar7KeIfNVZALTAtaMCi5DRHOUENT12kPCHRTns+UKA0=
 github.com/antinvestor/apis/go/profile v1.7.18 h1:hVVMNjP0XQ9fJ5qMWLmACDyGDrEKHi8kLti1vpdEEJ4=
 github.com/antinvestor/apis/go/profile v1.7.18/go.mod h1:cT0OxzGUuDFoHr6xjvAOEXkmHxbSmdcykORoQPZLfxY=
 github.com/antlr4-go/antlr/v4 v4.13.0 h1:lxCg3LAv+EUK6t1i0y1V6/SLeUi0eKEKdhQAlS8TVTI=
