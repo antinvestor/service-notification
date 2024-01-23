@@ -6,7 +6,7 @@ toolchain go1.21.1
 
 require (
 	github.com/antinvestor/apis/go/common v1.7.19
-	github.com/antinvestor/apis/go/notification v1.7.18
+	github.com/antinvestor/apis/go/notification v1.7.19
 	github.com/antinvestor/apis/go/partition v1.7.18
 	github.com/antinvestor/apis/go/profile v1.7.18
 	github.com/bufbuild/protovalidate-go v0.5.0
