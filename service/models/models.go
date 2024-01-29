@@ -15,24 +15,51 @@ const (
 	RouteModeTransceive = "trx"
 
 	RouteTypeAny       = "any"
-	RouteTypeLongForm  = "long"
-	RouteTypeShortForm = "short"
+	RouteTypeLongForm  = "l"
+	RouteTypeShortForm = "s"
 )
 
-// Templete Table holds the templete details
-type Templete struct {
+// Template Table holds the template details
+type Template struct {
 	frame.BaseModel
 
-	LanguageID string `gorm:"type:varchar(50)"`
-	Name       string `gorm:"type:varchar(255)"`
+	Name string `gorm:"type:varchar(255)"`
 
-	DataList []TempleteData
+	DataList []TemplateData
+	Extra    datatypes.JSONMap
 }
 
-type TempleteData struct {
+func (t *Template) ToTemplateApi(language *Language) *notificationV1.Template {
+
+	var templateDataList []*notificationV1.TemplateData
+	for _, data := range t.DataList {
+
+		tData := &notificationV1.TemplateData{
+			Id:       data.GetID(),
+			Type:     data.Type,
+			Detail:   data.Detail,
+			Language: data.Language.toApi(),
+		}
+
+		if language == nil || language.GetID() == tData.Language.GetId() {
+			templateDataList = append(templateDataList, tData)
+		}
+	}
+
+	return &notificationV1.Template{
+		Id:    t.GetID(),
+		Name:  t.Name,
+		Data:  templateDataList,
+		Extra: frame.DBPropertiesToMap(t.Extra),
+	}
+}
+
+type TemplateData struct {
 	frame.BaseModel
 
-	TempleteID string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
+	TemplateID string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
+	LanguageID string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
+	Language   *Language
 	Type       string `gorm:"type:varchar(10);unique_index:uq_template_by_type"`
 	Detail     string `gorm:"type:text"`
 }
@@ -44,6 +71,15 @@ type Language struct {
 	Name        string `gorm:"type:varchar(50);unique_index"`
 	Code        string `gorm:"type:varchar(10);unique_index"`
 	Description string `gorm:"type:text"`
+}
+
+func (l *Language) toApi() *notificationV1.Language {
+	return &notificationV1.Language{
+		Id:    l.GetID(),
+		Code:  l.Code,
+		Name:  l.Name,
+		Extra: map[string]string{"description": l.Description},
+	}
 }
 
 // Notification table holding all the payload of message in transit in and out of the system

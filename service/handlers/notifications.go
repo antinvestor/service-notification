@@ -106,3 +106,28 @@ func (server *NotificationServer) Search(req *commonv1.SearchRequest, stream not
 	return notificationBusiness.Search(req, stream)
 
 }
+
+// TemplateSearch method is for client request for templates matching criteria from system
+func (server *NotificationServer) TemplateSearch(req *notificationV1.TemplateSearchRequest, stream notificationV1.NotificationService_TemplateSearchServer) error {
+
+	notificationBusiness, err := server.newNotificationBusiness(stream.Context())
+	if err != nil {
+		return err
+	}
+	return notificationBusiness.TemplateSearch(req, stream)
+
+}
+
+func (server *NotificationServer) TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.TemplateSaveResponse, error) {
+	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	if err != nil {
+		return nil, err
+	}
+	response, err := notificationBusiness.TemplateSave(ctx, req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &notificationV1.TemplateSaveResponse{Data: response}, nil
+}

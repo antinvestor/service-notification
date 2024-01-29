@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"errors"
+	"github.com/antinvestor/service-notification/config"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -15,7 +16,29 @@ import (
 	"github.com/pitabwire/frame"
 )
 
-const defaultLanguageCode = "en"
+type NotificationBusiness interface {
+	QueueOut(ctx context.Context, out *notificationV1.Notification) (*commonv1.StatusResponse, error)
+	QueueIn(ctx context.Context, in *notificationV1.Notification) (*commonv1.StatusResponse, error)
+	Status(ctx context.Context, status *commonv1.StatusRequest) (*commonv1.StatusResponse, error)
+	StatusUpdate(ctx context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error)
+	Release(ctx context.Context, status *notificationV1.ReleaseRequest) (*commonv1.StatusResponse, error)
+	Search(search *commonv1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error
+	TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.Template, error)
+	TemplateSearch(search *notificationV1.TemplateSearchRequest, stream notificationV1.NotificationService_TemplateSearchServer) error
+}
+
+func NewNotificationBusiness(_ context.Context, service *frame.Service, profileCli *profileV1.ProfileClient, partitionCli *partitionV1.PartitionClient) (NotificationBusiness, error) {
+
+	if service == nil || profileCli == nil || partitionCli == nil {
+		return nil, ErrorInitializationFail
+	}
+
+	return &notificationBusiness{
+		service:      service,
+		profileCli:   profileCli,
+		partitionCli: partitionCli,
+	}, nil
+}
 
 type notificationBusiness struct {
 	service      *frame.Service
@@ -23,7 +46,20 @@ type notificationBusiness struct {
 	partitionCli *partitionV1.PartitionClient
 }
 
-func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID string) (frame.BaseModel, error) {
+func getLanguageByCode(ctx context.Context, service *frame.Service, languageCode string) (*models.Language, error) {
+
+	if languageCode == "" {
+		notificationConfig, ok := service.Config().(*config.NotificationConfig)
+		if ok {
+			languageCode = notificationConfig.DefaultLanguageCode
+		}
+	}
+
+	languageRepo := repository.NewLanguageRepository(ctx, service)
+	return languageRepo.GetByCode(languageCode)
+}
+
+func getPartitionData(ctx context.Context, partitionCli *partitionV1.PartitionClient, accessID string) (frame.BaseModel, error) {
 	if accessID == "" {
 		authClaims := frame.ClaimsFromContext(ctx)
 		if authClaims != nil {
@@ -37,7 +73,7 @@ func (nb *notificationBusiness) getPartitionData(ctx context.Context, accessID s
 		return frame.BaseModel{}, errors.New("access id is empty")
 	}
 
-	access, err := nb.partitionCli.GetAccessById(ctx, accessID)
+	access, err := partitionCli.GetAccessById(ctx, accessID)
 	if err != nil {
 		return frame.BaseModel{}, err
 	}
@@ -59,7 +95,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	logger := nb.service.L().WithField("request", message)
 	logger.Info("handling queue out request")
 
-	partition, err := nb.getPartitionData(ctx, message.GetAccessId())
+	partition, err := getPartitionData(ctx, nb.partitionCli, message.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition data")
 		return nil, err
@@ -72,7 +108,10 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 	languageCode := message.GetLanguage()
 	if languageCode == "" {
-		languageCode = defaultLanguageCode
+		notificationConfig, ok := nb.service.Config().(*config.NotificationConfig)
+		if ok {
+			languageCode = notificationConfig.DefaultLanguageCode
+		}
 	}
 
 	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
@@ -133,8 +172,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 	if message.GetTemplate() != "" {
 		templateRepo := repository.NewTemplateRepository(ctx, nb.service)
-		template, err := templateRepo.GetByNamePartitionIDAndLanguageID(
-			message.GetTemplate(), partition.PartitionID, language.ID)
+		template, err := templateRepo.GetByPartitionIDAndName(partition.PartitionID, message.GetTemplate())
 		if err != nil {
 			logger.WithError(err).Warn("could not get template")
 			return nil, err
@@ -181,7 +219,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	logger := nb.service.L().WithField("request", message)
 	logger.Info("handling queue in request")
 
-	partition, err := nb.getPartitionData(ctx, message.GetAccessId())
+	partition, err := getPartitionData(ctx, nb.partitionCli, message.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition")
 		return nil, err
@@ -244,7 +282,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 	logger := nb.service.L().WithField("request", statusReq)
 	logger.Info("handling status check request")
 
-	partition, err := nb.getPartitionData(ctx, statusReq.GetId())
+	partition, err := getPartitionData(ctx, nb.partitionCli, statusReq.GetId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition")
 		return nil, err
@@ -270,7 +308,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 	logger := nb.service.L().WithField("request", statusReq)
 	logger.Info("handling status update request")
 
-	partition, err := nb.getPartitionData(ctx, statusReq.GetAccessId())
+	partition, err := getPartitionData(ctx, nb.partitionCli, statusReq.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get access partition")
 		return nil, err
@@ -310,7 +348,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	logger := nb.service.L().WithField("request", releaseReq)
 	logger.Info("handling release request")
 
-	partition, err := nb.getPartitionData(ctx, releaseReq.GetAccessId())
+	partition, err := getPartitionData(ctx, nb.partitionCli, releaseReq.GetAccessId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get partition")
 		return nil, err
@@ -368,13 +406,13 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 	stream notificationV1.NotificationService_SearchServer) error {
 	logger := nb.service.L().WithField("request", search)
 
-	logger.Info("handling search request")
+	logger.Debug("handling search request")
 
 	ctx := stream.Context()
 	authClaims := frame.ClaimsFromContext(ctx)
 	jwtToken := frame.JwtFromContext(ctx)
 
-	logger.WithField("jwt", jwtToken).Info("auth jwt supplied")
+	logger.WithField("jwt", jwtToken).Debug("auth jwt supplied")
 
 	partitionId := ""
 	if authClaims != nil {
@@ -433,4 +471,97 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 	logger.Info("_______________________________________________________")
 
 	return nil
+}
+
+func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSearchRequest,
+	stream notificationV1.NotificationService_TemplateSearchServer) error {
+	logger := nb.service.L().WithField("request", search)
+
+	logger.Debug("handling template search request")
+
+	ctx := stream.Context()
+	authClaims := frame.ClaimsFromContext(ctx)
+
+	partitionId := ""
+	if authClaims != nil {
+		partitionId = authClaims.PartitionId()
+	}
+
+	queryString := search.GetQuery()
+
+	templateRepository := repository.NewTemplateRepository(ctx, nb.service)
+	templateList, err := templateRepository.SearchByPartitionIDName(partitionId, queryString, int(search.GetPage()), int(search.GetCount()))
+	if err != nil {
+		return err
+	}
+
+	language, err := getLanguageByCode(ctx, nb.service, search.GetLanguageCode())
+	if err != nil {
+		logger.WithError(err).Debug("searching without an existing language")
+		//make sure to incooporate language code into query
+
+	} else {
+		if err != nil {
+			return err
+		}
+	}
+
+	var responsesList []*notificationV1.Template
+
+	for _, t := range templateList {
+
+		result := t.ToTemplateApi(language)
+		responsesList = append(responsesList, result)
+	}
+
+	err = stream.Send(&notificationV1.TemplateSearchResponse{Data: responsesList})
+	if err != nil {
+		logger.WithError(err).Warn(" unable to send a result")
+	}
+
+	return nil
+}
+
+func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.Template, error) {
+	logger := nb.service.L().WithField("request", req)
+	logger.Info("handling template request update")
+
+	language, err := getLanguageByCode(ctx, nb.service, req.GetLanguageCode())
+	if err != nil {
+		logger.WithError(err).Debug("language for template is required")
+		return nil, err
+	}
+
+	template := &models.Template{
+		Name:  req.GetName(),
+		Extra: frame.DBPropertiesFromMap(req.GetExtra()),
+	}
+
+	templateRepository := repository.NewTemplateRepository(ctx, nb.service)
+	err = templateRepository.Save(template)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, val := range req.GetData() {
+		templateData := &models.TemplateData{
+			TemplateID: template.GetID(),
+			LanguageID: language.GetID(),
+			Type:       key,
+			Detail:     val,
+		}
+
+		err = templateRepository.SaveTemplateData(templateData)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	template, err = templateRepository.GetByID(template.GetID())
+	if err != nil {
+		logger.WithError(err).Debug("could not get existing template")
+		return nil, err
+	}
+
+	return template.ToTemplateApi(language), nil
 }

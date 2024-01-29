@@ -46,7 +46,7 @@ func getProfileCli(t *testing.T) *profileV1.ProfileClient {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockProfileService := profileV1.NewMockProfileServiceClient(ctrl)
-	profileCli := profileV1.InstantiateProfileClient(nil, mockProfileService)
+	profileCli := profileV1.Init(nil, mockProfileService)
 	return profileCli
 }
 
@@ -65,7 +65,7 @@ func getPartitionCli(t *testing.T) *partitionV1.PartitionClient {
 			},
 		}}, nil).AnyTimes()
 
-	profileCli := partitionV1.InstantiatePartitionsClient(nil, mockPartitionService)
+	profileCli := partitionV1.Init(nil, mockPartitionService)
 	return profileCli
 }
 

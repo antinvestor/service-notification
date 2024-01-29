@@ -45,8 +45,8 @@ func main() {
 		service.Init(serviceOptions...)
 
 		err = service.MigrateDatastore(ctx, notificationConfig.GetDatabaseMigrationPath(),
-			models.Route{}, models.Language{}, models.Templete{},
-			models.TempleteData{}, models.Notification{}, models.NotificationStatus{})
+			models.Route{}, models.Language{}, models.Template{},
+			models.TemplateData{}, models.Notification{}, models.NotificationStatus{})
 
 		if err != nil {
 			log.WithError(err).Fatal("could not migrate successfully")
