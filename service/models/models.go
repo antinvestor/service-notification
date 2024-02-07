@@ -19,32 +19,33 @@ const (
 	RouteTypeShortForm = "s"
 )
 
+// Language Our simple table holding all the supported languages
+type Language struct {
+	frame.BaseModel
+
+	Name        string `gorm:"type:varchar(50);unique_index"`
+	Code        string `gorm:"type:varchar(10);unique_index"`
+	Description string `gorm:"type:text"`
+}
+
+func (l *Language) ToApi() *notificationV1.Language {
+	return &notificationV1.Language{
+		Id:    l.GetID(),
+		Code:  l.Code,
+		Name:  l.Name,
+		Extra: map[string]string{"description": l.Description},
+	}
+}
+
 // Template Table holds the template details
 type Template struct {
 	frame.BaseModel
 
-	Name string `gorm:"type:varchar(255)"`
-
-	DataList []TemplateData
-	Extra    datatypes.JSONMap
+	Name  string `gorm:"type:varchar(255)"`
+	Extra datatypes.JSONMap
 }
 
-func (t *Template) ToTemplateApi(language *Language) *notificationV1.Template {
-
-	var templateDataList []*notificationV1.TemplateData
-	for _, data := range t.DataList {
-
-		tData := &notificationV1.TemplateData{
-			Id:       data.GetID(),
-			Type:     data.Type,
-			Detail:   data.Detail,
-			Language: data.Language.toApi(),
-		}
-
-		if language == nil || language.GetID() == tData.Language.GetId() {
-			templateDataList = append(templateDataList, tData)
-		}
-	}
+func (t *Template) ToApi(templateDataList []*notificationV1.TemplateData) *notificationV1.Template {
 
 	return &notificationV1.Template{
 		Id:    t.GetID(),
@@ -59,27 +60,20 @@ type TemplateData struct {
 
 	TemplateID string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
 	LanguageID string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
-	Language   *Language
 	Type       string `gorm:"type:varchar(10);unique_index:uq_template_by_type"`
 	Detail     string `gorm:"type:text"`
 }
 
-// Language Our simple table holding all the supported languages
-type Language struct {
-	frame.BaseModel
+func (td *TemplateData) ToApi(language *notificationV1.Language) *notificationV1.TemplateData {
 
-	Name        string `gorm:"type:varchar(50);unique_index"`
-	Code        string `gorm:"type:varchar(10);unique_index"`
-	Description string `gorm:"type:text"`
-}
-
-func (l *Language) toApi() *notificationV1.Language {
-	return &notificationV1.Language{
-		Id:    l.GetID(),
-		Code:  l.Code,
-		Name:  l.Name,
-		Extra: map[string]string{"description": l.Description},
+	tData := &notificationV1.TemplateData{
+		Id:       td.GetID(),
+		Type:     td.Type,
+		Detail:   td.Detail,
+		Language: language,
 	}
+
+	return tData
 }
 
 // Notification table holding all the payload of message in transit in and out of the system

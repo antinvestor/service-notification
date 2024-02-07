@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"fmt"
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
@@ -26,13 +27,23 @@ func getService(serviceName string) *ctxSrv {
 
 	ctx, service := frame.NewService(serviceName, testDb, frame.Config(&ncfg), frame.NoopDriver())
 
+	m := make(map[string]string)
+	m["sub"] = "testing"
+	m["tenant_id"] = "test_tenant-id"
+	m["partition_id"] = "test_partition-id"
+	m["access_id"] = "test_access-id"
+
+	//claims := frame.ClaimsFromMap(m)
+	//ctx = claims.ClaimsToContext(ctx)
+
 	eventList := frame.RegisterEvents(
 		&events.NotificationSave{Service: service},
 		&events.NotificationStatusSave{Service: service})
 	service.Init(eventList)
 	_ = service.Run(ctx, "")
 	return &ctxSrv{
-		ctx, service,
+		ctx,
+		service,
 	}
 }
 
@@ -174,11 +185,12 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nb := &notificationBusiness{
-				service:      tt.fields.ctxService.srv,
-				profileCli:   tt.fields.profileCli,
-				partitionCli: tt.fields.partitionCl,
-			}
+			nb, err := NewNotificationBusiness(
+				tt.fields.ctxService.ctx,
+				tt.fields.ctxService.srv,
+				tt.fields.profileCli,
+				tt.fields.partitionCl)
+
 			got, err := nb.QueueIn(tt.fields.ctxService.ctx, tt.args.message)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("QueueIn() error = %v, wantErr %v", err, tt.wantErr)
@@ -265,11 +277,12 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nb := &notificationBusiness{
-				service:      tt.fields.ctxService.srv,
-				profileCli:   tt.fields.profileCli,
-				partitionCli: tt.fields.partitionCl,
-			}
+			nb, err := NewNotificationBusiness(
+				tt.fields.ctxService.ctx,
+				tt.fields.ctxService.srv,
+				tt.fields.profileCli,
+				tt.fields.partitionCl)
+
 			got, err := nb.QueueOut(tt.args.ctx, tt.args.message)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("QueueOut() error = %v, wantErr %v", err, tt.wantErr)
@@ -330,11 +343,11 @@ func Test_notificationBusiness_Release(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nb := &notificationBusiness{
-				service:      tt.fields.ctxService.srv,
-				profileCli:   tt.fields.profileCli,
-				partitionCli: tt.fields.partitionCl,
-			}
+			nb, err := NewNotificationBusiness(
+				tt.fields.ctxService.ctx,
+				tt.fields.ctxService.srv,
+				tt.fields.profileCli,
+				tt.fields.partitionCl)
 
 			n := models.Notification{
 				ContactID:        "epochTesting",
@@ -344,9 +357,10 @@ func Test_notificationBusiness_Release(t *testing.T) {
 			}
 			n.AccessID = "testingAccessData"
 			n.PartitionID = "test_partition-id"
+			n.TenantID = "test_tenant-id"
 
-			nRepo := repository.NewNotificationRepository(ctx, nb.service)
-			err := nRepo.Save(&n)
+			nRepo := repository.NewNotificationRepository(ctx, tt.fields.ctxService.srv)
+			err = nRepo.Save(&n)
 			if err != nil {
 				t.Errorf("Status() error = %v could not store a notification for status checking", err)
 				return
@@ -418,11 +432,11 @@ func Test_notificationBusiness_Search(t *testing.T) {
 
 			nsSs.EXPECT().Send(gomock.Any()).MinTimes(tt.fields.leastCount)
 
-			nb := &notificationBusiness{
-				service:      tt.fields.ctxService.srv,
-				profileCli:   tt.fields.profileCli,
-				partitionCli: tt.fields.partitionCl,
-			}
+			nb, err := NewNotificationBusiness(
+				tt.fields.ctxService.ctx,
+				tt.fields.ctxService.srv,
+				tt.fields.profileCli,
+				tt.fields.partitionCl)
 
 			n := models.Notification{
 				ContactID:        "epochTesting",
@@ -432,8 +446,8 @@ func Test_notificationBusiness_Search(t *testing.T) {
 			}
 			n.PartitionID = "test_partition-id"
 
-			nRepo := repository.NewNotificationRepository(ctx, nb.service)
-			err := nRepo.Save(&n)
+			nRepo := repository.NewNotificationRepository(ctx, tt.fields.ctxService.srv)
+			err = nRepo.Save(&n)
 			if err != nil {
 				t.Errorf("Search() error = %v could not store a notification", err)
 				return
@@ -491,11 +505,11 @@ func Test_notificationBusiness_Status(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 
-			nb := &notificationBusiness{
-				service:      tt.fields.ctxService.srv,
-				profileCli:   tt.fields.profileCli,
-				partitionCli: tt.fields.partitionCl,
-			}
+			nb, err := NewNotificationBusiness(
+				tt.fields.ctxService.ctx,
+				tt.fields.ctxService.srv,
+				tt.fields.profileCli,
+				tt.fields.partitionCl)
 
 			nStatus := models.NotificationStatus{
 				State:  int32(commonv1.STATE_DELETED.Number()),
@@ -518,16 +532,17 @@ func Test_notificationBusiness_Status(t *testing.T) {
 			n.ID = "c2f4j7au6s7f91uqnojg"
 			n.AccessID = "testingAccessData"
 			n.PartitionID = "test_partition-id"
+			n.TenantID = "test_tenant-id"
 
-			nRepo := repository.NewNotificationRepository(ctx, nb.service)
-			err := nRepo.Save(&n)
+			nRepo := repository.NewNotificationRepository(ctx, tt.fields.ctxService.srv)
+			err = nRepo.Save(&n)
 			if err != nil {
 				t.Errorf("Status() error = %v could not store a notification for status checking", err)
 				return
 			}
 
 			nStatus.NotificationID = n.GetID()
-			nSRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
+			nSRepo := repository.NewNotificationStatusRepository(ctx, tt.fields.ctxService.srv)
 			err = nSRepo.Save(&nStatus)
 			if err != nil {
 				t.Errorf("Status() error = %v could not store a notification Status for status checking", err)
@@ -601,11 +616,11 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nb := &notificationBusiness{
-				service:      tt.fields.ctxService.srv,
-				profileCli:   tt.fields.profileCli,
-				partitionCli: tt.fields.partitionCl,
-			}
+			nb, err := NewNotificationBusiness(
+				tt.fields.ctxService.ctx,
+				tt.fields.ctxService.srv,
+				tt.fields.profileCli,
+				tt.fields.partitionCl)
 
 			releaseDate := time.Now()
 			n := models.Notification{
@@ -618,8 +633,8 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 			n.AccessID = "testingAccessData"
 			n.PartitionID = "test_partition-id"
 
-			nRepo := repository.NewNotificationRepository(ctx, nb.service)
-			err := nRepo.Save(&n)
+			nRepo := repository.NewNotificationRepository(ctx, tt.fields.ctxService.srv)
+			err = nRepo.Save(&n)
 			if err != nil {
 				t.Errorf("Status() error = %v could not store a notification for status checking", err)
 				return
@@ -643,6 +658,132 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 			if got.GetId() != n.GetID() {
 				t.Errorf("Status() expecting notification id to be reused")
 			}
+		})
+	}
+}
+
+func Test_notificationBusiness_TemplateSearch(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	type fields struct {
+		ctxService *ctxSrv
+
+		profileCli  *profileV1.ProfileClient
+		partitionCl *partitionV1.PartitionClient
+		resultCount int
+	}
+	type args struct {
+		search *notificationV1.TemplateSearchRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+
+		{
+			name: "Normal Search",
+			fields: fields{
+				ctxService: getService(
+					"NormalSearchTest"),
+				profileCli:  getProfileCli(t),
+				partitionCl: getPartitionCli(t),
+				resultCount: 1,
+			},
+			args: args{
+				search: &notificationV1.TemplateSearchRequest{Query: "Normal Search"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Non existent Search",
+			fields: fields{
+				ctxService: getService(
+					"InvalidSearchTest"),
+				profileCli:  getProfileCli(t),
+				partitionCl: getPartitionCli(t),
+				resultCount: 0,
+			},
+			args: args{
+				search: &notificationV1.TemplateSearchRequest{Query: "alien cryptic template"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Empty Search",
+			fields: fields{
+				ctxService: getService(
+					"EmptySearchTest"),
+				profileCli:  getProfileCli(t),
+				partitionCl: getPartitionCli(t),
+				resultCount: 3,
+			},
+			args: args{
+				search: &notificationV1.TemplateSearchRequest{
+					Query: "",
+					Page:  0,
+					Count: 3,
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			nsSs := notificationV1.NewMockNotificationService_TemplateSearchServer(ctrl)
+			nsSs.EXPECT().Context().Return(tt.fields.ctxService.ctx).AnyTimes()
+			nsSs.EXPECT().Send(gomock.Any()).MinTimes(1).DoAndReturn(
+				func(arg *notificationV1.TemplateSearchResponse) any {
+
+					if len(arg.Data) != tt.fields.resultCount {
+						t.Errorf("TemplateSearch() expected result items %v don't match %v", tt.fields.resultCount, len(arg.Data))
+					}
+
+					return nil
+				},
+			)
+
+			nb, err := NewNotificationBusiness(
+				tt.fields.ctxService.ctx,
+				tt.fields.ctxService.srv,
+				tt.fields.profileCli,
+				tt.fields.partitionCl)
+
+			template := models.Template{
+				Name: fmt.Sprintf("%s-test template", tt.name),
+			}
+			template.PartitionID = "test_partition-id"
+
+			templateRepository := repository.NewTemplateRepository(tt.fields.ctxService.ctx, tt.fields.ctxService.srv)
+			err = templateRepository.Save(&template)
+			if err != nil {
+				t.Errorf("TemplateSearch() error = %v could not store a template", err)
+				return
+			}
+
+			templateData := models.TemplateData{
+				TemplateID: template.GetID(),
+				LanguageID: "9bsv0s23l8og00vgjqa0",
+				Type:       models.RouteTypeShortForm,
+				Detail:     fmt.Sprintf("testing short message - %s", tt.name),
+			}
+
+			templateDataRepository := repository.NewTemplateDataRepository(tt.fields.ctxService.ctx, tt.fields.ctxService.srv)
+
+			err = templateDataRepository.Save(&templateData)
+			if err != nil {
+				t.Errorf("TemplateSearch() error = %v could not store a template data", err)
+				return
+			}
+
+			if err = nb.TemplateSearch(tt.args.search, nsSs); (err != nil) != tt.wantErr {
+				t.Errorf("TemplateSearch() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
 		})
 	}
 }

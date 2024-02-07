@@ -120,6 +120,12 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 		return nil, err
 	}
 
+	templateDataRepository := repository.NewTemplateDataRepository(ctx, event.Service)
+	tmpltDataList, err0 := templateDataRepository.GetByTemplateID(tmplDetail.GetID())
+	if err0 != nil {
+		return nil, err0
+	}
+
 	payload := make(map[string]string)
 	data, err := n.Payload.MarshalJSON()
 	if err != nil {
@@ -133,9 +139,10 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 
 	templateMap := make(map[string]string)
 
-	for _, data := range tmplDetail.DataList {
+	for _, templateData := range tmpltDataList {
 
-		tmpl, err := template.New("message_out").Parse(data.Detail)
+		var tmpl *template.Template
+		tmpl, err = template.New("message_out").Parse(templateData.Detail)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +152,7 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 		if err != nil {
 			return nil, err
 		}
-		templateMap[data.Type] = tmplBytes.String()
+		templateMap[templateData.Type] = tmplBytes.String()
 
 	}
 
