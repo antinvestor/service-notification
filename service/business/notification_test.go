@@ -191,6 +191,11 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 				tt.fields.profileCli,
 				tt.fields.partitionCl)
 
+			if err != nil {
+				t.Errorf("QueueIn() error = %v, could not get notification business", err)
+				return
+			}
+
 			got, err := nb.QueueIn(tt.fields.ctxService.ctx, tt.args.message)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("QueueIn() error = %v, wantErr %v", err, tt.wantErr)
@@ -282,6 +287,10 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 				tt.fields.ctxService.srv,
 				tt.fields.profileCli,
 				tt.fields.partitionCl)
+			if err != nil {
+				t.Errorf("QueueOut() error = %v, could not get notification business", err)
+				return
+			}
 
 			got, err := nb.QueueOut(tt.args.ctx, tt.args.message)
 			if (err != nil) != tt.wantErr {
@@ -348,6 +357,10 @@ func Test_notificationBusiness_Release(t *testing.T) {
 				tt.fields.ctxService.srv,
 				tt.fields.profileCli,
 				tt.fields.partitionCl)
+			if err != nil {
+				t.Errorf("Release() error = %v, could not get notification business", err)
+				return
+			}
 
 			n := models.Notification{
 				ContactID:        "epochTesting",
@@ -437,6 +450,10 @@ func Test_notificationBusiness_Search(t *testing.T) {
 				tt.fields.ctxService.srv,
 				tt.fields.profileCli,
 				tt.fields.partitionCl)
+			if err != nil {
+				t.Errorf("Search() error = %v, could not get notification business", err)
+				return
+			}
 
 			n := models.Notification{
 				ContactID:        "epochTesting",
@@ -510,6 +527,10 @@ func Test_notificationBusiness_Status(t *testing.T) {
 				tt.fields.ctxService.srv,
 				tt.fields.profileCli,
 				tt.fields.partitionCl)
+			if err != nil {
+				t.Errorf("Status() error = %v, could not get notification business", err)
+				return
+			}
 
 			nStatus := models.NotificationStatus{
 				State:  int32(commonv1.STATE_DELETED.Number()),
@@ -621,6 +642,10 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 				tt.fields.ctxService.srv,
 				tt.fields.profileCli,
 				tt.fields.partitionCl)
+			if err != nil {
+				t.Errorf("Status() error = %v, could not get notification business", err)
+				return
+			}
 
 			releaseDate := time.Now()
 			n := models.Notification{
@@ -752,6 +777,10 @@ func Test_notificationBusiness_TemplateSearch(t *testing.T) {
 				tt.fields.ctxService.srv,
 				tt.fields.profileCli,
 				tt.fields.partitionCl)
+			if err != nil {
+				t.Errorf("TemplateSearch() error = %v, could not get notification business", err)
+				return
+			}
 
 			template := models.Template{
 				Name: fmt.Sprintf("%s-test template", tt.name),

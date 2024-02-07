@@ -485,6 +485,10 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 		var apiTemplateDataList []*notificationV1.TemplateData
 
 		templateDataList, err = templateDataRepository.GetByTemplateID(t.GetID())
+		if err != nil {
+			logger.WithError(err).Warn(" unable to get template data")
+			return err
+		}
 
 		for _, data := range templateDataList {
 
