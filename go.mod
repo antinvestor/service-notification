@@ -9,14 +9,14 @@ require (
 	github.com/antinvestor/apis/go/notification v1.9.4
 	github.com/antinvestor/apis/go/partition v1.9.4
 	github.com/antinvestor/apis/go/profile v1.9.4
-	github.com/bufbuild/protovalidate-go v0.5.0
+	github.com/bufbuild/protovalidate-go v0.5.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/pitabwire/frame v1.17.6
 	github.com/sirupsen/logrus v1.9.3
 	go.uber.org/mock v0.4.0
 	google.golang.org/grpc v1.61.0
 	gorm.io/datatypes v1.2.0
-	gorm.io/gorm v1.25.5
+	gorm.io/gorm v1.25.7
 )
 
 require (
