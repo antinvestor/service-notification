@@ -47,49 +47,46 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 		return err
 	}
 
-	p, err := event.ProfileCli.GetProfileByID(ctx, n.ProfileID)
+	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, event.Service)
+	nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
+	if err != nil {
+		logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status id for")
+		return err
+	}
+
+	languageRepo := repository.NewLanguageRepository(ctx, event.Service)
+	language, err := languageRepo.GetByID(n.LanguageID)
+	if err != nil {
+		logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status id for")
+		return err
+	}
+
+	var templateMap map[string]string
+	templateMap, err = event.formatOutboundNotification(ctx, n)
 	if err != nil {
 		return err
 	}
 
-	contact := filterContactFromProfileByID(p, n.ContactID)
-
-	var templateMap map[string]string
-	if n.TemplateID != "" {
-		templateMap, err = event.formatOutboundNotification(ctx, n)
-		if err != nil {
-			return err
-		}
-	} else {
-		templateMap = map[string]string{"en": n.Message}
-	}
-
-	message := map[string]interface{}{
-		"profile": p,
-		"contact": contact,
-		"data":    templateMap,
-	}
+	apiNotification := n.ToApi(nStatus, language, templateMap)
 
 	// Queue a message for further processing by peripheral services
-	err = event.Service.Publish(ctx, n.RouteID, message)
+	err = event.Service.Publish(ctx, n.RouteID, apiNotification)
 	if err != nil {
 		return err
 	}
 
 	log := event.Service.L()
-	log.Info("===========================================================")
-	log.Info(" We have successfully managed to get to post out ")
-	log.Infof(" Contact details : %s", contact.Detail)
-	log.Infof(" Notification details : %s", n.ID)
-	log.Infof(" Message details : %s", templateMap)
-	log.Info("===========================================================")
+	log.WithField("notification_id", n.GetID()).
+		WithField("route", n.RouteID).
+		WithField("message", templateMap).
+		Info(" We have successfully queued out message")
 
 	err = notificationRepo.Save(n)
 	if err != nil {
 		return err
 	}
 
-	nStatus := models.NotificationStatus{
+	nStatus = &models.NotificationStatus{
 		NotificationID: n.GetID(),
 		State:          int32(commonv1.STATE_ACTIVE),
 		Status:         int32(commonv1.STATUS_IN_PROCESS),
@@ -109,19 +106,19 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 
 func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, n *models.Notification) (map[string]string, error) {
 
-	if n.TemplateID == "" {
-		return nil, errors.New("No template id specified")
+	templateMap := make(map[string]string)
+
+	if n.Message != "" {
+		templateMap = map[string]string{"default": n.Message}
+		return templateMap, nil
 	}
 
-	templateRepository := repository.NewTemplateRepository(ctx, event.Service)
-
-	tmplDetail, err := templateRepository.GetByID(n.TemplateID)
-	if err != nil {
-		return nil, err
+	if n.TemplateID == "" {
+		return nil, errors.New("no template id specified")
 	}
 
 	templateDataRepository := repository.NewTemplateDataRepository(ctx, event.Service)
-	tmpltDataList, err0 := templateDataRepository.GetByTemplateID(tmplDetail.GetID())
+	tmpltDataList, err0 := templateDataRepository.GetByTemplateIDAndLanguage(n.TemplateID, n.LanguageID)
 	if err0 != nil {
 		return nil, err0
 	}
@@ -136,8 +133,6 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 	if err != nil {
 		return nil, err
 	}
-
-	templateMap := make(map[string]string)
 
 	for _, templateData := range tmpltDataList {
 

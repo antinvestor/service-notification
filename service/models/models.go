@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -108,22 +109,31 @@ func (model *Notification) IsReleased() bool {
 	return model.ReleasedAt != nil && !model.ReleasedAt.IsZero()
 }
 
-func (model *Notification) ToNotificationApi(status *NotificationStatus) *notificationV1.Notification {
+func (model *Notification) ToApi(status *NotificationStatus, language *Language, message map[string]string) *notificationV1.Notification {
 
 	extra := make(map[string]string)
 	if model.IsReleased() {
 		extra["ReleaseDate"] = model.ReleasedAt.String()
 	}
 
+	var messageData string
+	if message == nil || len(message) == 0 {
+		messageData = model.Message
+	} else {
+		data, _ := json.Marshal(message)
+		messageData = string(data)
+	}
+
 	notification := notificationV1.Notification{
 		Id:          model.ID,
 		AccessId:    model.AccessID,
 		Contact:     &notificationV1.Notification_ContactId{ContactId: model.ContactID},
+		ProfileId:   model.ProfileID,
 		Type:        model.NotificationType,
 		Template:    model.TemplateID,
 		Payload:     frame.DBPropertiesToMap(model.Payload),
-		Data:        model.Message,
-		Language:    model.LanguageID,
+		Data:        messageData,
+		Language:    language.Code,
 		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),
 		RouteId:     model.RouteID,

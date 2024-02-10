@@ -420,6 +420,8 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
 
+	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
+
 	var responsesList []*notificationV1.Notification
 	for _, n := range notificationList {
 		nStatus := &models.NotificationStatus{}
@@ -432,7 +434,13 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 			}
 		}
 
-		result := n.ToNotificationApi(nStatus)
+		language, err := languageRepo.GetByID(n.LanguageID)
+		if err != nil {
+			logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status id for")
+			return err
+		}
+
+		result := n.ToApi(nStatus, language, nil)
 		responsesList = append(responsesList, result)
 	}
 
