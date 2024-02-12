@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"github.com/antinvestor/apis/go/common"
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
@@ -57,7 +58,22 @@ func getProfileCli(t *testing.T) *profileV1.ProfileClient {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockProfileService := profileV1.NewMockProfileServiceClient(ctrl)
-	profileCli := profileV1.Init(nil, mockProfileService)
+	mockProfileService.EXPECT().
+		GetById(gomock.Any(), gomock.Any()).
+		Return(&profileV1.GetByIdResponse{
+			Data: &profileV1.ProfileObject{
+				Id: "test_profile-id",
+			},
+		}, nil).AnyTimes()
+	mockProfileService.EXPECT().
+		GetByContact(gomock.Any(), gomock.Any()).
+		Return(&profileV1.GetByContactResponse{
+			Data: &profileV1.ProfileObject{
+				Id: "test_profile-id",
+			},
+		}, nil).AnyTimes()
+
+	profileCli := profileV1.Init(&common.GrpcClientBase{}, mockProfileService)
 	return profileCli
 }
 
@@ -76,7 +92,7 @@ func getPartitionCli(t *testing.T) *partitionV1.PartitionClient {
 			},
 		}}, nil).AnyTimes()
 
-	profileCli := partitionV1.Init(nil, mockPartitionService)
+	profileCli := partitionV1.Init(&common.GrpcClientBase{}, mockPartitionService)
 	return profileCli
 }
 
@@ -151,7 +167,6 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
 					OutBound: true,
 					Data:     "Hello we are just testing things out",
-					AccessId: "testingAccessData",
 				},
 			},
 			wantErr: false,
@@ -169,10 +184,9 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			},
 			args: args{
 				message: &notificationV1.Notification{
-					Id:       "c2f4j7au6s7f91uqnojg",
-					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					Data:     "Hello we are just testing things out",
-					AccessId: "testingAccessData",
+					Id:      "c2f4j7au6s7f91uqnojg",
+					Contact: &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
+					Data:    "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,
@@ -242,10 +256,9 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					Id:       "testingQueue_out",
-					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					Data:     "Hello we are just testing things out",
-					AccessId: "testingAccessData",
+					Id:      "testingQueue_out",
+					Contact: &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
+					Data:    "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,
@@ -266,10 +279,9 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					Id:       "c2f4j7au6s7f91uqnojg",
-					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					Data:     "Hello we are just testing things out",
-					AccessId: "testingAccessData",
+					Id:      "c2f4j7au6s7f91uqnojg",
+					Contact: &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
+					Data:    "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,

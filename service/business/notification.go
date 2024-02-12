@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"errors"
 	"github.com/antinvestor/service-notification/config"
 	"time"
 
@@ -59,47 +58,9 @@ func getLanguageByCode(ctx context.Context, service *frame.Service, languageCode
 	return languageRepo.GetByCode(languageCode)
 }
 
-func getPartitionData(ctx context.Context, partitionCli *partitionV1.PartitionClient, accessID string) (frame.BaseModel, error) {
-	if accessID == "" {
-		authClaims := frame.ClaimsFromContext(ctx)
-		if authClaims != nil {
-			return frame.BaseModel{
-				TenantID:    authClaims.TenantId(),
-				PartitionID: authClaims.PartitionId(),
-				AccessID:    authClaims.AccessId(),
-			}, nil
-		}
-
-		return frame.BaseModel{}, errors.New("access id is empty")
-	}
-
-	access, err := partitionCli.GetAccessById(ctx, accessID)
-	if err != nil {
-		return frame.BaseModel{}, err
-	}
-
-	if access == nil {
-		return frame.BaseModel{}, errors.New("access specified is invalid")
-	}
-
-	partition := access.GetPartition()
-
-	return frame.BaseModel{
-		TenantID:    partition.GetTenantId(),
-		PartitionID: partition.GetId(),
-		AccessID:    accessID,
-	}, nil
-}
-
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
 	logger := nb.service.L().WithField("request", message)
 	logger.Info("handling queue out request")
-
-	partition, err := getPartitionData(ctx, nb.partitionCli, message.GetAccessId())
-	if err != nil {
-		logger.WithError(err).Warn("could not get partition data")
-		return nil, err
-	}
 
 	var releaseDate time.Time
 	if message.AutoRelease {
@@ -121,27 +82,40 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-	profileID := ""
-	contactID := message.GetContactId()
-	contactData := message.GetDetail()
-	if contactData != "" {
-		profile, err := nb.profileCli.GetProfileByContact(ctx, contactData)
+	profileID := message.GetProfileId()
+
+	var contact string
+	contactObj := message.GetContact()
+	contactData, ok := contactObj.(*notificationV1.Notification_ContactId)
+	if ok {
+		contact = contactData.ContactId
+	} else {
+		contactDetail, ok0 := contactObj.(*notificationV1.Notification_Detail)
+		if ok0 {
+			contact = contactDetail.Detail
+		}
+	}
+
+	if contact != "" {
+
+		var profile *profileV1.ProfileObject
+		profile, err = nb.profileCli.GetProfileByContact(ctx, contact)
 		if err != nil {
 			logger.WithError(err).Warn("could not obtain contact")
 
-			profile, err = nb.profileCli.CreateProfileByContactAndName(ctx, contactData, "")
+			profile, err = nb.profileCli.CreateProfileByContactAndName(ctx, contact, "")
 			if err != nil {
 				logger.WithError(err).Warn("could not create contact")
 				return nil, err
 			}
-
-			//return nil, err
 		}
 
-		profileID = profile.GetId()
-		for _, contact := range profile.GetContacts() {
-			if contact.GetDetail() == contactData {
-				contactID = contact.GetId()
+		if profile.GetId() != "" && profile.GetId() != profileID {
+			profileID = profile.GetId()
+		}
+		for _, pcontact := range profile.GetContacts() {
+			if pcontact.GetDetail() == contact {
+				contact = pcontact.GetId()
 				break
 			}
 		}
@@ -155,9 +129,10 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	n := models.Notification{
 
 		TransientID: message.GetId(),
-		BaseModel:   partition,
-		ContactID:   contactID,
+		ContactID:   contact,
 		ProfileID:   profileID,
+
+		ProfileType: message.GetProfileType(),
 
 		LanguageID: language.GetID(),
 		OutBound:   true,
@@ -219,25 +194,17 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	logger := nb.service.L().WithField("request", message)
 	logger.Info("handling queue in request")
 
-	partition, err := getPartitionData(ctx, nb.partitionCli, message.GetAccessId())
-	if err != nil {
-		logger.WithError(err).Warn("could not get partition")
-		return nil, err
-	}
-
 	releaseDate := time.Now()
 
 	n := models.Notification{
 
 		TransientID: message.GetId(),
-		BaseModel:   partition,
-
-		ContactID: message.GetContactId(),
-
-		RouteID: message.GetRouteId(),
-
-		LanguageID: message.GetLanguage(),
-		OutBound:   false,
+		ProfileType: message.GetProfileType(),
+		ProfileID:   message.GetProfileId(),
+		ContactID:   message.GetContactId(),
+		RouteID:     message.GetRouteId(),
+		LanguageID:  message.GetLanguage(),
+		OutBound:    false,
 
 		Payload:          frame.DBPropertiesFromMap(message.GetPayload()),
 		Message:          message.GetData(),
@@ -261,7 +228,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 
 	// Queue in message for further processing
 	event := events.NotificationSave{}
-	err = nb.service.Emit(ctx, event.Name(), n)
+	err := nb.service.Emit(ctx, event.Name(), n)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit notification")
 		return nil, err

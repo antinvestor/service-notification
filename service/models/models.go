@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -81,6 +80,10 @@ func (td *TemplateData) ToApi(language *notificationV1.Language) *notificationV1
 type Notification struct {
 	frame.BaseModel
 
+	Source string `gorm:"type:varchar(250)"`
+
+	ProfileType string `gorm:"type:varchar(50)"`
+
 	ProfileID string `gorm:"type:varchar(50)"`
 	ContactID string `gorm:"type:varchar(50)"`
 
@@ -116,18 +119,22 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 		extra["ReleaseDate"] = model.ReleasedAt.String()
 	}
 
-	var messageData string
-	if message == nil || len(message) == 0 {
-		messageData = model.Message
-	} else {
-		data, _ := json.Marshal(message)
-		messageData = string(data)
+	messageData := model.Message
+
+	if message != nil && len(message) > 0 {
+		for key, val := range message {
+			extra[key] = val
+
+			if key == RouteTypeShortForm && model.Message == "" {
+				messageData = val
+			}
+		}
 	}
 
 	notification := notificationV1.Notification{
 		Id:          model.ID,
-		AccessId:    model.AccessID,
 		Contact:     &notificationV1.Notification_ContactId{ContactId: model.ContactID},
+		ProfileType: model.ProfileType,
 		ProfileId:   model.ProfileID,
 		Type:        model.NotificationType,
 		Template:    model.TemplateID,
