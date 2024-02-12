@@ -632,7 +632,6 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 				ctx: ctx,
 				statusReq: &commonv1.StatusUpdateRequest{
 					Id:         "testingQueue_out",
-					AccessId:   "testingAccessData",
 					State:      commonv1.STATE_INACTIVE,
 					Status:     commonv1.STATUS_SUCCESSFUL,
 					ExternalId: "total_externalization",
