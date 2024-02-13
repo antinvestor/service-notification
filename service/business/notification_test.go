@@ -164,6 +164,7 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			args: args{
 				message: &notificationV1.Notification{
 					Id:       "justtestingId",
+					Language: "en",
 					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
 					OutBound: true,
 					Data:     "Hello we are just testing things out",
@@ -184,9 +185,10 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			},
 			args: args{
 				message: &notificationV1.Notification{
-					Id:      "c2f4j7au6s7f91uqnojg",
-					Contact: &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					Data:    "Hello we are just testing things out",
+					Id:       "c2f4j7au6s7f91uqnojg",
+					Language: "en",
+					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
+					Data:     "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,
@@ -256,9 +258,10 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					Id:      "testingQueue_out",
-					Contact: &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					Data:    "Hello we are just testing things out",
+					Id:       "testingQueue_out",
+					Language: "en",
+					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
+					Data:     "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,
@@ -279,9 +282,10 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					Id:      "c2f4j7au6s7f91uqnojg",
-					Contact: &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					Data:    "Hello we are just testing things out",
+					Id:       "c2f4j7au6s7f91uqnojg",
+					Language: "en",
+					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
+					Data:     "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,
@@ -379,6 +383,7 @@ func Test_notificationBusiness_Release(t *testing.T) {
 				Message:          "Hello we are just testing statuses out",
 				NotificationType: "email",
 				State:            int32(commonv1.STATE_ACTIVE.Number()),
+				LanguageID:       "9bsv0s23l8og00vgjqa0",
 			}
 			n.AccessID = "testingAccessData"
 			n.PartitionID = "test_partition-id"
@@ -467,11 +472,20 @@ func Test_notificationBusiness_Search(t *testing.T) {
 				return
 			}
 
+			nStatus := models.NotificationStatus{
+				State:  int32(commonv1.STATE_ACTIVE.Number()),
+				Status: int32(commonv1.STATUS_QUEUED.Number()),
+			}
+
+			nStatus.GenID(ctx)
+
 			n := models.Notification{
 				ContactID:        "epochTesting",
 				Message:          "Hello we are just testing statuses out",
 				NotificationType: "email",
 				State:            int32(commonv1.STATE_ACTIVE.Number()),
+				LanguageID:       "9bsv0s23l8og00vgjqa0",
+				StatusID:         nStatus.GetID(),
 			}
 			n.PartitionID = "test_partition-id"
 
@@ -479,6 +493,15 @@ func Test_notificationBusiness_Search(t *testing.T) {
 			err = nRepo.Save(&n)
 			if err != nil {
 				t.Errorf("Search() error = %v could not store a notification", err)
+				return
+			}
+
+			nStatus.NotificationID = n.GetID()
+
+			nStatusRepo := repository.NewNotificationStatusRepository(ctx, tt.fields.ctxService.srv)
+			err = nStatusRepo.Save(&nStatus)
+			if err != nil {
+				t.Errorf("Search() error = %v could not store a notification status", err)
 				return
 			}
 
@@ -560,6 +583,7 @@ func Test_notificationBusiness_Status(t *testing.T) {
 				NotificationType: "email",
 				StatusID:         nStatus.GetID(),
 				ReleasedAt:       &releaseDate,
+				LanguageID:       "9bsv0s23l8og00vgjqa0",
 			}
 
 			n.ID = "c2f4j7au6s7f91uqnojg"
@@ -665,6 +689,7 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 				NotificationType: "email",
 				State:            int32(commonv1.STATE_ACTIVE.Number()),
 				ReleasedAt:       &releaseDate,
+				LanguageID:       "9bsv0s23l8og00vgjqa0",
 			}
 			n.AccessID = "testingAccessData"
 			n.PartitionID = "test_partition-id"

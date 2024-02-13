@@ -121,7 +121,7 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 
 	messageData := model.Message
 
-	if message != nil && len(message) > 0 {
+	if len(message) > 0 {
 		for key, val := range message {
 			extra[key] = val
 

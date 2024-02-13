@@ -67,16 +67,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		releaseDate = time.Now()
 	}
 
-	languageCode := message.GetLanguage()
-	if languageCode == "" {
-		notificationConfig, ok := nb.service.Config().(*config.NotificationConfig)
-		if ok {
-			languageCode = notificationConfig.DefaultLanguageCode
-		}
-	}
-
-	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
-	language, err := languageRepo.GetByCode(languageCode)
+	language, err := getLanguageByCode(ctx, nb.service, message.GetLanguage())
 	if err != nil {
 		logger.WithError(err).Warn("could not get language")
 		return nil, err
@@ -196,6 +187,12 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 
 	releaseDate := time.Now()
 
+	language, err := getLanguageByCode(ctx, nb.service, message.GetLanguage())
+	if err != nil {
+		logger.WithError(err).Warn("could not get language")
+		return nil, err
+	}
+
 	n := models.Notification{
 
 		TransientID: message.GetId(),
@@ -203,7 +200,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		ProfileID:   message.GetProfileId(),
 		ContactID:   message.GetContactId(),
 		RouteID:     message.GetRouteId(),
-		LanguageID:  message.GetLanguage(),
+		LanguageID:  language.GetID(),
 		OutBound:    false,
 
 		Payload:          frame.DBPropertiesFromMap(message.GetPayload()),
@@ -228,7 +225,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 
 	// Queue in message for further processing
 	event := events.NotificationSave{}
-	err := nb.service.Emit(ctx, event.Name(), n)
+	err = nb.service.Emit(ctx, event.Name(), n)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit notification")
 		return nil, err
@@ -379,31 +376,30 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 
 		notificationList, err = notificationRepo.Search(search.GetQuery())
 		if err != nil {
-			logger.WithError(err).Warn("failed to search notifications")
+			logger.WithError(err).Error("failed to search notifications")
 			return err
 		}
 
 	}
 
-	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
-
-	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
-
 	var responsesList []*notificationV1.Notification
 	for _, n := range notificationList {
 		nStatus := &models.NotificationStatus{}
 		if n.StatusID != "" {
+			notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
 			resultStatus, err := notificationStatusRepo.GetByID(n.StatusID)
 			if err != nil {
-				logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status id for")
+				logger.WithError(err).WithField("status_id", n.StatusID).Error(" could not get status id for")
+				return err
 			} else {
 				nStatus = resultStatus
 			}
 		}
 
+		languageRepo := repository.NewLanguageRepository(ctx, nb.service)
 		language, err := languageRepo.GetByID(n.LanguageID)
 		if err != nil {
-			logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status id for")
+			logger.WithError(err).WithField("language_id", n.LanguageID).Error(" could not get language id")
 			return err
 		}
 
