@@ -1,5 +1,7 @@
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.32.0-20231115204500-e097f827e652.1 h1:u0olL4yf2p7Tl5jfsAK5keaFi+JFJuv1CDHrbiXkxkk=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.32.0-20231115204500-e097f827e652.1/go.mod h1:tiTMKD8j6Pd/D2WzREoweufjzaJKHZg35f/VGcZ2v3I=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.32.0-20240212200630-3014d81c3a48.1 h1:rOe/itdO7+9cWOnKqvpn1K7VmTDwp3vI4juPz6aNQbc=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.32.0-20240212200630-3014d81c3a48.1/go.mod h1:tiTMKD8j6Pd/D2WzREoweufjzaJKHZg35f/VGcZ2v3I=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.110.10 h1:LXy9GEO+timppncPIAZoOj3l58LIU9k+kn48AN7IO3Y=
@@ -53,6 +55,8 @@ github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6r
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/bufbuild/protovalidate-go v0.5.1 h1:pUUNnrxkUpt2yEX0gMiPTibTTFpGmzQkYxYLbL3lDVg=
 github.com/bufbuild/protovalidate-go v0.5.1/go.mod h1:3XAwFeJ2x9sXyPLgkxufH9sts1tQRk8fdt1AW93NiUU=
+github.com/bufbuild/protovalidate-go v0.5.2 h1:MPNZd6F2ekGWjWVQDv8lEYOX8ndSOzMnmTaGbDZWIcg=
+github.com/bufbuild/protovalidate-go v0.5.2/go.mod h1:DWCNjFl/HwtBiHyN5/3lKA+0MgXOlAoc3jk8Ps3iN+s=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/cenkalti/backoff v2.2.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/cenkalti/backoff/v4 v4.1.1/go.mod h1:scbssz8iZGpm3xbr14ovlUdkxfGXNInqkPWOWmG2CLw=
@@ -168,6 +172,8 @@ github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c/go.mod h1:lNA+9X1NB3Z
 github.com/google/btree v1.0.0/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ5JPQ=
 github.com/google/cel-go v0.18.2 h1:L0B6sNBSVmt0OyECi8v6VOS74KOc9W/tLiWKfZABvf4=
 github.com/google/cel-go v0.18.2/go.mod h1:kWcIzTsPX0zmQ+H3TirHstLLf9ep5QTsZBN9u4dOYLg=
+github.com/google/cel-go v0.19.0 h1:vVgaZoHPBDd1lXCYGQOh5A06L4EtuIfmqQ/qnSXSKiU=
+github.com/google/cel-go v0.19.0/go.mod h1:kWcIzTsPX0zmQ+H3TirHstLLf9ep5QTsZBN9u4dOYLg=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
 github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
