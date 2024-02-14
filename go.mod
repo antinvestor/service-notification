@@ -14,7 +14,7 @@ require (
 	github.com/pitabwire/frame v1.17.6
 	github.com/sirupsen/logrus v1.9.3
 	go.uber.org/mock v0.4.0
-	google.golang.org/grpc v1.61.0
+	google.golang.org/grpc v1.61.1
 	gorm.io/datatypes v1.2.0
 	gorm.io/gorm v1.25.7
 )
