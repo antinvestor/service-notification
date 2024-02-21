@@ -91,13 +91,11 @@ type Notification struct {
 	OutBound bool
 
 	LanguageID string `gorm:"type:varchar(50)"`
-
 	TemplateID string `gorm:"type:varchar(50)"`
-	Payload    datatypes.JSONMap
 
 	NotificationType string `gorm:"type:varchar(10)"`
-
-	Message string `gorm:"type:text"`
+	Message          string `gorm:"type:text"`
+	Payload          datatypes.JSONMap
 
 	ReleasedAt  *time.Time
 	State       int32
