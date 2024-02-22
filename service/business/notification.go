@@ -117,6 +117,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		logger.WithError(err).Warn("could not get/match contact")
 		return nil, err
 	}
+
 	n := models.Notification{
 
 		TransientID: message.GetId(),
@@ -136,6 +137,11 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		Priority:         int32(message.GetPriority()),
 	}
 
+	n.GenID(ctx)
+	if n.ValidXID(message.GetId()) {
+		n.ID = message.GetId()
+	}
+
 	if message.GetTemplate() != "" {
 		templateRepo := repository.NewTemplateRepository(ctx, nb.service)
 		t, err := templateRepo.GetByName(message.GetTemplate())
@@ -146,12 +152,6 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 		n.TemplateID = t.GetID()
 
-	}
-
-	if n.ValidXID(message.GetId()) {
-		n.ID = message.GetId()
-	} else {
-		n.GenID(ctx)
 	}
 
 	nStatus := models.NotificationStatus{
@@ -210,10 +210,9 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		Priority:         int32(message.GetPriority()),
 	}
 
+	n.GenID(ctx)
 	if n.ValidXID(message.GetId()) {
 		n.ID = message.GetId()
-	} else {
-		n.GenID(ctx)
 	}
 
 	nStatus := models.NotificationStatus{
