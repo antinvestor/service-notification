@@ -11,7 +11,7 @@ require (
 	github.com/antinvestor/apis/go/profile v1.10.0
 	github.com/bufbuild/protovalidate-go v0.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
-	github.com/pitabwire/frame v1.18.4
+	github.com/pitabwire/frame v1.18.5
 	github.com/sirupsen/logrus v1.9.3
 	go.uber.org/mock v0.4.0
 	google.golang.org/grpc v1.62.0
