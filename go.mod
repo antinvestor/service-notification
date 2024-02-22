@@ -11,7 +11,7 @@ require (
 	github.com/antinvestor/apis/go/profile v1.10.0
 	github.com/bufbuild/protovalidate-go v0.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
-	github.com/pitabwire/frame v1.18.0
+	github.com/pitabwire/frame v1.18.1
 	github.com/sirupsen/logrus v1.9.3
 	go.uber.org/mock v0.4.0
 	google.golang.org/grpc v1.62.0
@@ -44,12 +44,12 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
-	github.com/klauspost/compress v1.17.4 // indirect
-	github.com/nats-io/nats.go v1.32.0 // indirect
+	github.com/klauspost/compress v1.17.6 // indirect
+	github.com/nats-io/nats.go v1.33.1 // indirect
 	github.com/nats-io/nkeys v0.4.7 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect
-	github.com/pitabwire/natspubsub v0.1.1 // indirect
+	github.com/pitabwire/natspubsub v0.1.2 // indirect
 	github.com/rs/cors v1.8.3 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
