@@ -17,8 +17,6 @@ import (
 
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	protovalidateinterceptor "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
-
 	"github.com/pitabwire/frame"
 	"google.golang.org/grpc"
 )
@@ -104,12 +102,10 @@ func main() {
 		grpc.ChainUnaryInterceptor(
 			service.UnaryAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer),
 			protovalidateinterceptor.UnaryServerInterceptor(validator),
-			recovery.UnaryServerInterceptor(),
 		),
 		grpc.ChainStreamInterceptor(
 			service.StreamAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer),
 			protovalidateinterceptor.StreamServerInterceptor(validator),
-			recovery.StreamServerInterceptor(),
 		),
 	)
 
