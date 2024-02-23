@@ -47,13 +47,9 @@ func (repo *routeRepository) GetByMode(mode string) ([]*models.Route, error) {
 func (repo *routeRepository) GetByModeTypeAndPartitionID(mode string, routeType string, partitionId string) ([]*models.Route, error) {
 	var routes []*models.Route
 
-	if routeType == "" {
-		routeType = "any"
-	}
-
-	err := repo.readDb.Debug().Find(&routes,
-		"partition_id = ? AND route_type = ? AND (mode = ? OR ( mode = ?))",
-		partitionId, routeType, mode, models.RouteModeTransceive).Error
+	err := repo.readDb.Find(&routes,
+		"partition_id = ? AND ( route_type = ? OR route_type = ? ) AND (mode = ? OR ( mode = ?))",
+		partitionId, "any", routeType, mode, models.RouteModeTransceive).Error
 	if err != nil {
 		return nil, err
 	}
