@@ -10,6 +10,7 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
+	"google.golang.org/protobuf/encoding/protojson"
 	"text/template"
 )
 
@@ -69,8 +70,10 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 
 	apiNotification := n.ToApi(nStatus, language, templateMap)
 
+	jsonString, err := protojson.Marshal(apiNotification)
+
 	// Queue a message for further processing by peripheral services
-	err = event.Service.Publish(ctx, n.RouteID, apiNotification)
+	err = event.Service.Publish(ctx, n.RouteID, jsonString)
 	if err != nil {
 		return err
 	}
