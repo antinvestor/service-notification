@@ -37,11 +37,11 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload interfa
 
 func (event *NotificationOutQueue) Execute(ctx context.Context, payload interface{}) error {
 	notificationID := *payload.(*string)
+
 	logger := event.Service.L().WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Info("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
-
 	n, err := notificationRepo.GetByID(notificationID)
 	if err != nil {
 		return err
@@ -50,14 +50,14 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, event.Service)
 	nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
 	if err != nil {
-		logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status id for")
+		logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status")
 		return err
 	}
 
 	languageRepo := repository.NewLanguageRepository(ctx, event.Service)
 	language, err := languageRepo.GetByID(n.LanguageID)
 	if err != nil {
-		logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status id for")
+		logger.WithError(err).WithField("language_id", n.LanguageID).Warn(" could not get language")
 		return err
 	}
 
@@ -75,8 +75,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 		return err
 	}
 
-	log := event.Service.L()
-	log.WithField("notification_id", n.GetID()).
+	logger.WithField("notification_id", n.GetID()).
 		WithField("route", n.RouteID).
 		WithField("message", templateMap).
 		Info(" We have successfully queued out message")

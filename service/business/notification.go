@@ -55,7 +55,27 @@ func getLanguageByCode(ctx context.Context, service *frame.Service, languageCode
 	}
 
 	languageRepo := repository.NewLanguageRepository(ctx, service)
-	return languageRepo.GetByCode(languageCode)
+	lang, err := languageRepo.GetByCode(languageCode)
+	if err != nil {
+		if frame.DBErrorIsRecordNotFound(err) {
+
+			lang = &models.Language{
+				BaseModel:   frame.BaseModel{},
+				Name:        "English",
+				Code:        "en",
+				Description: "The default platform language",
+			}
+			lang.GenID(ctx)
+
+			err = languageRepo.Save(lang)
+			if err != nil {
+				return nil, err
+			}
+
+		}
+	}
+
+	return lang, nil
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {

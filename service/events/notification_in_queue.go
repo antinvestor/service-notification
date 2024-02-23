@@ -50,8 +50,7 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload interface
 		return err
 	}
 
-	log := event.Service.L()
-	log.
+	logger.
 		WithField("notification", n.ID).
 		Info(" Successfully routed in message ")
 

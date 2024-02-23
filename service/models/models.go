@@ -22,9 +22,8 @@ const (
 // Language Our simple table holding all the supported languages
 type Language struct {
 	frame.BaseModel
-
-	Name        string `gorm:"type:varchar(50);unique_index"`
-	Code        string `gorm:"type:varchar(10);unique_index"`
+	Name        string `gorm:"type:varchar(50)"`
+	Code        string `gorm:"type:varchar(10)"`
 	Description string `gorm:"type:text"`
 }
 
