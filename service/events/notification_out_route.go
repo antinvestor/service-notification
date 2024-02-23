@@ -50,7 +50,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 
 	p, err := event.ProfileCli.GetProfileByID(ctx, n.ProfileID)
 	if err != nil {
-		logger.WithError(err).Warn("could not get profile by id")
+		logger.WithError(err).WithField("profile_id", n.ProfileID).Warn("could not get profile by id")
 		return err
 	}
 
