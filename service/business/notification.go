@@ -215,10 +215,15 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		return nil, err
 	}
 
+	profileType := message.GetProfileType()
+	if profileType == "" {
+		profileType = "user"
+	}
+
 	n := models.Notification{
 
 		TransientID: message.GetId(),
-		ProfileType: message.GetProfileType(),
+		ProfileType: profileType,
 		ProfileID:   message.GetProfileId(),
 		ContactID:   message.GetContactId(),
 		RouteID:     message.GetRouteId(),
