@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"fmt"
 	"github.com/antinvestor/service-notification/config"
 	"time"
 
@@ -57,20 +58,21 @@ func getLanguageByCode(ctx context.Context, service *frame.Service, languageCode
 	languageRepo := repository.NewLanguageRepository(ctx, service)
 	lang, err := languageRepo.GetByCode(languageCode)
 	if err != nil {
-		if frame.DBErrorIsRecordNotFound(err) {
+		if !frame.DBErrorIsRecordNotFound(err) || languageCode == "" {
+			return nil, err
+		}
 
-			lang = &models.Language{
-				BaseModel:   frame.BaseModel{},
-				Name:        "English",
-				Code:        "en",
-				Description: "The default platform language",
-			}
-			lang.GenID(ctx)
+		lang = &models.Language{
+			BaseModel:   frame.BaseModel{},
+			Name:        fmt.Sprintf("Edit - %s", languageCode),
+			Code:        languageCode,
+			Description: "Auto created partition language",
+		}
+		lang.GenID(ctx)
 
-			err = languageRepo.Save(lang)
-			if err != nil {
-				return nil, err
-			}
+		err = languageRepo.Save(lang)
+		if err != nil {
+			return nil, err
 
 		}
 	}
