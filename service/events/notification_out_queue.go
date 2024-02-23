@@ -9,8 +9,8 @@ import (
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
-	"github.com/golang/protobuf/proto"
 	"github.com/pitabwire/frame"
+	"google.golang.org/protobuf/proto"
 	"text/template"
 )
 
@@ -71,6 +71,9 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	apiNotification := n.ToApi(nStatus, language, templateMap)
 
 	binaryProto, err := proto.Marshal(apiNotification)
+	if err != nil {
+		return err
+	}
 
 	// Queue a message for further processing by peripheral services
 	err = event.Service.Publish(ctx, n.RouteID, binaryProto)
