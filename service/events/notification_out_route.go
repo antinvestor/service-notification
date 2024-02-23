@@ -3,12 +3,12 @@ package events
 import (
 	"context"
 	"errors"
-	"fmt"
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
+	"strings"
 )
 
 type NotificationOutRoute struct {
@@ -66,7 +66,29 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 
 	route, err := event.routeNotification(ctx, n)
 	if err != nil {
-		logger.WithError(err).Warn("could not route notification")
+		logger.WithError(err).Error("could not route notification")
+
+		if strings.Contains(err.Error(), "no routes matched for notification") {
+			nStatus := models.NotificationStatus{
+				NotificationID: n.GetID(),
+				State:          int32(commonv1.STATE_INACTIVE),
+				Status:         int32(commonv1.STATUS_FAILED),
+				Extra: frame.DBPropertiesFromMap(map[string]string{
+					"error": err.Error(),
+				}),
+			}
+
+			nStatus.GenID(ctx)
+
+			eventStatus := NotificationStatusSave{}
+			err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
+			if err != nil {
+				logger.WithError(err).Warn("could not emit status for save")
+				return err
+			}
+
+		}
+
 		return err
 	}
 
@@ -128,27 +150,28 @@ func (event *NotificationOutRoute) routeNotification(ctx context.Context, notifi
 		return nil, err
 	}
 
-	if len(routes) > 0 {
-		route := routes[0]
-		if len(routes) > 1 {
-			route = event.selectRoute(ctx, routes)
-		}
-
-		err = event.Service.AddPublisher(ctx, route.ID, route.Uri)
-		if err != nil {
-			return nil, err
-		}
-
-		return route, nil
-
-	} else {
-		return nil, fmt.Errorf("no routes matched for notification : %s", notification.GetID())
+	var route *models.Route
+	route, err = event.selectRoute(ctx, routes)
+	if err != nil {
+		return nil, err
 	}
+
+	err = event.Service.AddPublisher(ctx, route.ID, route.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	return route, nil
+
 }
 
-func (event *NotificationOutRoute) selectRoute(ctx context.Context, routes []*models.Route) *models.Route {
+func (event *NotificationOutRoute) selectRoute(_ context.Context, routes []*models.Route) (*models.Route, error) {
 	//TODO: find a simple way of routing message mostly by settings
 	// or contact and profile preferences
 
-	return routes[0]
+	if len(routes) == 0 {
+		return nil, errors.New("no routes matched for notification")
+	}
+
+	return routes[0], nil
 }
