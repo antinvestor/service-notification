@@ -150,8 +150,10 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		TransientID: message.GetId(),
 		ContactID:   contact,
 		ProfileID:   profileID,
-
 		ProfileType: profileType,
+
+		Source:          message.GetSource(),
+		SourceContactID: message.GetSourceContactId(),
 
 		LanguageID: language.GetID(),
 		OutBound:   true,
@@ -231,9 +233,13 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		ProfileType: profileType,
 		ProfileID:   message.GetProfileId(),
 		ContactID:   message.GetContactId(),
-		RouteID:     message.GetRouteId(),
-		LanguageID:  language.GetID(),
-		OutBound:    false,
+
+		Source:          message.GetSource(),
+		SourceContactID: message.GetSourceContactId(),
+
+		RouteID:    message.GetRouteId(),
+		LanguageID: language.GetID(),
+		OutBound:   false,
 
 		Payload:          frame.DBPropertiesFromMap(message.GetPayload()),
 		Message:          message.GetData(),

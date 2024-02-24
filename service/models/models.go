@@ -79,8 +79,9 @@ func (td *TemplateData) ToApi(language *notificationV1.Language) *notificationV1
 type Notification struct {
 	frame.BaseModel
 
-	ParentID string `gorm:"type:varchar(50)"`
-	Source   string `gorm:"type:varchar(250)"`
+	ParentID        string `gorm:"type:varchar(50)"`
+	Source          string `gorm:"type:varchar(250)"`
+	SourceContactID string `gorm:"type:varchar(50)"`
 
 	ProfileType string `gorm:"type:varchar(50)"`
 
