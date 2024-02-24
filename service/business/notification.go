@@ -140,13 +140,18 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-	n := models.Notification{
+	profileType := message.GetProfileType()
+	if profileType == "" {
+		profileType = "user"
+	}
 
+	n := models.Notification{
+		ParentID:    message.GetParentId(),
 		TransientID: message.GetId(),
 		ContactID:   contact,
 		ProfileID:   profileID,
 
-		ProfileType: message.GetProfileType(),
+		ProfileType: profileType,
 
 		LanguageID: language.GetID(),
 		OutBound:   true,
@@ -221,7 +226,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	}
 
 	n := models.Notification{
-
+		ParentID:    message.GetParentId(),
 		TransientID: message.GetId(),
 		ProfileType: profileType,
 		ProfileID:   message.GetProfileId(),

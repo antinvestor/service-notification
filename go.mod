@@ -5,10 +5,10 @@ go 1.21
 toolchain go1.21.1
 
 require (
-	github.com/antinvestor/apis/go/common v1.10.0
-	github.com/antinvestor/apis/go/notification v1.10.0
-	github.com/antinvestor/apis/go/partition v1.10.0
-	github.com/antinvestor/apis/go/profile v1.10.0
+	github.com/antinvestor/apis/go/common v1.11.0
+	github.com/antinvestor/apis/go/notification v1.11.0
+	github.com/antinvestor/apis/go/partition v1.11.0
+	github.com/antinvestor/apis/go/profile v1.11.0
 	github.com/bufbuild/protovalidate-go v0.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/pitabwire/frame v1.18.5
