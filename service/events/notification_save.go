@@ -38,9 +38,9 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 	notification := payload.(*models.Notification)
 
 	logger := e.Service.L().WithField("type", e.Name())
-	logger.WithField("payload", notification).Info("handling event")
+	logger.WithField("payload", notification).Debug("handling event")
 
-	result := e.Service.DB(ctx, false).Debug().Clauses(clause.OnConflict{
+	result := e.Service.DB(ctx, false).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		UpdateAll: true,
 	}).Create(notification)
@@ -50,7 +50,7 @@ func (e *NotificationSave) Execute(ctx context.Context, payload interface{}) err
 		logger.WithError(err).Warn("could not save to db")
 		return err
 	}
-	logger.WithField("rows affected", result.RowsAffected).Info("successfully saved record to db")
+	logger.WithField("rows affected", result.RowsAffected).Debug("successfully saved record to db")
 
 	if !notification.OutBound {
 		event := NotificationInRoute{}

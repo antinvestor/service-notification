@@ -40,7 +40,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	notificationID := *payload.(*string)
 
 	logger := event.Service.L().WithField("payload", notificationID).WithField("type", event.Name())
-	logger.Info("handling event")
+	logger.Debug("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 	n, err := notificationRepo.GetByID(notificationID)
@@ -84,7 +84,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload interfac
 	logger.WithField("notification_id", n.GetID()).
 		WithField("route", n.RouteID).
 		WithField("message", templateMap).
-		Info(" We have successfully queued out message")
+		Debug(" We have successfully queued out message")
 
 	err = notificationRepo.Save(n)
 	if err != nil {

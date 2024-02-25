@@ -301,7 +301,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error) {
 	logger := nb.service.L().WithField("request", statusReq)
-	logger.Info("handling status update request")
+	logger.Debug("handling status update request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 
@@ -335,7 +335,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*commonv1.StatusResponse, error) {
 
 	logger := nb.service.L().WithField("request", releaseReq)
-	logger.Info("handling release request")
+	logger.Debug("handling release request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 	n, err := notificationRepo.GetByID(releaseReq.GetId())

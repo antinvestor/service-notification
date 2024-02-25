@@ -35,7 +35,7 @@ func (event *NotificationInQueue) Validate(ctx context.Context, payload interfac
 func (event *NotificationInQueue) Execute(ctx context.Context, payload interface{}) error {
 	notificationID := *payload.(*string)
 	logger := event.Service.L().WithField("payload", notificationID).WithField("type", event.Name())
-	logger.Info("handling event")
+	logger.Debug("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 
@@ -52,7 +52,7 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload interface
 
 	logger.
 		WithField("notification", n.ID).
-		Info(" Successfully routed in message ")
+		Debug(" Successfully routed in message ")
 
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),

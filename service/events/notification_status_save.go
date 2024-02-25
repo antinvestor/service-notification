@@ -38,9 +38,9 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload interface{
 	nStatus := payload.(*models.NotificationStatus)
 
 	logger := e.Service.L().WithField("payload", nStatus).WithField("type", e.Name())
-	logger.Info("handling event")
+	logger.Debug("handling event")
 
-	result := e.Service.DB(ctx, false).Debug().Clauses(clause.OnConflict{
+	result := e.Service.DB(ctx, false).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		UpdateAll: true,
 	}).Create(nStatus)
@@ -50,7 +50,7 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload interface{
 		logger.WithError(err).Warn("could not save notification status to db")
 		return err
 	}
-	logger.WithField("rows affected", result.RowsAffected).Info("successfully saved record to db")
+	logger.WithField("rows affected", result.RowsAffected).Debug("successfully saved record to db")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, e.Service)
 	n, err := notificationRepo.GetByID(nStatus.NotificationID)
