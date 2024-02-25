@@ -449,11 +449,6 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 		logger.WithError(err).Warn(" unable to send a result")
 	}
 
-	logger.Info("_______________________________________________________")
-	logger.WithField("result count", len(responsesList)).
-		Infof("_____  Sending out %d object   _______________", len(notificationList))
-	logger.Info("_______________________________________________________")
-
 	return nil
 }
 
