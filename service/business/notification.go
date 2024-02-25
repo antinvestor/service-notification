@@ -142,7 +142,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 	profileType := message.GetProfileType()
 	if profileType == "" {
-		profileType = "user"
+		profileType = "Profile"
 	}
 
 	n := models.Notification{
@@ -224,7 +224,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 
 	profileType := message.GetProfileType()
 	if profileType == "" {
-		profileType = "user"
+		profileType = "Profile"
 	}
 
 	n := models.Notification{
