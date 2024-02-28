@@ -32,6 +32,8 @@ github.com/antinvestor/apis/go/common v1.11.3 h1:MCY2Omt/5grg+9Js8VXfIsNa81eM4E5
 github.com/antinvestor/apis/go/common v1.11.3/go.mod h1:ZJYKXFz+guTx1vPoiLGFrtg3b8MUVFtuf8olnbxEzxA=
 github.com/antinvestor/apis/go/common v1.12.1 h1:+eIViKz5Q4a/UuGZgHRdK0ja+3BUCiwtKizZZGK6r3Y=
 github.com/antinvestor/apis/go/common v1.12.1/go.mod h1:ZJYKXFz+guTx1vPoiLGFrtg3b8MUVFtuf8olnbxEzxA=
+github.com/antinvestor/apis/go/common v1.12.2 h1:FCC+YVacjln3r5LPyObP3k+HkWYcIIWTeeK9QCblkog=
+github.com/antinvestor/apis/go/common v1.12.2/go.mod h1:ZJYKXFz+guTx1vPoiLGFrtg3b8MUVFtuf8olnbxEzxA=
 github.com/antinvestor/apis/go/notification v1.11.3 h1:xGJ4XsIju4iNoT65RiXYe/xqYo3R9ueoJcZowulyZoo=
 github.com/antinvestor/apis/go/notification v1.11.3/go.mod h1:JZ2TX+ueL+w3nJFcF9yQmPQ40ce1BzlXLv52kGSBNVY=
 github.com/antinvestor/apis/go/notification v1.12.1 h1:jK3kKpH+4IrEoVDjcpYBF6VtxTYItWJ/91J3D44f4gs=
