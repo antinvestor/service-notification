@@ -114,6 +114,10 @@ func (model *Notification) IsReleased() bool {
 func (model *Notification) ToApi(status *NotificationStatus, language *Language, message map[string]string) *notificationV1.Notification {
 
 	extra := make(map[string]string)
+	extra["tenant_id"] = model.TenantID
+	extra["partition_id"] = model.PartitionID
+	extra["access_id"] = model.AccessID
+
 	if model.IsReleased() {
 		extra["ReleaseDate"] = model.ReleasedAt.String()
 	}
