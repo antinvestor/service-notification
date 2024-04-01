@@ -38,7 +38,7 @@ func (tr *templateRepository) GetByID(id string) (*models.Template, error) {
 func (tr *templateRepository) GetByName(name string) (*models.Template, error) {
 	template := models.Template{}
 
-	err := tr.readDb.Debug().Find(&template, "name = ?", name).Error
+	err := tr.readDb.Find(&template, "name = ?", name).Error
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (tr *templateRepository) SearchByName(query string, page int, count int) ([
 	query = strings.TrimSpace(query)
 
 	var templateList []*models.Template
-	templateSearchQuery := tr.readDb.Debug()
+	templateSearchQuery := tr.readDb
 
 	if count <= 0 {
 		count = 10

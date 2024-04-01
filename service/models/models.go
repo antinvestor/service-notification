@@ -122,15 +122,23 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 		extra["ReleaseDate"] = model.ReleasedAt.String()
 	}
 
-	messageData := model.Message
+	if len(message) != 0 {
 
-	if len(message) > 0 {
+		if model.Message == "" {
+			formattedData, ok := message[model.NotificationType]
+			if ok {
+				model.Message = formattedData
+			} else {
+
+				formattedData, ok = message[RouteTypeShortForm]
+				if ok {
+					model.Message = formattedData
+				}
+			}
+		}
+
 		for key, val := range message {
 			extra[key] = val
-
-			if key == RouteTypeShortForm && model.Message == "" {
-				messageData = val
-			}
 		}
 	}
 
@@ -142,7 +150,7 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 		Type:        model.NotificationType,
 		Template:    model.TemplateID,
 		Payload:     frame.DBPropertiesToMap(model.Payload),
-		Data:        messageData,
+		Data:        model.Message,
 		Language:    language.Code,
 		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),

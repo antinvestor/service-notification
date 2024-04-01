@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/antinvestor/service-notification/config"
+	"strings"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -127,7 +128,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 			profileID = profile.GetId()
 		}
 		for _, pcontact := range profile.GetContacts() {
-			if pcontact.GetDetail() == contact {
+			if strings.EqualFold(pcontact.GetDetail(), contact) {
 				contact = pcontact.GetId()
 				break
 			}
@@ -180,7 +181,6 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		}
 
 		n.TemplateID = t.GetID()
-
 	}
 
 	nStatus := models.NotificationStatus{

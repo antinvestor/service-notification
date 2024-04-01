@@ -46,7 +46,7 @@ func (repo *notificationRepository) GetByID(id string) (*models.Notification, er
 func (repo *notificationRepository) Search(query string) ([]*models.Notification, error) {
 	query = strings.TrimSpace(query)
 	var notifications []*models.Notification
-	notificationQuery := repo.readDb.Debug()
+	notificationQuery := repo.readDb
 	if query != "" {
 		searchQ := fmt.Sprintf("%%%s%%", query)
 
