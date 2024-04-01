@@ -87,6 +87,8 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 				return err
 			}
 
+			return nil
+
 		}
 
 		return err

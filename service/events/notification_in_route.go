@@ -9,6 +9,7 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
+	"strings"
 )
 
 func filterContactFromProfileByID(profile *profileV1.ProfileObject, contactID string) *profileV1.ContactObject {
@@ -58,6 +59,29 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload interface
 	route, err := event.routeNotification(ctx, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not route notification")
+
+		if strings.Contains(err.Error(), "no routes matched for notification") {
+			nStatus := models.NotificationStatus{
+				NotificationID: n.GetID(),
+				State:          int32(commonv1.STATE_INACTIVE),
+				Status:         int32(commonv1.STATUS_FAILED),
+				Extra: frame.DBPropertiesFromMap(map[string]string{
+					"error": err.Error(),
+				}),
+			}
+
+			nStatus.GenID(ctx)
+
+			eventStatus := NotificationStatusSave{}
+			err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
+			if err != nil {
+				logger.WithError(err).Warn("could not emit status for save")
+				return err
+			}
+
+			return nil
+		}
+
 		return err
 	}
 
