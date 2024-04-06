@@ -79,14 +79,15 @@ func (td *TemplateData) ToApi(language *notificationV1.Language) *notificationV1
 type Notification struct {
 	frame.BaseModel
 
-	ParentID        string `gorm:"type:varchar(50)"`
-	Source          string `gorm:"type:varchar(250)"`
-	SourceContactID string `gorm:"type:varchar(50)"`
+	ParentID string `gorm:"type:varchar(50)"`
 
-	ProfileType string `gorm:"type:varchar(50)"`
+	SenderProfileID   string `gorm:"type:varchar(250)"`
+	SenderProfileType string `gorm:"type:varchar(50)"`
+	SenderContactID   string `gorm:"type:varchar(50)"`
 
-	ProfileID string `gorm:"type:varchar(50)"`
-	ContactID string `gorm:"type:varchar(50)"`
+	RecipientProfileID   string `gorm:"type:varchar(50)"`
+	RecipientProfileType string `gorm:"type:varchar(50)"`
+	RecipientContactID   string `gorm:"type:varchar(50)"`
 
 	RouteID  string `gorm:"type:varchar(50)"`
 	OutBound bool
@@ -142,24 +143,33 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 		}
 	}
 
+	source := &commonv1.ContactLink{
+		ProfileType: model.SenderProfileType,
+		ProfileId:   model.SenderProfileID,
+		ContactId:   model.SenderContactID,
+	}
+
+	recipient := &commonv1.ContactLink{
+		ProfileType: model.RecipientProfileType,
+		ProfileId:   model.RecipientProfileID,
+		ContactId:   model.RecipientContactID,
+	}
+
 	notification := notificationV1.Notification{
-		Id:              model.ID,
-		Contact:         &notificationV1.Notification_ContactId{ContactId: model.ContactID},
-		ProfileType:     model.ProfileType,
-		ProfileId:       model.ProfileID,
-		SourceContactId: model.SourceContactID,
-		Source:          model.Source,
-		Type:            model.NotificationType,
-		Template:        model.TemplateID,
-		Payload:         frame.DBPropertiesToMap(model.Payload),
-		Data:            model.Message,
-		Language:        language.Code,
-		OutBound:        model.OutBound,
-		AutoRelease:     model.IsReleased(),
-		RouteId:         model.RouteID,
-		Status:          status.ToStatusAPI(),
-		Extras:          extra,
-		Priority:        notificationV1.PRIORITY(model.Priority),
+		Id:          model.ID,
+		Source:      source,
+		Recipient:   recipient,
+		Type:        model.NotificationType,
+		Template:    model.TemplateID,
+		Payload:     frame.DBPropertiesToMap(model.Payload),
+		Data:        model.Message,
+		Language:    language.Code,
+		OutBound:    model.OutBound,
+		AutoRelease: model.IsReleased(),
+		RouteId:     model.RouteID,
+		Status:      status.ToStatusAPI(),
+		Extras:      extra,
+		Priority:    notificationV1.PRIORITY(model.Priority),
 	}
 	return &notification
 }

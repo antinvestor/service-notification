@@ -163,11 +163,11 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			},
 			args: args{
 				message: &notificationV1.Notification{
-					Id:       "justtestingId",
-					Language: "en",
-					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					OutBound: true,
-					Data:     "Hello we are just testing things out",
+					Id:        "justtestingId",
+					Language:  "en",
+					Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
+					OutBound:  true,
+					Data:      "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,
@@ -185,10 +185,10 @@ func Test_notificationBusiness_QueueIn(t *testing.T) {
 			},
 			args: args{
 				message: &notificationV1.Notification{
-					Id:       "c2f4j7au6s7f91uqnojg",
-					Language: "en",
-					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					Data:     "Hello we are just testing things out",
+					Id:        "c2f4j7au6s7f91uqnojg",
+					Language:  "en",
+					Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
+					Data:      "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,
@@ -258,10 +258,10 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					Id:       "testingQueue_out",
-					Language: "en",
-					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					Data:     "Hello we are just testing things out",
+					Id:        "testingQueue_out",
+					Language:  "en",
+					Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
+					Data:      "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,
@@ -282,10 +282,10 @@ func Test_notificationBusiness_QueueOut(t *testing.T) {
 			args: args{
 				ctx: ctx,
 				message: &notificationV1.Notification{
-					Id:       "c2f4j7au6s7f91uqnojg",
-					Language: "en",
-					Contact:  &notificationV1.Notification_ContactId{ContactId: "epochTesting"},
-					Data:     "Hello we are just testing things out",
+					Id:        "c2f4j7au6s7f91uqnojg",
+					Language:  "en",
+					Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
+					Data:      "Hello we are just testing things out",
 				},
 			},
 			wantErr: false,
@@ -379,7 +379,7 @@ func Test_notificationBusiness_Release(t *testing.T) {
 			}
 
 			n := models.Notification{
-				ContactID:        "epochTesting",
+				SenderContactID:  "epochTesting",
 				Message:          "Hello we are just testing statuses out",
 				NotificationType: "email",
 				State:            int32(commonv1.STATE_ACTIVE.Number()),
@@ -480,7 +480,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 			nStatus.GenID(ctx)
 
 			n := models.Notification{
-				ContactID:        "epochTesting",
+				SenderContactID:  "epochTesting",
 				Message:          "Hello we are just testing statuses out",
 				NotificationType: "email",
 				State:            int32(commonv1.STATE_ACTIVE.Number()),
@@ -578,7 +578,7 @@ func Test_notificationBusiness_Status(t *testing.T) {
 
 			releaseDate := time.Now()
 			n := models.Notification{
-				ContactID:        "epochTesting",
+				SenderContactID:  "epochTesting",
 				Message:          "Hello we are just testing statuses out",
 				NotificationType: "email",
 				StatusID:         nStatus.GetID(),
@@ -684,7 +684,7 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 
 			releaseDate := time.Now()
 			n := models.Notification{
-				ContactID:        "epochTesting",
+				SenderContactID:  "epochTesting",
 				Message:          "Hello we are just testing statuses out",
 				NotificationType: "email",
 				State:            int32(commonv1.STATE_ACTIVE.Number()),

@@ -48,13 +48,13 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload interfac
 		return err
 	}
 
-	p, err := event.ProfileCli.GetProfileByID(ctx, n.ProfileID)
+	p, err := event.ProfileCli.GetProfileByID(ctx, n.RecipientProfileID)
 	if err != nil {
-		logger.WithError(err).WithField("profile_id", n.ProfileID).Warn("could not get profile by id")
+		logger.WithError(err).WithField("profile_id", n.RecipientProfileID).Warn("could not get profile by id")
 		return err
 	}
 
-	contact := filterContactFromProfileByID(p, n.ContactID)
+	contact := filterContactFromProfileByID(p, n.RecipientContactID)
 	switch contact.Type {
 	case profileV1.ContactType_PHONE:
 		n.NotificationType = models.RouteTypeShortForm

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/antinvestor/service-notification/config"
-	"strings"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -96,65 +95,61 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-	profileID := message.GetProfileId()
-
-	var contact string
-	contactObj := message.GetContact()
-	contactData, ok := contactObj.(*notificationV1.Notification_ContactId)
-	if ok {
-		contact = contactData.ContactId
-	} else {
-		contactDetail, ok0 := contactObj.(*notificationV1.Notification_Detail)
-		if ok0 {
-			contact = contactDetail.Detail
-		}
-	}
-
-	if contact != "" {
-
-		var profile *profileV1.ProfileObject
-		profile, err = nb.profileCli.GetProfileByContact(ctx, contact)
-		if err != nil {
-			logger.WithError(err).Warn("could not obtain contact")
-
-			profile, err = nb.profileCli.CreateProfileByContactAndName(ctx, contact, "")
-			if err != nil {
-				logger.WithError(err).Warn("could not create contact")
-				return nil, err
-			}
-		}
-
-		if profile.GetId() != "" && profile.GetId() != profileID {
-			profileID = profile.GetId()
-		}
-		for _, pcontact := range profile.GetContacts() {
-			if strings.EqualFold(pcontact.GetDetail(), contact) {
-				contact = pcontact.GetId()
-				break
-			}
-		}
-
-	}
+	//profileID := message.GetProfileId()
+	//
+	//var contact string
+	//contactObj := message.GetContact()
+	//contactData, ok := contactObj.(*notificationV1.Notification_ContactId)
+	//if ok {
+	//	contact = contactData.ContactId
+	//} else {
+	//	contactDetail, ok0 := contactObj.(*notificationV1.Notification_Detail)
+	//	if ok0 {
+	//		contact = contactDetail.Detail
+	//	}
+	//}
+	//
+	//if contact != "" {
+	//
+	//	var profile *profileV1.ProfileObject
+	//	profile, err = nb.profileCli.GetProfileByContact(ctx, contact)
+	//	if err != nil {
+	//		logger.WithError(err).Warn("could not obtain contact")
+	//
+	//		profile, err = nb.profileCli.CreateProfileByContactAndName(ctx, contact, "")
+	//		if err != nil {
+	//			logger.WithError(err).Warn("could not create contact")
+	//			return nil, err
+	//		}
+	//	}
+	//
+	//	if profile.GetId() != "" && profile.GetId() != profileID {
+	//		profileID = profile.GetId()
+	//	}
+	//	for _, pcontact := range profile.GetContacts() {
+	//		if strings.EqualFold(pcontact.GetDetail(), contact) {
+	//			contact = pcontact.GetId()
+	//			break
+	//		}
+	//	}
+	//
+	//}
 
 	if err != nil {
 		logger.WithError(err).Warn("could not get/match contact")
 		return nil, err
 	}
 
-	profileType := message.GetProfileType()
-	if profileType == "" {
-		profileType = "Profile"
-	}
-
 	n := models.Notification{
-		ParentID:    message.GetParentId(),
-		TransientID: message.GetId(),
-		ContactID:   contact,
-		ProfileID:   profileID,
-		ProfileType: profileType,
+		ParentID:          message.GetParentId(),
+		TransientID:       message.GetId(),
+		SenderProfileType: message.GetSource().GetProfileType(),
+		SenderProfileID:   message.GetSource().GetProfileId(),
+		SenderContactID:   message.GetSource().GetContactId(),
 
-		Source:          message.GetSource(),
-		SourceContactID: message.GetSourceContactId(),
+		RecipientProfileType: message.GetRecipient().GetProfileType(),
+		RecipientProfileID:   message.GetRecipient().GetProfileId(),
+		RecipientContactID:   message.GetRecipient().GetContactId(),
 
 		LanguageID: language.GetID(),
 		OutBound:   true,
@@ -222,24 +217,19 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		return nil, err
 	}
 
-	profileType := message.GetProfileType()
-	if profileType == "" {
-		profileType = "Profile"
-	}
-
 	n := models.Notification{
-		ParentID:    message.GetParentId(),
-		TransientID: message.GetId(),
-		ProfileType: profileType,
-		ProfileID:   message.GetProfileId(),
-		ContactID:   message.GetContactId(),
+		ParentID:          message.GetParentId(),
+		TransientID:       message.GetId(),
+		SenderProfileType: message.GetSource().GetProfileType(),
+		SenderProfileID:   message.GetSource().GetProfileId(),
+		SenderContactID:   message.GetSource().GetContactId(),
 
-		Source:          message.GetSource(),
-		SourceContactID: message.GetSourceContactId(),
-
-		RouteID:    message.GetRouteId(),
-		LanguageID: language.GetID(),
-		OutBound:   false,
+		RecipientProfileType: message.GetRecipient().GetProfileType(),
+		RecipientProfileID:   message.GetRecipient().GetProfileId(),
+		RecipientContactID:   message.GetRecipient().GetContactId(),
+		RouteID:              message.GetRouteId(),
+		LanguageID:           language.GetID(),
+		OutBound:             false,
 
 		Payload:          frame.DBPropertiesFromMap(message.GetPayload()),
 		Message:          message.GetData(),
