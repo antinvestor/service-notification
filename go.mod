@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.1
 
 require (
-	github.com/antinvestor/apis/go/common v1.16.1
+	github.com/antinvestor/apis/go/common v1.16.2
 	github.com/antinvestor/apis/go/notification v1.16.1
 	github.com/antinvestor/apis/go/partition v1.16.1
 	github.com/antinvestor/apis/go/profile v1.16.1
@@ -14,7 +14,7 @@ require (
 	github.com/pitabwire/frame v1.19.5
 	github.com/sirupsen/logrus v1.9.3
 	go.uber.org/mock v0.4.0
-	google.golang.org/grpc v1.63.0
+	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.33.0
 	gorm.io/datatypes v1.2.0
 	gorm.io/gorm v1.25.9
