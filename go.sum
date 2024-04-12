@@ -32,6 +32,8 @@ github.com/alitto/pond v1.8.3 h1:ydIqygCLVPqIX/USe5EaV/aSRXTRXDEI9JwuDdu+/xs=
 github.com/alitto/pond v1.8.3/go.mod h1:CmvIIGd5jKLasGI3D87qDkQxjzChdKMmnXMg3fG6M6Q=
 github.com/antinvestor/apis/go/common v1.16.1 h1:exGoGV6aDuKfnpfqJ2ASkaKpktLVWGppbfPnpDFuJZk=
 github.com/antinvestor/apis/go/common v1.16.1/go.mod h1:/4hq5jX8UfyWJXvua0Ra2jZzKx/uavWCWzFdY1Os7DM=
+github.com/antinvestor/apis/go/common v1.16.2 h1:6O6gm0UFe9nu7ow1vemV8XRzywobD6pwf2bRzs+z1GA=
+github.com/antinvestor/apis/go/common v1.16.2/go.mod h1:dcA2qZtGh2lr8PcgcIlNeC9YA61XSLq6gr4QT4cowJI=
 github.com/antinvestor/apis/go/notification v1.16.1 h1:OFEZGsQmGWivLi6qHssbljdeWllkqtZ0Uve/dMDybnY=
 github.com/antinvestor/apis/go/notification v1.16.1/go.mod h1:WsVgqM4mzTH575w7YOc31SFc1zJvoAZNHLphuWt3Zng=
 github.com/antinvestor/apis/go/partition v1.16.1 h1:e2c/OP/TeACwvm31pc0Zfn86aJPLFsqIFXj6qAH9o5Q=
@@ -602,6 +604,8 @@ google.golang.org/grpc v1.32.0/go.mod h1:N36X2cJ7JwdamYAgDz+s+rVMFjt3numwzf/HckM
 google.golang.org/grpc v1.33.2/go.mod h1:JMHMWHQWaTccqQQlmk3MJZS+GWXOdAesneDmEnv2fbc=
 google.golang.org/grpc v1.63.0 h1:WjKe+dnvABXyPJMD7KDNLxtoGk5tgk+YFWN6cBWjZE8=
 google.golang.org/grpc v1.63.0/go.mod h1:WAX/8DgncnokcFUldAxq7GeB5DXHDbMF+lLvDomNkRA=
+google.golang.org/grpc v1.63.2 h1:MUeiw1B2maTVZthpU5xvASfTh3LDbxHd6IJ6QQVU+xM=
+google.golang.org/grpc v1.63.2/go.mod h1:WAX/8DgncnokcFUldAxq7GeB5DXHDbMF+lLvDomNkRA=
 google.golang.org/grpc/examples v0.0.0-20231208223803-52baf161f30f h1:szXwOVVgjYaQFDCjBEqymUAAJXJ1frFEXu7bXWOgl58=
 google.golang.org/grpc/examples v0.0.0-20231208223803-52baf161f30f/go.mod h1:j5uROIAAgi3YmtiETMt1LW0d/lHqQ7wwrIY4uGRXLQ4=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
