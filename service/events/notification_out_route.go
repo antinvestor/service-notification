@@ -20,12 +20,12 @@ func (event *NotificationOutRoute) Name() string {
 	return "notification.out.route"
 }
 
-func (event *NotificationOutRoute) PayloadType() interface{} {
+func (event *NotificationOutRoute) PayloadType() any {
 	pType := ""
 	return &pType
 }
 
-func (event *NotificationOutRoute) Validate(ctx context.Context, payload interface{}) error {
+func (event *NotificationOutRoute) Validate(ctx context.Context, payload any) error {
 	if _, ok := payload.(*string); !ok {
 		return errors.New(" payload is not of type string")
 	}
@@ -33,7 +33,7 @@ func (event *NotificationOutRoute) Validate(ctx context.Context, payload interfa
 	return nil
 }
 
-func (event *NotificationOutRoute) Execute(ctx context.Context, payload interface{}) error {
+func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) error {
 
 	notificationId := *payload.(*string)
 

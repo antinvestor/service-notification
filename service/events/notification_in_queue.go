@@ -19,12 +19,12 @@ func (event *NotificationInQueue) Name() string {
 	return "notification.in.queue"
 }
 
-func (event *NotificationInQueue) PayloadType() interface{} {
+func (event *NotificationInQueue) PayloadType() any {
 	pType := ""
 	return &pType
 }
 
-func (event *NotificationInQueue) Validate(ctx context.Context, payload interface{}) error {
+func (event *NotificationInQueue) Validate(ctx context.Context, payload any) error {
 	if _, ok := payload.(*string); !ok {
 		return errors.New(" payload is not of type string")
 	}
@@ -32,7 +32,7 @@ func (event *NotificationInQueue) Validate(ctx context.Context, payload interfac
 	return nil
 }
 
-func (event *NotificationInQueue) Execute(ctx context.Context, payload interface{}) error {
+func (event *NotificationInQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
 	logger := event.Service.L().WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")

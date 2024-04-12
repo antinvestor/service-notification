@@ -41,7 +41,7 @@ func TestNotificationSave_Execute(t *testing.T) {
 
 	type args struct {
 		ctx     context.Context
-		payload interface{}
+		payload any
 	}
 	tests := []struct {
 		name    string

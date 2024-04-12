@@ -31,12 +31,12 @@ func (event *NotificationInRoute) Name() string {
 	return "notification.in.route"
 }
 
-func (event *NotificationInRoute) PayloadType() interface{} {
+func (event *NotificationInRoute) PayloadType() any {
 	pType := ""
 	return &pType
 }
 
-func (event *NotificationInRoute) Validate(ctx context.Context, payload interface{}) error {
+func (event *NotificationInRoute) Validate(ctx context.Context, payload any) error {
 	if _, ok := payload.(*string); !ok {
 		return errors.New(" payload is not of type string")
 	}
@@ -44,7 +44,7 @@ func (event *NotificationInRoute) Validate(ctx context.Context, payload interfac
 	return nil
 }
 
-func (event *NotificationInRoute) Execute(ctx context.Context, payload interface{}) error {
+func (event *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
 	logger := event.Service.L().WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")

@@ -17,11 +17,11 @@ func (e *NotificationStatusSave) Name() string {
 	return "notificationStatus.save"
 }
 
-func (e *NotificationStatusSave) PayloadType() interface{} {
+func (e *NotificationStatusSave) PayloadType() any {
 	return &models.NotificationStatus{}
 }
 
-func (e *NotificationStatusSave) Validate(_ context.Context, payload interface{}) error {
+func (e *NotificationStatusSave) Validate(_ context.Context, payload any) error {
 	notificationStatus, ok := payload.(*models.NotificationStatus)
 	if !ok {
 		return errors.New(" payload is not of type models.NotificationStatus")
@@ -34,7 +34,7 @@ func (e *NotificationStatusSave) Validate(_ context.Context, payload interface{}
 	return nil
 }
 
-func (e *NotificationStatusSave) Execute(ctx context.Context, payload interface{}) error {
+func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error {
 	nStatus := payload.(*models.NotificationStatus)
 
 	logger := e.Service.L().WithField("payload", nStatus).WithField("type", e.Name())
