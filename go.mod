@@ -7,7 +7,7 @@ toolchain go1.22.2
 require (
 	github.com/antinvestor/apis/go/common v1.16.5
 	github.com/antinvestor/apis/go/notification v1.16.5
-	github.com/antinvestor/apis/go/partition v1.16.4
+	github.com/antinvestor/apis/go/partition v1.16.5
 	github.com/antinvestor/apis/go/profile v1.16.4
 	github.com/bufbuild/protovalidate-go v0.6.2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
