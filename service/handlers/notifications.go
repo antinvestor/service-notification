@@ -19,14 +19,14 @@ type NotificationServer struct {
 	notificationV1.UnimplementedNotificationServiceServer
 }
 
-func (server *NotificationServer) newNotificationBusiness(ctx context.Context) (business.NotificationBusiness, error) {
-	return business.NewNotificationBusiness(ctx, server.Service, server.ProfileCli, server.PartitionCli)
+func (ns *NotificationServer) newNotificationBusiness(ctx context.Context) (business.NotificationBusiness, error) {
+	return business.NewNotificationBusiness(ctx, ns.Service, ns.ProfileCli, ns.PartitionCli)
 }
 
 // Send method for queueing massages as requested
-func (server *NotificationServer) Send(ctx context.Context, req *notificationV1.SendRequest) (*notificationV1.SendResponse, error) {
+func (ns *NotificationServer) Send(ctx context.Context, req *notificationV1.SendRequest) (*notificationV1.SendResponse, error) {
 
-	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,9 +40,9 @@ func (server *NotificationServer) Send(ctx context.Context, req *notificationV1.
 }
 
 // Status request to determine if notification is prepared or released
-func (server *NotificationServer) Status(ctx context.Context, req *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
+func (ns *NotificationServer) Status(ctx context.Context, req *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
 
-	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -50,9 +50,9 @@ func (server *NotificationServer) Status(ctx context.Context, req *commonv1.Stat
 }
 
 // StatusUpdate request to allow continuation of notification processing
-func (server *NotificationServer) StatusUpdate(ctx context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusUpdateResponse, error) {
+func (ns *NotificationServer) StatusUpdate(ctx context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusUpdateResponse, error) {
 
-	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -65,9 +65,9 @@ func (server *NotificationServer) StatusUpdate(ctx context.Context, req *commonv
 }
 
 // Release method for releasing queued massages and returns if notification status if released
-func (server *NotificationServer) Release(ctx context.Context, req *notificationV1.ReleaseRequest) (*notificationV1.ReleaseResponse, error) {
+func (ns *NotificationServer) Release(ctx context.Context, req *notificationV1.ReleaseRequest) (*notificationV1.ReleaseResponse, error) {
 
-	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -81,9 +81,9 @@ func (server *NotificationServer) Release(ctx context.Context, req *notification
 }
 
 // Receive method is for client request for particular notification responses from system
-func (server *NotificationServer) Receive(ctx context.Context, req *notificationV1.ReceiveRequest) (*notificationV1.ReceiveResponse, error) {
+func (ns *NotificationServer) Receive(ctx context.Context, req *notificationV1.ReceiveRequest) (*notificationV1.ReceiveResponse, error) {
 
-	notificationBusiness, err := server.newNotificationBusiness(ctx)
+	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -97,9 +97,9 @@ func (server *NotificationServer) Receive(ctx context.Context, req *notification
 }
 
 // Search method is for client request for particular notification details from system
-func (server *NotificationServer) Search(req *commonv1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error {
+func (ns *NotificationServer) Search(req *commonv1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error {
 
-	notificationBusiness, err := server.newNotificationBusiness(stream.Context())
+	notificationBusiness, err := ns.newNotificationBusiness(stream.Context())
 	if err != nil {
 		return err
 	}
@@ -108,9 +108,9 @@ func (server *NotificationServer) Search(req *commonv1.SearchRequest, stream not
 }
 
 // TemplateSearch method is for client request for templates matching criteria from system
-func (server *NotificationServer) TemplateSearch(req *notificationV1.TemplateSearchRequest, stream notificationV1.NotificationService_TemplateSearchServer) error {
+func (ns *NotificationServer) TemplateSearch(req *notificationV1.TemplateSearchRequest, stream notificationV1.NotificationService_TemplateSearchServer) error {
 
-	notificationBusiness, err := server.newNotificationBusiness(stream.Context())
+	notificationBusiness, err := ns.newNotificationBusiness(stream.Context())
 	if err != nil {
 		return err
 	}
@@ -118,8 +118,8 @@ func (server *NotificationServer) TemplateSearch(req *notificationV1.TemplateSea
 
 }
 
-func (server *NotificationServer) TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.TemplateSaveResponse, error) {
-	notificationBusiness, err := server.newNotificationBusiness(ctx)
+func (ns *NotificationServer) TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.TemplateSaveResponse, error) {
+	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
 	}
