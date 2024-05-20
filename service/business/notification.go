@@ -84,9 +84,8 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	logger := nb.service.L().WithField("request", message)
 
 	authClaim := frame.ClaimsFromContext(ctx)
-	logger.WithField("auth claim", authClaim)
 
-	logger.Info("handling queue out request")
+	logger.WithField("auth claim", authClaim).Info("handling queue out request")
 
 	var releaseDate time.Time
 	if message.AutoRelease {
@@ -213,9 +212,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	logger := nb.service.L().WithField("request", message)
 
 	authClaim := frame.ClaimsFromContext(ctx)
-	logger.WithField("auth claim", authClaim)
-
-	logger.Info("handling queue in request")
+	logger.WithField("auth claim", authClaim).Info("handling queue in request")
 
 	releaseDate := time.Now()
 
