@@ -82,6 +82,10 @@ func getLanguageByCode(ctx context.Context, service *frame.Service, languageCode
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
 	logger := nb.service.L().WithField("request", message)
+
+	authClaim := frame.ClaimsFromContext(ctx)
+	logger.WithField("auth claim", authClaim)
+
 	logger.Info("handling queue out request")
 
 	var releaseDate time.Time
@@ -207,6 +211,10 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
 	logger := nb.service.L().WithField("request", message)
+
+	authClaim := frame.ClaimsFromContext(ctx)
+	logger.WithField("auth claim", authClaim)
+
 	logger.Info("handling queue in request")
 
 	releaseDate := time.Now()
