@@ -3,7 +3,6 @@ package events
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
@@ -128,21 +127,11 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 		return nil, err0
 	}
 
-	payload := make(map[string]string)
-	data, err := n.Payload.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(data, &payload)
-	if err != nil {
-		return nil, err
-	}
+	payload := frame.DBPropertiesToMap(n.Payload)
 
 	for _, templateData := range tmpltDataList {
 
-		var tmpl *template.Template
-		tmpl, err = template.New("message_out").Parse(templateData.Detail)
+		tmpl, err := template.New("message_out").Parse(templateData.Detail)
 		if err != nil {
 			return nil, err
 		}
