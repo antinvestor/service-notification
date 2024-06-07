@@ -52,7 +52,7 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload any) erro
 		if !strings.Contains(err.Error(), "reference does not exist") {
 
 			if n.RouteID != "" {
-				_, err = LoadRoute(ctx, event.Service, n.RouteID)
+				_, err = loadRoute(ctx, event.Service, n.RouteID)
 				if err != nil {
 					return err
 				}

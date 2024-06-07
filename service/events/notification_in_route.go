@@ -56,7 +56,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 		return err
 	}
 
-	route, err := event.routeNotification(ctx, n)
+	route, err := routeNotification(ctx, event.Service, models.RouteModeReceive, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not route notification")
 
@@ -119,16 +119,19 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 	return nil
 }
 
-func (event *NotificationInRoute) routeNotification(ctx context.Context, notification *models.Notification) (*models.Route, error) {
+func routeNotification(ctx context.Context, service *frame.Service, routeMode string, notification *models.Notification) (*models.Route, error) {
 
+	routeRepository := repository.NewRouteRepository(ctx, service)
 	if notification.RouteID != "" {
-
-		return LoadRoute(ctx, event.Service, notification.RouteID)
+		route, err := routeRepository.GetByID(notification.RouteID)
+		if err != nil {
+			return nil, err
+		}
+		return route, nil
 	}
 
-	routeRepository := repository.NewRouteRepository(ctx, event.Service)
 	routes, err := routeRepository.GetByModeTypeAndPartitionID(
-		models.RouteModeReceive, notification.NotificationType, notification.PartitionID)
+		routeMode, notification.NotificationType, notification.PartitionID)
 	if err != nil {
 		return nil, err
 	}
@@ -139,14 +142,17 @@ func (event *NotificationInRoute) routeNotification(ctx context.Context, notific
 
 	route := routes[0]
 	if len(routes) > 1 {
-		route = event.selectRoute(ctx, routes)
+		route, err = selectRoute(ctx, routes)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return LoadRoute(ctx, event.Service, route.ID)
+	return route, nil
 
 }
 
-func LoadRoute(ctx context.Context, service *frame.Service, routeId string) (*models.Route, error) {
+func loadRoute(ctx context.Context, service *frame.Service, routeId string) (*models.Route, error) {
 
 	if routeId == "" {
 		return nil, fmt.Errorf("no route id provided")
@@ -168,9 +174,11 @@ func LoadRoute(ctx context.Context, service *frame.Service, routeId string) (*mo
 
 }
 
-func (event *NotificationInRoute) selectRoute(ctx context.Context, routes []*models.Route) *models.Route {
+func selectRoute(_ context.Context, routes []*models.Route) (*models.Route, error) {
 	//TODO: find a simple way of routing message mostly by settings
 	// or contact and profile preferences
-
-	return routes[0]
+	if len(routes) == 0 {
+		return nil, errors.New("no routes matched for notification")
+	}
+	return routes[0], nil
 }

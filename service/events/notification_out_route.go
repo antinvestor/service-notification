@@ -64,7 +64,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 		n.NotificationType = models.RouteTypeAny
 	}
 
-	route, err := event.routeNotification(ctx, n)
+	route, err := routeNotification(ctx, event.Service, models.RouteModeTransmit, n)
 	if err != nil {
 		logger.WithError(err).Error("could not route notification")
 
@@ -125,55 +125,4 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 	}
 
 	return nil
-}
-
-func (event *NotificationOutRoute) routeNotification(ctx context.Context, notification *models.Notification) (*models.Route, error) {
-	routeRepository := repository.NewRouteRepository(ctx, event.Service)
-
-	if notification.RouteID != "" {
-
-		route, err := routeRepository.GetByID(notification.RouteID)
-		if err != nil {
-			return nil, err
-		}
-
-		err = event.Service.AddPublisher(ctx, route.ID, route.Uri)
-		if err != nil {
-			return nil, err
-		}
-
-		return route, nil
-
-	}
-
-	routes, err := routeRepository.GetByModeTypeAndPartitionID(
-		models.RouteModeTransmit, notification.NotificationType, notification.PartitionID)
-	if err != nil {
-		return nil, err
-	}
-
-	var route *models.Route
-	route, err = event.selectRoute(ctx, routes)
-	if err != nil {
-		return nil, err
-	}
-
-	err = event.Service.AddPublisher(ctx, route.ID, route.Uri)
-	if err != nil {
-		return nil, err
-	}
-
-	return route, nil
-
-}
-
-func (event *NotificationOutRoute) selectRoute(_ context.Context, routes []*models.Route) (*models.Route, error) {
-	//TODO: find a simple way of routing message mostly by settings
-	// or contact and profile preferences
-
-	if len(routes) == 0 {
-		return nil, errors.New("no routes matched for notification")
-	}
-
-	return routes[0], nil
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
 	"google.golang.org/protobuf/proto"
+	"strings"
 	"text/template"
 )
 
@@ -77,6 +78,19 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	// Queue a message for further processing by peripheral services
 	err = event.Service.Publish(ctx, n.RouteID, binaryProto)
 	if err != nil {
+
+		if !strings.Contains(err.Error(), "reference does not exist") {
+
+			if n.RouteID != "" {
+				_, err = loadRoute(ctx, event.Service, n.RouteID)
+				if err != nil {
+					return err
+				}
+			}
+
+			return err
+		}
+
 		return err
 	}
 
