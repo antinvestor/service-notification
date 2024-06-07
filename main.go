@@ -23,7 +23,7 @@ import (
 
 func main() {
 
-	serviceName := "service_notification"
+	serviceName := "service_notifications"
 
 	var notificationConfig config.NotificationConfig
 	err := frame.ConfigProcess("", &notificationConfig)
