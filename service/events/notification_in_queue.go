@@ -8,6 +8,7 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
+	"strings"
 )
 
 type NotificationInQueue struct {
@@ -47,11 +48,23 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload any) erro
 	// Queue a message for further processing by peripheral services
 	err = event.Service.Publish(ctx, n.RouteID, n)
 	if err != nil {
-		return err
+
+		if !strings.Contains(err.Error(), "reference does not exist") {
+
+			if n.RouteID != "" {
+				_, err = LoadRoute(ctx, event.Service, n.RouteID)
+				if err != nil {
+					return err
+				}
+			}
+
+			return err
+		}
 	}
 
 	logger.
 		WithField("notification", n.ID).
+		WithField("route", n.RouteID).
 		Debug(" Successfully routed in message ")
 
 	nStatus := models.NotificationStatus{

@@ -120,45 +120,52 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 }
 
 func (event *NotificationInRoute) routeNotification(ctx context.Context, notification *models.Notification) (*models.Route, error) {
-	routeRepository := repository.NewRouteRepository(ctx, event.Service)
 
 	if notification.RouteID != "" {
 
-		route, err := routeRepository.GetByID(notification.RouteID)
-		if err != nil {
-			return nil, err
-		}
-
-		err = event.Service.AddPublisher(ctx, route.ID, route.Uri)
-		if err != nil {
-			return nil, err
-		}
-
-		return route, nil
-
+		return LoadRoute(ctx, event.Service, notification.RouteID)
 	}
 
+	routeRepository := repository.NewRouteRepository(ctx, event.Service)
 	routes, err := routeRepository.GetByModeTypeAndPartitionID(
 		models.RouteModeReceive, notification.NotificationType, notification.PartitionID)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(routes) > 0 {
-		route := routes[0]
-		if len(routes) > 1 {
-			route = event.selectRoute(ctx, routes)
-		}
-
-		err = event.Service.AddPublisher(ctx, route.ID, route.Uri)
-		if err != nil {
-			return nil, err
-		}
-
-		return route, nil
-	} else {
+	if len(routes) == 0 {
 		return nil, fmt.Errorf("no routes matched for notification : %s", notification.GetID())
 	}
+
+	route := routes[0]
+	if len(routes) > 1 {
+		route = event.selectRoute(ctx, routes)
+	}
+
+	return LoadRoute(ctx, event.Service, route.ID)
+
+}
+
+func LoadRoute(ctx context.Context, service *frame.Service, routeId string) (*models.Route, error) {
+
+	if routeId == "" {
+		return nil, fmt.Errorf("no route id provided")
+	}
+
+	routeRepository := repository.NewRouteRepository(ctx, service)
+
+	route, err := routeRepository.GetByID(routeId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = service.AddPublisher(ctx, route.ID, route.Uri)
+	if err != nil {
+		return route, err
+	}
+
+	return route, nil
+
 }
 
 func (event *NotificationInRoute) selectRoute(ctx context.Context, routes []*models.Route) *models.Route {
