@@ -160,7 +160,6 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 			return nil, err
 		}
 		templateMap[templateData.Type] = tmplBytes.String()
-
 	}
 
 	return templateMap, nil

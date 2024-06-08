@@ -334,15 +334,18 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 			logger.WithError(err).Error("failed to search notifications")
 			return err
 		}
-
 	}
 
+	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
+	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
+
+	var resultStatus *models.NotificationStatus
+	var language *models.Language
 	var responsesList []*notificationV1.Notification
 	for _, n := range notificationList {
 		nStatus := &models.NotificationStatus{}
 		if n.StatusID != "" {
-			notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
-			resultStatus, err := notificationStatusRepo.GetByID(ctx, n.StatusID)
+			resultStatus, err = notificationStatusRepo.GetByID(ctx, n.StatusID)
 			if err != nil {
 				logger.WithError(err).WithField("status_id", n.StatusID).Error(" could not get status id for")
 				return err
@@ -351,8 +354,7 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 			}
 		}
 
-		languageRepo := repository.NewLanguageRepository(ctx, nb.service)
-		language, err := languageRepo.GetByID(ctx, n.LanguageID)
+		language, err = languageRepo.GetByID(ctx, n.LanguageID)
 		if err != nil {
 			logger.WithError(err).WithField("language_id", n.LanguageID).Error(" could not get language id")
 			return err
