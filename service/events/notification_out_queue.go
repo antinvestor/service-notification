@@ -9,6 +9,7 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 	"strings"
 	"text/template"
@@ -63,7 +64,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	}
 
 	var templateMap map[string]string
-	templateMap, err = event.formatOutboundNotification(ctx, n)
+	templateMap, err = event.formatOutboundNotification(ctx, logger, n)
 	if err != nil {
 		return err
 	}
@@ -122,7 +123,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	return nil
 }
 
-func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, n *models.Notification) (map[string]string, error) {
+func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, logger *logrus.Entry, n *models.Notification) (map[string]string, error) {
 
 	templateMap := make(map[string]string)
 
@@ -136,14 +137,17 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 	}
 
 	templateDataRepository := repository.NewTemplateDataRepository(ctx, event.Service)
-	tmpltDataList, err0 := templateDataRepository.GetByTemplateIDAndLanguage(ctx, n.TemplateID, n.LanguageID)
+	tmplDataList, err0 := templateDataRepository.GetByTemplateIDAndLanguage(ctx, n.TemplateID, n.LanguageID)
 	if err0 != nil {
-		return nil, err0
+		logger.WithError(err0).
+			WithField("template id", n.TemplateID).
+			WithField("language id", n.LanguageID).Error(" could not get template data")
+		tmplDataList = []*models.TemplateData{}
 	}
 
 	payload := frame.DBPropertiesToMap(n.Payload)
 
-	for _, templateData := range tmpltDataList {
+	for _, templateData := range tmplDataList {
 
 		tmpl, err := template.New("message_out").Parse(templateData.Detail)
 		if err != nil {
