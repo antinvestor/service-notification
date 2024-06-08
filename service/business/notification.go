@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"github.com/antinvestor/service-notification/config"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -45,19 +44,6 @@ type notificationBusiness struct {
 	partitionCli *partitionV1.PartitionClient
 }
 
-func getLanguageByCode(ctx context.Context, service *frame.Service, languageCode string) (*models.Language, error) {
-
-	if languageCode == "" {
-		notificationConfig, ok := service.Config().(*config.NotificationConfig)
-		if ok {
-			languageCode = notificationConfig.DefaultLanguageCode
-		}
-	}
-
-	languageRepo := repository.NewLanguageRepository(ctx, service)
-	return languageRepo.GetOrCreateByCode(ctx, languageCode)
-}
-
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
 	logger := nb.service.L().WithField("request", message)
 
@@ -70,7 +56,9 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		releaseDate = time.Now()
 	}
 
-	language, err := getLanguageByCode(ctx, nb.service, message.GetLanguage())
+	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
+	language, err := languageRepo.GetOrCreateByCode(ctx, message.GetLanguage())
+
 	if err != nil {
 		logger.WithError(err).Warn("could not get language")
 		return nil, err
@@ -149,7 +137,9 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 
 	releaseDate := time.Now()
 
-	language, err := getLanguageByCode(ctx, nb.service, message.GetLanguage())
+	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
+	language, err := languageRepo.GetOrCreateByCode(ctx, message.GetLanguage())
+
 	if err != nil {
 		logger.WithError(err).Warn("could not get language")
 		return nil, err
@@ -399,7 +389,8 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 
 	var language *models.Language
 	if search.GetLanguageCode() != "" {
-		language, err = getLanguageByCode(ctx, nb.service, search.GetLanguageCode())
+		language, err = languageRepo.GetOrCreateByCode(ctx, search.GetLanguageCode())
+
 		if err != nil {
 			return err
 		}
@@ -457,7 +448,9 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 	logger := nb.service.L().WithField("request", req)
 	logger.Info("handling template request update")
 
-	language, err := getLanguageByCode(ctx, nb.service, req.GetLanguageCode())
+	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
+	language, err := languageRepo.GetOrCreateByCode(ctx, req.GetLanguageCode())
+
 	if err != nil {
 		logger.WithError(err).Debug("language for template is required")
 		return nil, err
@@ -495,8 +488,6 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 		logger.WithError(err).Debug("could not get existing template")
 		return nil, err
 	}
-
-	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
 
 	languageMap := map[string]*models.Language{}
 

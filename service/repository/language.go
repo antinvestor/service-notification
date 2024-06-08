@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"github.com/antinvestor/service-notification/config"
 
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
@@ -25,9 +26,19 @@ func NewLanguageRepository(_ context.Context, service *frame.Service) LanguageRe
 }
 
 func (repo *languageRepository) GetOrCreateByCode(ctx context.Context, languageCode string) (*models.Language, error) {
+
+	if languageCode == "" {
+		notificationConfig, ok := repo.service.Config().(*config.NotificationConfig)
+		if !ok {
+			return nil, fmt.Errorf("language code is totaly empty")
+		}
+
+		languageCode = notificationConfig.DefaultLanguageCode
+	}
+
 	lang, err := repo.GetByCode(ctx, languageCode)
 	if err != nil {
-		if !frame.DBErrorIsRecordNotFound(err) || languageCode == "" {
+		if !frame.DBErrorIsRecordNotFound(err) {
 			return nil, err
 		}
 
