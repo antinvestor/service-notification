@@ -59,13 +59,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	language, err := languageRepo.GetByID(ctx, n.LanguageID)
 	if err != nil {
 		logger.WithError(err).WithField("language_id", n.LanguageID).Warn(" could not get language")
-
-		language, err = languageRepo.GetOrCreateByCode(ctx, "")
-		if err != nil {
-			logger.WithError(err).WithField("language_id", n.LanguageID).Warn(" could not auto create the default language")
-
-			return err
-		}
+		return err
 	}
 
 	var templateMap map[string]string

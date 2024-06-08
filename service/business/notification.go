@@ -374,10 +374,11 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 	stream notificationV1.NotificationService_TemplateSearchServer) error {
 	logger := nb.service.L().WithField("request", search)
 
-	logger.Debug("handling template search request")
-
 	ctx := stream.Context()
 	queryString := search.GetQuery()
+
+	authClaims := frame.ClaimsFromContext(ctx)
+	logger.WithField("claims", authClaims).Debug("handling template search request")
 
 	templateRepository := repository.NewTemplateRepository(ctx, nb.service)
 	templateList, err := templateRepository.SearchByName(ctx, queryString, int(search.GetPage()), int(search.GetCount()))
@@ -446,7 +447,9 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 
 func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.Template, error) {
 	logger := nb.service.L().WithField("request", req)
-	logger.Info("handling template request update")
+
+	authClaims := frame.ClaimsFromContext(ctx)
+	logger.WithField("claims", authClaims).Info("handling template request update")
 
 	languageRepo := repository.NewLanguageRepository(ctx, nb.service)
 	language, err := languageRepo.GetOrCreateByCode(ctx, req.GetLanguageCode())
