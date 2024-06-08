@@ -81,7 +81,7 @@ func TestNotificationSave_Execute(t *testing.T) {
 			}
 
 			nRepo := repository.NewNotificationRepository(ctx, tt.fields.Service)
-			n, err := nRepo.GetByID("testingSaveId")
+			n, err := nRepo.GetByID(ctx, "testingSaveId")
 			if err != nil {
 				t.Errorf("Search() error = %v could not retrieve saved notification", err)
 				return

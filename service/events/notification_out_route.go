@@ -42,7 +42,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 
-	n, err := notificationRepo.GetByID(notificationId)
+	n, err := notificationRepo.GetByID(ctx, notificationId)
 	if err != nil {
 		logger.WithError(err).Warn("could not get notification from db")
 		return err
@@ -95,7 +95,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 	}
 
 	n.RouteID = route.ID
-	err = notificationRepo.Save(n)
+	err = notificationRepo.Save(ctx, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not save routed notification to db")
 		return err

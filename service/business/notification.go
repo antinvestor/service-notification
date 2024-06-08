@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"fmt"
 	"github.com/antinvestor/service-notification/config"
 	"time"
 
@@ -56,28 +55,7 @@ func getLanguageByCode(ctx context.Context, service *frame.Service, languageCode
 	}
 
 	languageRepo := repository.NewLanguageRepository(ctx, service)
-	lang, err := languageRepo.GetByCode(languageCode)
-	if err != nil {
-		if !frame.DBErrorIsRecordNotFound(err) || languageCode == "" {
-			return nil, err
-		}
-
-		lang = &models.Language{
-			BaseModel:   frame.BaseModel{},
-			Name:        fmt.Sprintf("Edit - %s", languageCode),
-			Code:        languageCode,
-			Description: "Auto created partition language",
-		}
-		lang.GenID(ctx)
-
-		err = languageRepo.Save(lang)
-		if err != nil {
-			return nil, err
-
-		}
-	}
-
-	return lang, nil
+	return languageRepo.GetOrCreateByCode(ctx, languageCode)
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
@@ -95,51 +73,6 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	language, err := getLanguageByCode(ctx, nb.service, message.GetLanguage())
 	if err != nil {
 		logger.WithError(err).Warn("could not get language")
-		return nil, err
-	}
-
-	//profileID := message.GetProfileId()
-	//
-	//var contact string
-	//contactObj := message.GetContact()
-	//contactData, ok := contactObj.(*notificationV1.Notification_ContactId)
-	//if ok {
-	//	contact = contactData.ContactId
-	//} else {
-	//	contactDetail, ok0 := contactObj.(*notificationV1.Notification_Detail)
-	//	if ok0 {
-	//		contact = contactDetail.Detail
-	//	}
-	//}
-	//
-	//if contact != "" {
-	//
-	//	var profile *profileV1.ProfileObject
-	//	profile, err = nb.profileCli.GetProfileByContact(ctx, contact)
-	//	if err != nil {
-	//		logger.WithError(err).Warn("could not obtain contact")
-	//
-	//		profile, err = nb.profileCli.CreateProfileByContactAndName(ctx, contact, "")
-	//		if err != nil {
-	//			logger.WithError(err).Warn("could not create contact")
-	//			return nil, err
-	//		}
-	//	}
-	//
-	//	if profile.GetId() != "" && profile.GetId() != profileID {
-	//		profileID = profile.GetId()
-	//	}
-	//	for _, pcontact := range profile.GetContacts() {
-	//		if strings.EqualFold(pcontact.GetDetail(), contact) {
-	//			contact = pcontact.GetId()
-	//			break
-	//		}
-	//	}
-	//
-	//}
-
-	if err != nil {
-		logger.WithError(err).Warn("could not get/match contact")
 		return nil, err
 	}
 
@@ -172,7 +105,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 	if message.GetTemplate() != "" {
 		templateRepo := repository.NewTemplateRepository(ctx, nb.service)
-		t, err := templateRepo.GetByName(message.GetTemplate())
+		t, err := templateRepo.GetByName(ctx, message.GetTemplate())
 		if err != nil {
 			logger.WithError(err).Warn("could not get template")
 			return nil, err
@@ -279,14 +212,14 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 	logger.Info("handling status check request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
-	n, err := notificationRepo.GetByID(statusReq.GetId())
+	n, err := notificationRepo.GetByID(ctx, statusReq.GetId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get by id")
 		return nil, err
 	}
 
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
-	nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
+	nStatus, err := notificationStatusRepo.GetByID(ctx, n.StatusID)
 	if err != nil {
 		logger.WithError(err).Warn("unable to get by status id")
 		return nil, err
@@ -300,7 +233,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 
-	n, err := notificationRepo.GetByID(statusReq.GetId())
+	n, err := notificationRepo.GetByID(ctx, statusReq.GetId())
 	if err != nil {
 		logger.WithError(err).Warn("could not get by id")
 		return nil, err
@@ -333,7 +266,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	logger.Debug("handling release request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
-	n, err := notificationRepo.GetByID(releaseReq.GetId())
+	n, err := notificationRepo.GetByID(ctx, releaseReq.GetId())
 	if err != nil {
 		logger.WithError(err).Warn("could not fetch by id")
 		return nil, err
@@ -370,7 +303,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	} else {
 
 		notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
-		nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
+		nStatus, err := notificationStatusRepo.GetByID(ctx, n.StatusID)
 		if err != nil {
 			logger.WithError(err).Warn("could not get notification status")
 			return nil, err
@@ -397,7 +330,7 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
 
 	if search.GetIdQuery() != "" {
-		notification, err0 := notificationRepo.GetByID(search.GetIdQuery())
+		notification, err0 := notificationRepo.GetByID(ctx, search.GetIdQuery())
 		if err0 != nil {
 			return err0
 		}
@@ -406,7 +339,7 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 
 	} else {
 
-		notificationList, err = notificationRepo.Search(search.GetQuery())
+		notificationList, err = notificationRepo.Search(ctx, search.GetQuery())
 		if err != nil {
 			logger.WithError(err).Error("failed to search notifications")
 			return err
@@ -419,7 +352,7 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 		nStatus := &models.NotificationStatus{}
 		if n.StatusID != "" {
 			notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
-			resultStatus, err := notificationStatusRepo.GetByID(n.StatusID)
+			resultStatus, err := notificationStatusRepo.GetByID(ctx, n.StatusID)
 			if err != nil {
 				logger.WithError(err).WithField("status_id", n.StatusID).Error(" could not get status id for")
 				return err
@@ -429,7 +362,7 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 		}
 
 		languageRepo := repository.NewLanguageRepository(ctx, nb.service)
-		language, err := languageRepo.GetByID(n.LanguageID)
+		language, err := languageRepo.GetByID(ctx, n.LanguageID)
 		if err != nil {
 			logger.WithError(err).WithField("language_id", n.LanguageID).Error(" could not get language id")
 			return err
@@ -457,7 +390,7 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 	queryString := search.GetQuery()
 
 	templateRepository := repository.NewTemplateRepository(ctx, nb.service)
-	templateList, err := templateRepository.SearchByName(queryString, int(search.GetPage()), int(search.GetCount()))
+	templateList, err := templateRepository.SearchByName(ctx, queryString, int(search.GetPage()), int(search.GetCount()))
 	if err != nil {
 		return err
 	}
@@ -482,7 +415,7 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 
 		var apiTemplateDataList []*notificationV1.TemplateData
 
-		templateDataList, err = templateDataRepository.GetByTemplateID(t.GetID())
+		templateDataList, err = templateDataRepository.GetByTemplateID(ctx, t.GetID())
 		if err != nil {
 			logger.WithError(err).Warn(" unable to get template data")
 			return err
@@ -497,7 +430,7 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 			lang, ok := languageMap[data.LanguageID]
 			if !ok {
 
-				lang, err = languageRepo.GetByID(data.LanguageID)
+				lang, err = languageRepo.GetByID(ctx, data.LanguageID)
 				if err != nil {
 					return err
 				}
@@ -536,7 +469,7 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 	}
 
 	templateRepository := repository.NewTemplateRepository(ctx, nb.service)
-	err = templateRepository.Save(template)
+	err = templateRepository.Save(ctx, template)
 	if err != nil {
 		return nil, err
 	}
@@ -551,13 +484,13 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 			Detail:     val,
 		}
 
-		err = templateDataRepository.Save(templateData)
+		err = templateDataRepository.Save(ctx, templateData)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	template, err = templateRepository.GetByID(template.GetID())
+	template, err = templateRepository.GetByID(ctx, template.GetID())
 	if err != nil {
 		logger.WithError(err).Debug("could not get existing template")
 		return nil, err
@@ -569,7 +502,7 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 
 	var apiTemplateDataList []*notificationV1.TemplateData
 
-	templateDataList, err0 := templateDataRepository.GetByTemplateID(template.GetID())
+	templateDataList, err0 := templateDataRepository.GetByTemplateID(ctx, template.GetID())
 	if err0 != nil {
 		logger.WithError(err0).Debug("could not get existing template data")
 		return nil, err
@@ -579,7 +512,7 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 		lang, ok := languageMap[data.LanguageID]
 		if !ok {
 
-			lang, err = languageRepo.GetByID(data.LanguageID)
+			lang, err = languageRepo.GetByID(ctx, data.LanguageID)
 			if err != nil {
 				return nil, err
 			}

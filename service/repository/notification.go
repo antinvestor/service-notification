@@ -7,46 +7,44 @@ import (
 
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
-	"gorm.io/gorm"
 )
 
 type NotificationRepository interface {
-	GetByID(id string) (*models.Notification, error)
-	Search(query string) ([]*models.Notification, error)
-	Save(notification *models.Notification) error
+	GetByID(ctx context.Context, id string) (*models.Notification, error)
+	Search(ctx context.Context, query string) ([]*models.Notification, error)
+	Save(ctx context.Context, notification *models.Notification) error
 }
 
 type notificationRepository struct {
-	readDb  *gorm.DB
-	writeDb *gorm.DB
+	abstractRepository
 }
 
 func NewNotificationRepository(ctx context.Context, service *frame.Service) NotificationRepository {
-	return &notificationRepository{readDb: service.DB(ctx, true), writeDb: service.DB(ctx, false)}
+	return &notificationRepository{abstractRepository{service: service}}
 }
 
-func (repo *notificationRepository) GetByPartitionAndID(partitionID string, id string) (*models.Notification, error) {
+func (repo *notificationRepository) GetByPartitionAndID(ctx context.Context, partitionID string, id string) (*models.Notification, error) {
 	notification := models.Notification{}
-	err := repo.readDb.First(&notification, "partition_id = ? AND id = ?", partitionID, id).Error
+	err := repo.readDb(ctx).First(&notification, "partition_id = ? AND id = ?", partitionID, id).Error
 	if err != nil {
 		return nil, err
 	}
 	return &notification, nil
 }
 
-func (repo *notificationRepository) GetByID(id string) (*models.Notification, error) {
+func (repo *notificationRepository) GetByID(ctx context.Context, id string) (*models.Notification, error) {
 	notification := models.Notification{}
-	err := repo.readDb.First(&notification, "id = ?", id).Error
+	err := repo.readDb(ctx).First(&notification, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
 	return &notification, nil
 }
 
-func (repo *notificationRepository) Search(query string) ([]*models.Notification, error) {
+func (repo *notificationRepository) Search(ctx context.Context, query string) ([]*models.Notification, error) {
 	query = strings.TrimSpace(query)
 	var notifications []*models.Notification
-	notificationQuery := repo.readDb
+	notificationQuery := repo.readDb(ctx)
 	if query != "" {
 		searchQ := fmt.Sprintf("%%%s%%", query)
 
@@ -60,6 +58,6 @@ func (repo *notificationRepository) Search(query string) ([]*models.Notification
 	}
 	return notifications, nil
 }
-func (repo *notificationRepository) Save(notification *models.Notification) error {
-	return repo.writeDb.Save(notification).Error
+func (repo *notificationRepository) Save(ctx context.Context, notification *models.Notification) error {
+	return repo.writeDb(ctx).Save(notification).Error
 }

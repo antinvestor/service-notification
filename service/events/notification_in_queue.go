@@ -40,7 +40,7 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload any) erro
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 
-	n, err := notificationRepo.GetByID(notificationID)
+	n, err := notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		return err
 	}

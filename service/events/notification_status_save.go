@@ -53,7 +53,7 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error
 	logger.WithField("rows affected", result.RowsAffected).Debug("successfully saved record to db")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, e.Service)
-	n, err := notificationRepo.GetByID(nStatus.NotificationID)
+	n, err := notificationRepo.GetByID(ctx, nStatus.NotificationID)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error
 		n.TransientID = nStatus.TransientID
 	}
 
-	err = notificationRepo.Save(n)
+	err = notificationRepo.Save(ctx, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not save notification update to db")
 

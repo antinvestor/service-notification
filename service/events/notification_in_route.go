@@ -51,7 +51,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 
-	n, err := notificationRepo.GetByID(notificationID)
+	n, err := notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 
 	n.RouteID = route.ID
 
-	err = notificationRepo.Save(n)
+	err = notificationRepo.Save(ctx, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not save routed notification to db")
 		return err
@@ -123,14 +123,14 @@ func routeNotification(ctx context.Context, service *frame.Service, routeMode st
 
 	routeRepository := repository.NewRouteRepository(ctx, service)
 	if notification.RouteID != "" {
-		route, err := routeRepository.GetByID(notification.RouteID)
+		route, err := routeRepository.GetByID(ctx, notification.RouteID)
 		if err != nil {
 			return nil, err
 		}
 		return route, nil
 	}
 
-	routes, err := routeRepository.GetByModeTypeAndPartitionID(
+	routes, err := routeRepository.GetByModeTypeAndPartitionID(ctx,
 		routeMode, notification.NotificationType, notification.PartitionID)
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func loadRoute(ctx context.Context, service *frame.Service, routeId string) (*mo
 
 	routeRepository := repository.NewRouteRepository(ctx, service)
 
-	route, err := routeRepository.GetByID(routeId)
+	route, err := routeRepository.GetByID(ctx, routeId)
 	if err != nil {
 		return nil, err
 	}

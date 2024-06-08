@@ -43,20 +43,20 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	logger.Debug("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
-	n, err := notificationRepo.GetByID(notificationID)
+	n, err := notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		return err
 	}
 
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, event.Service)
-	nStatus, err := notificationStatusRepo.GetByID(n.StatusID)
+	nStatus, err := notificationStatusRepo.GetByID(ctx, n.StatusID)
 	if err != nil {
 		logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status")
 		return err
 	}
 
 	languageRepo := repository.NewLanguageRepository(ctx, event.Service)
-	language, err := languageRepo.GetByID(n.LanguageID)
+	language, err := languageRepo.GetByID(ctx, n.LanguageID)
 	if err != nil {
 		logger.WithError(err).WithField("language_id", n.LanguageID).Warn(" could not get language")
 		return err
@@ -99,7 +99,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 		WithField("message", templateMap).
 		Debug(" We have successfully queued out message")
 
-	err = notificationRepo.Save(n)
+	err = notificationRepo.Save(ctx, n)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 	}
 
 	templateDataRepository := repository.NewTemplateDataRepository(ctx, event.Service)
-	tmpltDataList, err0 := templateDataRepository.GetByTemplateIDAndLanguage(n.TemplateID, n.LanguageID)
+	tmpltDataList, err0 := templateDataRepository.GetByTemplateIDAndLanguage(ctx, n.TemplateID, n.LanguageID)
 	if err0 != nil {
 		return nil, err0
 	}

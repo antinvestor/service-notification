@@ -5,38 +5,36 @@ import (
 
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
-	"gorm.io/gorm"
 )
 
 type RouteRepository interface {
-	GetByID(id string) (*models.Route, error)
-	GetByModeTypeAndPartitionID(mode string, routeType string, partitionId string) ([]*models.Route, error)
-	GetByMode(mode string) ([]*models.Route, error)
-	Save(channel *models.Route) error
+	GetByID(ctx context.Context, id string) (*models.Route, error)
+	GetByModeTypeAndPartitionID(ctx context.Context, mode string, routeType string, partitionId string) ([]*models.Route, error)
+	GetByMode(ctx context.Context, mode string) ([]*models.Route, error)
+	Save(ctx context.Context, channel *models.Route) error
 }
 
 type routeRepository struct {
-	readDb  *gorm.DB
-	writeDb *gorm.DB
+	abstractRepository
 }
 
-func NewRouteRepository(ctx context.Context, service *frame.Service) RouteRepository {
-	return &routeRepository{readDb: service.DB(ctx, true), writeDb: service.DB(ctx, false)}
+func NewRouteRepository(_ context.Context, service *frame.Service) RouteRepository {
+	return &routeRepository{abstractRepository{service: service}}
 }
 
-func (repo *routeRepository) GetByID(id string) (*models.Route, error) {
+func (repo *routeRepository) GetByID(ctx context.Context, id string) (*models.Route, error) {
 	route := models.Route{}
-	err := repo.readDb.First(&route, "id = ?", id).Error
+	err := repo.readDb(ctx).First(&route, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
 	return &route, nil
 }
 
-func (repo *routeRepository) GetByMode(mode string) ([]*models.Route, error) {
+func (repo *routeRepository) GetByMode(ctx context.Context, mode string) ([]*models.Route, error) {
 	var routes []*models.Route
 
-	err := repo.readDb.Find(&routes,
+	err := repo.readDb(ctx).Find(&routes,
 		"mode = ? OR ( mode = ?)", mode, models.RouteModeTransceive).Error
 	if err != nil {
 		return nil, err
@@ -44,10 +42,10 @@ func (repo *routeRepository) GetByMode(mode string) ([]*models.Route, error) {
 	return routes, nil
 }
 
-func (repo *routeRepository) GetByModeTypeAndPartitionID(mode string, routeType string, partitionId string) ([]*models.Route, error) {
+func (repo *routeRepository) GetByModeTypeAndPartitionID(ctx context.Context, mode string, routeType string, partitionId string) ([]*models.Route, error) {
 	var routes []*models.Route
 
-	err := repo.readDb.Find(&routes,
+	err := repo.readDb(ctx).Find(&routes,
 		"partition_id = ? AND ( route_type = ? OR route_type = ? ) AND (mode = ? OR ( mode = ?))",
 		partitionId, "any", routeType, mode, models.RouteModeTransceive).Error
 	if err != nil {
@@ -56,6 +54,6 @@ func (repo *routeRepository) GetByModeTypeAndPartitionID(mode string, routeType 
 	return routes, nil
 }
 
-func (repo *routeRepository) Save(route *models.Route) error {
-	return repo.writeDb.Save(route).Error
+func (repo *routeRepository) Save(ctx context.Context, route *models.Route) error {
+	return repo.writeDb(ctx).Save(route).Error
 }

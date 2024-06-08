@@ -390,7 +390,7 @@ func Test_notificationBusiness_Release(t *testing.T) {
 			n.TenantID = "test_tenant-id"
 
 			nRepo := repository.NewNotificationRepository(ctx, tt.fields.ctxService.srv)
-			err = nRepo.Save(&n)
+			err = nRepo.Save(ctx, &n)
 			if err != nil {
 				t.Errorf("Status() error = %v could not store a notification for status checking", err)
 				return
@@ -490,7 +490,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 			n.PartitionID = "test_partition-id"
 
 			nRepo := repository.NewNotificationRepository(ctx, tt.fields.ctxService.srv)
-			err = nRepo.Save(&n)
+			err = nRepo.Save(ctx, &n)
 			if err != nil {
 				t.Errorf("Search() error = %v could not store a notification", err)
 				return
@@ -499,7 +499,7 @@ func Test_notificationBusiness_Search(t *testing.T) {
 			nStatus.NotificationID = n.GetID()
 
 			nStatusRepo := repository.NewNotificationStatusRepository(ctx, tt.fields.ctxService.srv)
-			err = nStatusRepo.Save(&nStatus)
+			err = nStatusRepo.Save(ctx, &nStatus)
 			if err != nil {
 				t.Errorf("Search() error = %v could not store a notification status", err)
 				return
@@ -592,7 +592,7 @@ func Test_notificationBusiness_Status(t *testing.T) {
 			n.TenantID = "test_tenant-id"
 
 			nRepo := repository.NewNotificationRepository(ctx, tt.fields.ctxService.srv)
-			err = nRepo.Save(&n)
+			err = nRepo.Save(ctx, &n)
 			if err != nil {
 				t.Errorf("Status() error = %v could not store a notification for status checking", err)
 				return
@@ -600,7 +600,7 @@ func Test_notificationBusiness_Status(t *testing.T) {
 
 			nStatus.NotificationID = n.GetID()
 			nSRepo := repository.NewNotificationStatusRepository(ctx, tt.fields.ctxService.srv)
-			err = nSRepo.Save(&nStatus)
+			err = nSRepo.Save(ctx, &nStatus)
 			if err != nil {
 				t.Errorf("Status() error = %v could not store a notification Status for status checking", err)
 				return
@@ -695,7 +695,7 @@ func Test_notificationBusiness_StatusUpdate(t *testing.T) {
 			n.PartitionID = "test_partition-id"
 
 			nRepo := repository.NewNotificationRepository(ctx, tt.fields.ctxService.srv)
-			err = nRepo.Save(&n)
+			err = nRepo.Save(ctx, &n)
 			if err != nil {
 				t.Errorf("Status() error = %v could not store a notification for status checking", err)
 				return
@@ -824,7 +824,7 @@ func Test_notificationBusiness_TemplateSearch(t *testing.T) {
 			template.PartitionID = "test_partition-id"
 
 			templateRepository := repository.NewTemplateRepository(tt.fields.ctxService.ctx, tt.fields.ctxService.srv)
-			err = templateRepository.Save(&template)
+			err = templateRepository.Save(tt.fields.ctxService.ctx, &template)
 			if err != nil {
 				t.Errorf("TemplateSearch() error = %v could not store a template", err)
 				return
@@ -839,7 +839,7 @@ func Test_notificationBusiness_TemplateSearch(t *testing.T) {
 
 			templateDataRepository := repository.NewTemplateDataRepository(tt.fields.ctxService.ctx, tt.fields.ctxService.srv)
 
-			err = templateDataRepository.Save(&templateData)
+			err = templateDataRepository.Save(tt.fields.ctxService.ctx, &templateData)
 			if err != nil {
 				t.Errorf("TemplateSearch() error = %v could not store a template data", err)
 				return

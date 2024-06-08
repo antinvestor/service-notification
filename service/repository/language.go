@@ -2,55 +2,79 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
-	"gorm.io/gorm"
 )
 
 type LanguageRepository interface {
-	GetByID(id string) (*models.Language, error)
-	GetByName(name string) (*models.Language, error)
-	GetByCode(code string) (*models.Language, error)
-	Save(language *models.Language) error
+	GetByID(ctx context.Context, id string) (*models.Language, error)
+	GetByName(ctx context.Context, name string) (*models.Language, error)
+	GetByCode(ctx context.Context, code string) (*models.Language, error)
+	GetOrCreateByCode(ctx context.Context, code string) (*models.Language, error)
+	Save(ctx context.Context, language *models.Language) error
 }
 
 type languageRepository struct {
-	readDb  *gorm.DB
-	writeDb *gorm.DB
+	abstractRepository
 }
 
-func NewLanguageRepository(ctx context.Context, service *frame.Service) LanguageRepository {
-	return &languageRepository{readDb: service.DB(ctx, true), writeDb: service.DB(ctx, false)}
+func NewLanguageRepository(_ context.Context, service *frame.Service) LanguageRepository {
+	return &languageRepository{abstractRepository{service: service}}
 }
 
-func (repo *languageRepository) GetByCode(code string) (*models.Language, error) {
+func (repo *languageRepository) GetOrCreateByCode(ctx context.Context, languageCode string) (*models.Language, error) {
+	lang, err := repo.GetByCode(ctx, languageCode)
+	if err != nil {
+		if !frame.DBErrorIsRecordNotFound(err) || languageCode == "" {
+			return nil, err
+		}
+
+		lang = &models.Language{
+			Name:        fmt.Sprintf("Edit - %s", languageCode),
+			Code:        languageCode,
+			Description: "Auto created partition language",
+		}
+		lang.GenID(ctx)
+
+		err = repo.Save(ctx, lang)
+		if err != nil {
+			return nil, err
+
+		}
+	}
+
+	return lang, nil
+}
+
+func (repo *languageRepository) GetByCode(ctx context.Context, code string) (*models.Language, error) {
 	var language models.Language
-	err := repo.readDb.First(&language, "code = ?", code).Error
+	err := repo.readDb(ctx).First(&language, "code = ?", code).Error
 	if err != nil {
 		return nil, err
 	}
 	return &language, nil
 }
 
-func (repo *languageRepository) GetByName(name string) (*models.Language, error) {
+func (repo *languageRepository) GetByName(ctx context.Context, name string) (*models.Language, error) {
 	var language models.Language
-	err := repo.readDb.First(&language, "code = ?", name).Error
+	err := repo.readDb(ctx).Find(&language, "name = ?", name).Error
 	if err != nil {
 		return nil, err
 	}
 	return &language, nil
 }
 
-func (repo *languageRepository) GetByID(id string) (*models.Language, error) {
+func (repo *languageRepository) GetByID(ctx context.Context, id string) (*models.Language, error) {
 	language := models.Language{}
-	err := repo.readDb.First(&language, "id = ?", id).Error
+	err := repo.readDb(ctx).First(&language, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
 	return &language, nil
 }
 
-func (repo *languageRepository) Save(language *models.Language) error {
-	return repo.writeDb.Save(language).Error
+func (repo *languageRepository) Save(ctx context.Context, language *models.Language) error {
+	return repo.writeDb(ctx).Save(language).Error
 }
