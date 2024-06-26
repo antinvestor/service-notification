@@ -49,6 +49,8 @@ github.com/antinvestor/apis/go/partition v1.18.1 h1:OFeCWhIfYUqW/Kf6iMcgc3XAfvkJ
 github.com/antinvestor/apis/go/partition v1.18.1/go.mod h1:uw6q342Jz49cfYEhuoxPBui8sV7g/zBRtjcbzX03Hts=
 github.com/antinvestor/apis/go/profile v1.17.10 h1:tHLuRQD2kOOYn1pm8KSzzNU94WM8XuUJIUGmFYj1Tss=
 github.com/antinvestor/apis/go/profile v1.17.10/go.mod h1:/q+EKzIwW9bqq2JEu3lXABRJDJ68Xs65MzXO6U8dDmI=
+github.com/antinvestor/apis/go/profile v1.18.1 h1:mzRzLVnA0pLfet7d7ba9eJEPxZyzK0+qx87GYIvuH7U=
+github.com/antinvestor/apis/go/profile v1.18.1/go.mod h1:8y8nPdJemsluxDzk7VhcsmwcIB6khS960L1SWIYXxWc=
 github.com/antlr4-go/antlr/v4 v4.13.0 h1:lxCg3LAv+EUK6t1i0y1V6/SLeUi0eKEKdhQAlS8TVTI=
 github.com/antlr4-go/antlr/v4 v4.13.0/go.mod h1:pfChB/xh/Unjila75QW7+VU4TSnWnnk9UTnmpPaOR2g=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
