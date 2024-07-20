@@ -3,7 +3,7 @@ module github.com/antinvestor/service-notification
 go 1.22
 
 require (
-	github.com/antinvestor/apis/go/common v1.18.5
+	github.com/antinvestor/apis/go/common v1.19.0
 	github.com/antinvestor/apis/go/notification v1.18.8
 	github.com/antinvestor/apis/go/partition v1.18.8
 	github.com/antinvestor/apis/go/profile v1.18.8
@@ -19,7 +19,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240717164558-a6c49f84cc0f.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/alitto/pond v1.8.3 // indirect
