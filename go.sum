@@ -87,6 +87,8 @@ github.com/antinvestor/apis/go/partition v1.21.1 h1:PmlgIywFuySc5qFVeZv1lsEJErpQ
 github.com/antinvestor/apis/go/partition v1.21.1/go.mod h1:JlCgqnZYiupOTUYWvroVXsw/uLJ3MCtZ85/rvr9QNjg=
 github.com/antinvestor/apis/go/partition v1.23.1 h1:2NJc+8mIOYiqxEwqAqA3GtU6HbudOluJa6cFkgAB8dQ=
 github.com/antinvestor/apis/go/partition v1.23.1/go.mod h1:JlCgqnZYiupOTUYWvroVXsw/uLJ3MCtZ85/rvr9QNjg=
+github.com/antinvestor/apis/go/partition v1.23.5 h1:l1ndGTUgJaIOq7fciicjax2lSNuQjCS1RCq/kvONtrs=
+github.com/antinvestor/apis/go/partition v1.23.5/go.mod h1:Elan3gmpq/8rVofaM1SNRvc/okh6gUxnpSl8ssNj8jc=
 github.com/antinvestor/apis/go/profile v1.17.10 h1:tHLuRQD2kOOYn1pm8KSzzNU94WM8XuUJIUGmFYj1Tss=
 github.com/antinvestor/apis/go/profile v1.17.10/go.mod h1:/q+EKzIwW9bqq2JEu3lXABRJDJ68Xs65MzXO6U8dDmI=
 github.com/antinvestor/apis/go/profile v1.18.1 h1:mzRzLVnA0pLfet7d7ba9eJEPxZyzK0+qx87GYIvuH7U=
