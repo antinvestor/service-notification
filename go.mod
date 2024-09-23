@@ -7,7 +7,7 @@ require (
 	github.com/antinvestor/apis/go/notification v1.20.4
 	github.com/antinvestor/apis/go/partition v1.23.5
 	github.com/antinvestor/apis/go/profile v1.23.5
-	github.com/bufbuild/protovalidate-go v0.6.5
+	github.com/bufbuild/protovalidate-go v0.7.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/pitabwire/frame v1.23.2
 	github.com/sirupsen/logrus v1.9.3
@@ -19,7 +19,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240717164558-a6c49f84cc0f.2 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240920164238-5a7b106cbb87.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/alitto/pond v1.9.1 // indirect
