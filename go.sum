@@ -129,6 +129,8 @@ github.com/antinvestor/apis/go/profile v1.25.0 h1:qeg4faL7Poi+RQQrtR2lhDPP+8cxZR
 github.com/antinvestor/apis/go/profile v1.25.0/go.mod h1:n11QPrecxrOSMyza8LrhHmVhAbdiuSKZucBINBvuVDw=
 github.com/antinvestor/apis/go/profile v1.25.2 h1:mWkYi2jTOiW1QdyaMozGIOvFsoZxcHk2mCuGxS2e1yE=
 github.com/antinvestor/apis/go/profile v1.25.2/go.mod h1:CNRiGdcJf9dx3SFXKZxljEIn5dkjL7/+bBqBff99pno=
+github.com/antinvestor/apis/go/profile v1.25.4 h1:2QM/7ro2OFLtangupHOXYb3CHQfCiwWFMYnRlQUuYyA=
+github.com/antinvestor/apis/go/profile v1.25.4/go.mod h1:RJcTiQJ2Uz53nV2x/Q6Za1l7MzLtdiDAyausMQ6z09E=
 github.com/antlr4-go/antlr/v4 v4.13.0 h1:lxCg3LAv+EUK6t1i0y1V6/SLeUi0eKEKdhQAlS8TVTI=
 github.com/antlr4-go/antlr/v4 v4.13.0/go.mod h1:pfChB/xh/Unjila75QW7+VU4TSnWnnk9UTnmpPaOR2g=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
