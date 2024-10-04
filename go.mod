@@ -12,7 +12,7 @@ require (
 	github.com/pitabwire/frame v1.23.2
 	github.com/sirupsen/logrus v1.9.3
 	go.uber.org/mock v0.4.0
-	google.golang.org/grpc v1.67.0
+	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.34.2
 	gorm.io/datatypes v1.2.2
 	gorm.io/gorm v1.25.12
