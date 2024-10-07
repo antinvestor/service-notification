@@ -1,9 +1,11 @@
 module github.com/antinvestor/service-notification
 
-go 1.22
+go 1.23
+
+toolchain go1.23.2
 
 require (
-	github.com/antinvestor/apis/go/common v1.25.2
+	github.com/antinvestor/apis/go/common v1.28.5
 	github.com/antinvestor/apis/go/notification v1.20.4
 	github.com/antinvestor/apis/go/partition v1.26.5
 	github.com/antinvestor/apis/go/profile v1.26.5
