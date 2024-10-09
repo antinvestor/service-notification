@@ -6,6 +6,8 @@ buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-2024071716455
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240717164558-a6c49f84cc0f.2/go.mod h1:ylS4c28ACSI59oJrOdW4pHS4n0Hw4TgSPHn8rpHl4Yw=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240920164238-5a7b106cbb87.2 h1:hl0FrmGlNpQZIGvU1/jDz0lsPDd0BhCE0QDRwPfLZcA=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240920164238-5a7b106cbb87.2/go.mod h1:ylS4c28ACSI59oJrOdW4pHS4n0Hw4TgSPHn8rpHl4Yw=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.1-20240920164238-5a7b106cbb87.1 h1:9wP6ZZYWnF2Z0TxmII7m3XNykxnP4/w8oXeth6ekcRI=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.1-20240920164238-5a7b106cbb87.1/go.mod h1:Duw/9JoXkXIydyASnLYIiufkzySThoqavOsF+IihqvM=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.114.0 h1:OIPFAdfrFDFO2ve2U7r/H5SwSbBzEdrBdE7xkgwc+kY=
@@ -63,6 +65,8 @@ github.com/antinvestor/apis/go/common v1.25.2 h1:urEX87keYuaB1fXfbr9b9yYdI57dLik
 github.com/antinvestor/apis/go/common v1.25.2/go.mod h1:6glWJofDab6cqTogMUs3RLBOyElXvmXlMP5oTPMkQ/4=
 github.com/antinvestor/apis/go/common v1.28.5 h1:XHveel2RFJyOAG+XjWgO45gXMj4LrVRb1TteUZCch94=
 github.com/antinvestor/apis/go/common v1.28.5/go.mod h1:koMLCJsyilq6JGYJs+gOGzSMQqd0reLdt8ZY/NqJ/eI=
+github.com/antinvestor/apis/go/common v1.29.0 h1:o+G0MpZ5Cc6IFA4srxgu/2D8IN/YnIm6WptmK0HlgEs=
+github.com/antinvestor/apis/go/common v1.29.0/go.mod h1:H0EdbHPzstMsZ7yhy2BL4YyBARPeSve3eqee2Oo7Q0s=
 github.com/antinvestor/apis/go/notification v1.17.10 h1:qMGmGS1izNbk+XFwusjYCvrmNdOy9jF2aMlPBxf4X5Q=
 github.com/antinvestor/apis/go/notification v1.17.10/go.mod h1:ABpgGZCNW8UspRwCz0yujklfWxwbCfDWJcxvWazoOT0=
 github.com/antinvestor/apis/go/notification v1.18.1 h1:6Kef8UvyF8rW07TUx1DSfRTqWq0DeuKXuhY5Tj7l+Is=
