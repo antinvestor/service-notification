@@ -45,7 +45,7 @@ type notificationBusiness struct {
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
-	logger := nb.service.L().WithField("request", message)
+	logger := nb.service.L(ctx).WithField("request", message)
 
 	authClaim := frame.ClaimsFromContext(ctx)
 
@@ -130,7 +130,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
-	logger := nb.service.L().WithField("request", message)
+	logger := nb.service.L(ctx).WithField("request", message)
 
 	authClaim := frame.ClaimsFromContext(ctx)
 	logger.WithField("auth claim", authClaim).Info("handling queue in request")
@@ -198,7 +198,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
-	logger := nb.service.L().WithField("request", statusReq)
+	logger := nb.service.L(ctx).WithField("request", statusReq)
 	logger.Info("handling status check request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
@@ -218,7 +218,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error) {
-	logger := nb.service.L().WithField("request", statusReq)
+	logger := nb.service.L(ctx).WithField("request", statusReq)
 	logger.Debug("handling status update request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
@@ -252,7 +252,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*commonv1.StatusResponse, error) {
 
-	logger := nb.service.L().WithField("request", releaseReq)
+	logger := nb.service.L(ctx).WithField("request", releaseReq)
 	logger.Debug("handling release request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
@@ -305,11 +305,13 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 
 func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 	stream notificationV1.NotificationService_SearchServer) error {
-	logger := nb.service.L().WithField("request", search)
+
+	ctx := stream.Context()
+
+	logger := nb.service.L(ctx).WithField("request", search)
 
 	logger.Debug("handling search request")
 
-	ctx := stream.Context()
 	jwtToken := frame.JwtFromContext(ctx)
 
 	logger.WithField("jwt", jwtToken).Debug("auth jwt supplied")
@@ -374,9 +376,10 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 
 func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSearchRequest,
 	stream notificationV1.NotificationService_TemplateSearchServer) error {
-	logger := nb.service.L().WithField("request", search)
 
 	ctx := stream.Context()
+	logger := nb.service.L(ctx).WithField("request", search)
+
 	queryString := search.GetQuery()
 
 	authClaims := frame.ClaimsFromContext(ctx)
@@ -448,7 +451,7 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 }
 
 func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.Template, error) {
-	logger := nb.service.L().WithField("request", req)
+	logger := nb.service.L(ctx).WithField("request", req)
 
 	authClaims := frame.ClaimsFromContext(ctx)
 	logger.WithField("claims", authClaims).Info("handling template request update")

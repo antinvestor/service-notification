@@ -46,7 +46,7 @@ func (event *NotificationInRoute) Validate(ctx context.Context, payload any) err
 
 func (event *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
-	logger := event.Service.L().WithField("payload", notificationID).WithField("type", event.Name())
+	logger := event.Service.L(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)

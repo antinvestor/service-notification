@@ -5,7 +5,9 @@ import (
 	apis "github.com/antinvestor/apis/go/common"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
 	"github.com/bufbuild/protovalidate-go"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/credentials/insecure"
 	"strings"
 
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
@@ -34,7 +36,7 @@ func main() {
 
 	ctx, service := frame.NewService(serviceName, frame.Config(&notificationConfig))
 
-	log := service.L()
+	log := service.L(ctx)
 
 	serviceOptions := []frame.Option{frame.Datastore(ctx)}
 
@@ -100,10 +102,12 @@ func main() {
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
+			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandlerContext(frame.RecoveryHandlerFun)),
 			service.UnaryAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer),
 			protovalidateinterceptor.UnaryServerInterceptor(validator),
 		),
 		grpc.ChainStreamInterceptor(
+			recovery.StreamServerInterceptor(recovery.WithRecoveryHandlerContext(frame.RecoveryHandlerFun)),
 			service.StreamAuthInterceptor(jwtAudience, notificationConfig.Oauth2JwtVerifyIssuer),
 			protovalidateinterceptor.StreamServerInterceptor(validator),
 		),
@@ -118,7 +122,21 @@ func main() {
 	notificationV1.RegisterNotificationServiceServer(grpcServer, implementation)
 
 	grpcServerOpt := frame.GrpcServer(grpcServer)
-	serviceOptions = append(serviceOptions, grpcServerOpt, frame.EnableGrpcServerReflection())
+	serviceOptions = append(serviceOptions, grpcServerOpt)
+
+	proxyOptions := apis.ProxyOptions{
+		GrpcServerEndpoint: fmt.Sprintf("localhost:%s", notificationConfig.GrpcServerPort),
+		GrpcServerDialOpts: []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
+	}
+
+	proxyMux, err := notificationV1.CreateProxyHandler(ctx, proxyOptions)
+	if err != nil {
+		log.WithError(err).Fatal("could not create proxy handler")
+		return
+	}
+
+	proxyServerOpt := frame.HttpHandler(proxyMux)
+	serviceOptions = append(serviceOptions, proxyServerOpt)
 
 	serviceOptions = append(serviceOptions,
 		frame.RegisterEvents(

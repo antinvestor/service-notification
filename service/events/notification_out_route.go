@@ -37,7 +37,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 	notificationId := *payload.(*string)
 
-	logger := event.Service.L().WithField("payload", notificationId).WithField("type", event.Name())
+	logger := event.Service.L(ctx).WithField("payload", notificationId).WithField("type", event.Name())
 	logger.Debug("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)

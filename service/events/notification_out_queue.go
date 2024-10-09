@@ -40,7 +40,7 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload any) er
 func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
 
-	logger := event.Service.L().WithField("payload", notificationID).WithField("type", event.Name())
+	logger := event.Service.L(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
