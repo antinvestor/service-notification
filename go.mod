@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.2
 
 require (
-	github.com/antinvestor/apis/go/common v1.28.5
+	github.com/antinvestor/apis/go/common v1.29.0
 	github.com/antinvestor/apis/go/notification v1.20.4
 	github.com/antinvestor/apis/go/partition v1.28.6
 	github.com/antinvestor/apis/go/profile v1.28.6
@@ -21,7 +21,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240920164238-5a7b106cbb87.2 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.1-20240920164238-5a7b106cbb87.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/alitto/pond v1.9.1 // indirect
