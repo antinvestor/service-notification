@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/antinvestor/apis/go/common"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/config"
@@ -99,19 +98,6 @@ func (bs *BaseTestSuite) SetupSuite() {
 	bs.service = service
 
 	assert.NoError(bs.T(), err)
-}
-
-func (bs *BaseTestSuite) getNotificationCli(_ context.Context) *notificationv1.NotificationClient {
-
-	t := bs.T()
-	//ctx := bs.ctx
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockNotificationService := notificationv1.NewMockNotificationServiceClient(ctrl)
-
-	notificationCli := notificationv1.Init(&common.GrpcClientBase{}, mockNotificationService)
-	return notificationCli
 }
 
 func (bs *BaseTestSuite) getProfileCli(_ context.Context) *profileV1.ProfileClient {
