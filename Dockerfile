@@ -15,6 +15,7 @@ FROM gcr.io/distroless/static:nonroot
 
 USER nonroot:nonroot
 EXPOSE 80
+EXPOSE 50051
 
 WORKDIR /
 
