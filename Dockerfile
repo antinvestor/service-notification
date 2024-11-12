@@ -13,7 +13,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflag
 
 FROM gcr.io/distroless/static:nonroot
 
-USER nonroot:nonroot
+USER 65532:65532
 EXPOSE 80
 EXPOSE 50051
 
