@@ -13,13 +13,16 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflag
 
 FROM gcr.io/distroless/static:nonroot
 
-COPY --from=builder /notification_binary /notification
-COPY --from=builder /migrations /migrations
+USER nonroot:nonroot
+EXPOSE 80
 
 WORKDIR /
+
+COPY --from=builder /notification_binary /notification
+COPY --from=builder /migrations /migrations
 
 # Run the service command by default when the container starts.
 ENTRYPOINT ["/notification"]
 
-# Document the port that the service listens on by default.
-EXPOSE 7020
+
+
