@@ -425,6 +425,8 @@ github.com/pitabwire/frame v1.25.20 h1:7mZDgbOhlsVS0FYcN3pbDEN6YZeYG2MApr9QplkAc
 github.com/pitabwire/frame v1.25.20/go.mod h1:MbdqIYHZXU8L4yjzxjF7QXke92dlatxeiPb7tX3n008=
 github.com/pitabwire/frame v1.25.21 h1:1hsskuBDcHzLbpWpzUFL0XG2rlYh+JDyagkx7vUzZ3I=
 github.com/pitabwire/frame v1.25.21/go.mod h1:stMOzPOAdbsPkI8h5+IT2BopsMYe1ioAqtFAEl9if5Y=
+github.com/pitabwire/frame v1.25.22 h1:JcbJPsJ9zKq4YrtVN27Ul0GshiyxiMw+tv5Jc+jHVds=
+github.com/pitabwire/frame v1.25.22/go.mod h1:KhvN2g8nFjvP0DIYHdLN4/8BTaEGsearyBoubVusEpg=
 github.com/pitabwire/natspubsub v0.1.7 h1:Qz7cyuhmGHBopegG1zlB1lqif6sTlwni0uc954FZv30=
 github.com/pitabwire/natspubsub v0.1.7/go.mod h1:i1bCGuooBz8pnT8MZsIgyT2qL6U8i/lq82M93bHyjTc=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
@@ -830,6 +832,8 @@ gorm.io/driver/mysql v1.5.6 h1:Ld4mkIickM+EliaQZQx3uOJDJHtrd70MxAUqWqlx3Y8=
 gorm.io/driver/mysql v1.5.6/go.mod h1:sEtPWMiqiN1N1cMXoXmBbd8C6/l+TESwriotuRRpkDM=
 gorm.io/driver/postgres v1.5.9 h1:DkegyItji119OlcaLjqN11kHoUgZ/j13E0jkJZgD6A8=
 gorm.io/driver/postgres v1.5.9/go.mod h1:DX3GReXH+3FPWGrrgffdvCk3DQ1dwDPdmbenSkweRGI=
+gorm.io/driver/postgres v1.5.10 h1:7Lggqempgy496c0WfHXsYWxk3Th+ZcW66/21QhVFdeE=
+gorm.io/driver/postgres v1.5.10/go.mod h1:DX3GReXH+3FPWGrrgffdvCk3DQ1dwDPdmbenSkweRGI=
 gorm.io/driver/sqlite v1.5.0 h1:zKYbzRCpBrT1bNijRnxLDJWPjVfImGEn0lSnUY5gZ+c=
 gorm.io/driver/sqlite v1.5.0/go.mod h1:kDMDfntV9u/vuMmz8APHtHF0b4nyBB7sfCieC6G8k8I=
 gorm.io/driver/sqlserver v1.4.1 h1:t4r4r6Jam5E6ejqP7N82qAJIJAht27EGT41HyPfXRw0=
