@@ -6,7 +6,7 @@ require (
 	github.com/antinvestor/apis/go/common v1.29.20
 	github.com/antinvestor/apis/go/notification v1.29.20
 	github.com/antinvestor/apis/go/partition v1.29.20
-	github.com/antinvestor/apis/go/profile v1.29.14
+	github.com/antinvestor/apis/go/profile v1.29.20
 	github.com/bufbuild/protovalidate-go v0.7.3
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/docker/go-connections v0.5.0
