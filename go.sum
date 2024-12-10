@@ -447,6 +447,8 @@ github.com/pitabwire/frame v1.25.24 h1:o/xJ3lqOPH6w5xi/P5sY1OZnbaR44U5Iuttm7uu3f
 github.com/pitabwire/frame v1.25.24/go.mod h1:BI/HcAMMYZgOP+ClQc9Z1knPSLw8AlFeuegG105hBwI=
 github.com/pitabwire/frame v1.25.26 h1:C+j2+iYtyDZN0QxMbwrer9bq44LqnuDf6JaefjT+MDk=
 github.com/pitabwire/frame v1.25.26/go.mod h1:Vsmc8L4EORMUN8eZJu6gu1qNS1TMwLTCshxLDsDrs0w=
+github.com/pitabwire/frame v1.25.27 h1:VyO7aglGRn+qwyW02sTRREEwp8MBpq+gHOKAkCacfCI=
+github.com/pitabwire/frame v1.25.27/go.mod h1:XqkggQFpzgsOEmXSkowQePwVOnfDzv8dk1xLQ0hgdq8=
 github.com/pitabwire/natspubsub v0.1.7 h1:Qz7cyuhmGHBopegG1zlB1lqif6sTlwni0uc954FZv30=
 github.com/pitabwire/natspubsub v0.1.7/go.mod h1:i1bCGuooBz8pnT8MZsIgyT2qL6U8i/lq82M93bHyjTc=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
