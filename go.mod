@@ -8,7 +8,7 @@ require (
 	github.com/antinvestor/apis/go/partition v1.29.20
 	github.com/antinvestor/apis/go/profile v1.29.20
 	github.com/bufbuild/protovalidate-go v0.8.0
-	github.com/docker/docker v27.4.0+incompatible
+	github.com/docker/docker v27.4.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
 	github.com/pitabwire/frame v1.25.29
