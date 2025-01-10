@@ -14,8 +14,8 @@ require (
 	github.com/pitabwire/frame v1.26.4
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
-	github.com/testcontainers/testcontainers-go v0.34.0
-	github.com/testcontainers/testcontainers-go/modules/postgres v0.34.0
+	github.com/testcontainers/testcontainers-go v0.35.0
+	github.com/testcontainers/testcontainers-go/modules/postgres v0.35.0
 	go.uber.org/mock v0.5.0
 	google.golang.org/grpc v1.69.2
 	google.golang.org/protobuf v1.36.2
