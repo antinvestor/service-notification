@@ -1,7 +1,7 @@
 services:
   
     notification_db:
-      image: postgres:17.2
+      image: postgres:17.3
       environment:
         POSTGRES_DB: service_notification
         POSTGRES_USER: ant
