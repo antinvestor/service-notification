@@ -7,7 +7,7 @@ require (
 	github.com/antinvestor/apis/go/notification v1.32.0
 	github.com/antinvestor/apis/go/partition v1.32.0
 	github.com/antinvestor/apis/go/profile v1.30.1
-	github.com/bufbuild/protovalidate-go v0.9.1
+	github.com/bufbuild/protovalidate-go v0.9.2
 	github.com/docker/docker v27.5.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.0
@@ -24,7 +24,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.4-20250130201111-63bb56e20495.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.5-20250130201111-63bb56e20495.1 // indirect
 	cel.dev/expr v0.19.1 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/google/cel-go v0.23.0 // indirect
+	github.com/google/cel-go v0.23.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
