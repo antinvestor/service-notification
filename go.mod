@@ -3,7 +3,7 @@ module github.com/antinvestor/service-notification
 go 1.23.0
 
 require (
-	github.com/antinvestor/apis/go/common v1.30.5
+	github.com/antinvestor/apis/go/common v1.33.0
 	github.com/antinvestor/apis/go/notification v1.32.0
 	github.com/antinvestor/apis/go/partition v1.32.0
 	github.com/antinvestor/apis/go/profile v1.30.1
