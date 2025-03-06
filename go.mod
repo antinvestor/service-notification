@@ -10,7 +10,7 @@ require (
 	github.com/bufbuild/protovalidate-go v0.9.2
 	github.com/docker/docker v27.5.1+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.0
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
 	github.com/pitabwire/frame v1.28.6
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
