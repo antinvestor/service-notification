@@ -38,7 +38,7 @@ func (repo *languageRepository) GetOrCreateByCode(ctx context.Context, languageC
 
 	lang, err := repo.GetByCode(ctx, languageCode)
 	if err != nil {
-		if !frame.DBErrorIsRecordNotFound(err) {
+		if !frame.ErrorIsNoRows(err) {
 			return nil, err
 		}
 

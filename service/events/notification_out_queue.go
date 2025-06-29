@@ -9,7 +9,7 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
-	"github.com/sirupsen/logrus"
+	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/proto"
 	"strings"
 	"text/template"
@@ -40,7 +40,7 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload any) er
 func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
 
-	logger := event.Service.L(ctx).WithField("payload", notificationID).WithField("type", event.Name())
+	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
@@ -123,7 +123,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	return nil
 }
 
-func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, logger *logrus.Entry, n *models.Notification) (map[string]string, error) {
+func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, logger *util.LogEntry, n *models.Notification) (map[string]string, error) {
 
 	templateMap := make(map[string]string)
 

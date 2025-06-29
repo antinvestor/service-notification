@@ -4,6 +4,7 @@ import (
 	"context"
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
+	"google.golang.org/grpc"
 
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
@@ -24,18 +25,56 @@ func (ns *NotificationServer) newNotificationBusiness(ctx context.Context) (busi
 }
 
 // Send method for queueing massages as requested
-func (ns *NotificationServer) Send(ctx context.Context, req *notificationV1.SendRequest) (*notificationV1.SendResponse, error) {
-
+func (ns *NotificationServer) Send(req *notificationV1.SendRequest, stream grpc.ServerStreamingServer[notificationV1.SendResponse]) error {
+	ctx := stream.Context()
 	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
-		return nil, err
-	}
-	response, err := notificationBusiness.QueueOut(ctx, req.GetData())
-	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &notificationV1.SendResponse{Data: response}, nil
+	jobResultChannelList := make(chan any, len(req.GetData()))
+
+	for _, data := range req.GetData() {
+
+		job := frame.NewJob(func(ctx context.Context, result frame.JobResultPipe) error {
+			resp, jobErr := notificationBusiness.QueueOut(ctx, data)
+			if jobErr != nil {
+
+				jobResultChannelList <- jobErr
+				return nil
+			}
+
+			jobResultChannelList <- resp
+			return nil
+		})
+
+		err = frame.SubmitJob(ctx, ns.Service, job)
+		if err != nil {
+			return err
+		}
+	}
+
+	var responses []*commonv1.StatusResponse
+	for range len(req.GetData()) {
+		resp := <- jobResultChannelList
+		switch v := resp.(type) {
+		case error:
+			err = v
+		case *commonv1.StatusResponse:
+			responses = append(responses, v)
+
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	err = stream.Send(&notificationV1.SendResponse{Data: responses})
+	if err != nil {
+		return err
+	}
+	return nil
 
 }
 
@@ -65,39 +104,78 @@ func (ns *NotificationServer) StatusUpdate(ctx context.Context, req *commonv1.St
 }
 
 // Release method for releasing queued massages and returns if notification status if released
-func (ns *NotificationServer) Release(ctx context.Context, req *notificationV1.ReleaseRequest) (*notificationV1.ReleaseResponse, error) {
-
+func (ns *NotificationServer) Release(req *notificationV1.ReleaseRequest, stream grpc.ServerStreamingServer[notificationV1.ReleaseResponse]) error {
+	ctx := stream.Context()
 	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	response, err := notificationBusiness.Release(ctx, req)
-
+	err = notificationBusiness.Release(ctx, req, stream)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &notificationV1.ReleaseResponse{Data: response}, nil
+	return nil
 }
 
 // Receive method is for client request for particular notification responses from system
-func (ns *NotificationServer) Receive(ctx context.Context, req *notificationV1.ReceiveRequest) (*notificationV1.ReceiveResponse, error) {
+func (ns *NotificationServer) Receive(req *notificationV1.ReceiveRequest, stream grpc.ServerStreamingServer[notificationV1.ReceiveResponse]) error {
 
+	ctx := stream.Context()
 	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	response, err := notificationBusiness.QueueIn(ctx, req.GetData())
+
+
+	jobResultChannelList := make(chan any, len(req.GetData()))
+
+	for _, data := range req.GetData() {
+
+		job := frame.NewJob(func(ctx context.Context, result frame.JobResultPipe) error {
+			resp, jobErr := notificationBusiness.QueueIn(ctx, data)
+			if jobErr != nil {
+
+				jobResultChannelList <- jobErr
+				return nil
+			}
+
+			jobResultChannelList <- resp
+			return nil
+		})
+
+		err = frame.SubmitJob(ctx, ns.Service, job)
+		if err != nil {
+			return err
+		}
+	}
+
+	var responses []*commonv1.StatusResponse
+	for range len(req.GetData()) {
+		resp := <- jobResultChannelList
+		switch v := resp.(type) {
+		case error:
+			err = v
+		case *commonv1.StatusResponse:
+			responses = append(responses, v)
+
+		}
+	}
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &notificationV1.ReceiveResponse{Data: response}, nil
+	err = stream.Send(&notificationV1.ReceiveResponse{Data: responses})
+	if err != nil {
+		return err
+	}
+	return nil
+
 }
 
 // Search method is for client request for particular notification details from system
-func (ns *NotificationServer) Search(req *commonv1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error {
+func (ns *NotificationServer) Search(req *commonv1.SearchRequest, stream grpc.ServerStreamingServer[notificationV1.SearchResponse]) error {
 
 	notificationBusiness, err := ns.newNotificationBusiness(stream.Context())
 	if err != nil {
@@ -108,7 +186,7 @@ func (ns *NotificationServer) Search(req *commonv1.SearchRequest, stream notific
 }
 
 // TemplateSearch method is for client request for templates matching criteria from system
-func (ns *NotificationServer) TemplateSearch(req *notificationV1.TemplateSearchRequest, stream notificationV1.NotificationService_TemplateSearchServer) error {
+func (ns *NotificationServer) TemplateSearch(req *notificationV1.TemplateSearchRequest, stream grpc.ServerStreamingServer[notificationV1.TemplateSearchResponse]) error {
 
 	notificationBusiness, err := ns.newNotificationBusiness(stream.Context())
 	if err != nil {

@@ -37,7 +37,7 @@ func (e *NotificationStatusSave) Validate(_ context.Context, payload any) error 
 func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error {
 	nStatus := payload.(*models.NotificationStatus)
 
-	logger := e.Service.L(ctx).WithField("payload", nStatus).WithField("type", e.Name())
+	logger := e.Service.Log(ctx).WithField("payload", nStatus).WithField("type", e.Name())
 	logger.Debug("handling event")
 
 	result := e.Service.DB(ctx, false).Clauses(clause.OnConflict{

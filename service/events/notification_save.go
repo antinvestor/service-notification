@@ -37,7 +37,7 @@ func (e *NotificationSave) Validate(ctx context.Context, payload any) error {
 func (e *NotificationSave) Execute(ctx context.Context, payload any) error {
 	notification := payload.(*models.Notification)
 
-	logger := e.Service.L(ctx).WithField("type", e.Name())
+	logger := e.Service.Log(ctx).WithField("type", e.Name())
 	logger.WithField("payload", notification).Debug("handling event")
 
 	result := e.Service.DB(ctx, false).Clauses(clause.OnConflict{

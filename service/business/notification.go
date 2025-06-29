@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"google.golang.org/grpc"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -19,10 +20,10 @@ type NotificationBusiness interface {
 	QueueIn(ctx context.Context, in *notificationV1.Notification) (*commonv1.StatusResponse, error)
 	Status(ctx context.Context, status *commonv1.StatusRequest) (*commonv1.StatusResponse, error)
 	StatusUpdate(ctx context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error)
-	Release(ctx context.Context, status *notificationV1.ReleaseRequest) (*commonv1.StatusResponse, error)
-	Search(search *commonv1.SearchRequest, stream notificationV1.NotificationService_SearchServer) error
+	Release(ctx context.Context, req *notificationV1.ReleaseRequest, stream grpc.ServerStreamingServer[notificationV1.ReleaseResponse]) error
+	Search(search *commonv1.SearchRequest, stream grpc.ServerStreamingServer[notificationV1.SearchResponse]) error
 	TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.Template, error)
-	TemplateSearch(search *notificationV1.TemplateSearchRequest, stream notificationV1.NotificationService_TemplateSearchServer) error
+	TemplateSearch(search *notificationV1.TemplateSearchRequest, stream grpc.ServerStreamingServer[notificationV1.TemplateSearchResponse]) error
 }
 
 func NewNotificationBusiness(_ context.Context, service *frame.Service, profileCli *profileV1.ProfileClient, partitionCli *partitionV1.PartitionClient) (NotificationBusiness, error) {
@@ -45,7 +46,7 @@ type notificationBusiness struct {
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
-	logger := nb.service.L(ctx).WithField("request", message)
+	logger := nb.service.Log(ctx).WithField("request", message)
 
 	authClaim := frame.ClaimsFromContext(ctx)
 
@@ -130,7 +131,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationV1.Notification) (*commonv1.StatusResponse, error) {
-	logger := nb.service.L(ctx).WithField("request", message)
+	logger := nb.service.Log(ctx).WithField("request", message)
 
 	authClaim := frame.ClaimsFromContext(ctx)
 	logger.WithField("auth claim", authClaim).Info("handling queue in request")
@@ -198,7 +199,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
-	logger := nb.service.L(ctx).WithField("request", statusReq)
+	logger := nb.service.Log(ctx).WithField("request", statusReq)
 	logger.Info("handling status check request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
@@ -218,7 +219,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error) {
-	logger := nb.service.L(ctx).WithField("request", statusReq)
+	logger := nb.service.Log(ctx).WithField("request", statusReq)
 	logger.Debug("handling status update request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
@@ -250,27 +251,42 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 	return nStatus.ToStatusAPI(), nil
 }
 
-func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest) (*commonv1.StatusResponse, error) {
+func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationV1.ReleaseRequest, stream grpc.ServerStreamingServer[notificationV1.ReleaseResponse]) error {
 
-	logger := nb.service.L(ctx).WithField("request", releaseReq)
+	logger := nb.service.Log(ctx).WithField("request", releaseReq)
 	logger.Debug("handling release request")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, nb.service)
-	n, err := notificationRepo.GetByID(ctx, releaseReq.GetId())
+	notificationList, err := notificationRepo.GetByIDList(ctx, releaseReq.GetId()...)
 	if err != nil {
 		logger.WithError(err).Warn("could not fetch by id")
-		return nil, err
+		return err
 	}
 
-	if !n.IsReleased() {
-		releaseDate := time.Now()
-		n.ReleasedAt = &releaseDate
+	var releasedStatusIDs []string
+	var notificationsToUpdate []*models.Notification
+
+	releaseDate := time.Now()
+
+	for _, n := range notificationList {
+
+		if n.IsReleased() {
+			releasedStatusIDs = append(releasedStatusIDs, n.StatusID)
+		} else {
+			n.ReleasedAt = &releaseDate
+			notificationsToUpdate = append(notificationsToUpdate, n)
+		}
+
+	}
+
+	var statusesToRelease []*commonv1.StatusResponse
+	for _, n := range notificationsToUpdate {
 
 		event := events.NotificationSave{}
 		err = nb.service.Emit(ctx, event.Name(), n)
 		if err != nil {
 			logger.WithError(err).Warn("could not emit notification save")
-			return nil, err
+			return err
 		}
 
 		nStatus := models.NotificationStatus{
@@ -286,21 +302,42 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
 		if err != nil {
 			logger.WithError(err).Warn("could not emit notification status")
-			return nil, err
+			return err
 		}
 
-		return nStatus.ToStatusAPI(), nil
-	} else {
+		statusesToRelease = append(statusesToRelease, nStatus.ToStatusAPI())
+	}
 
+	if len(statusesToRelease) > 0 {
+		err = stream.Send(&notificationV1.ReleaseResponse{Data: statusesToRelease})
+		if err != nil {
+			return err
+		}
+	}
+
+	statusesToRelease = nil
+	var notificationStatusList []*models.NotificationStatus
+	if len(releasedStatusIDs) > 0 {
 		notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, nb.service)
-		nStatus, err := notificationStatusRepo.GetByID(ctx, n.StatusID)
+		notificationStatusList, err = notificationStatusRepo.GetByIDList(ctx, releasedStatusIDs...)
 		if err != nil {
 			logger.WithError(err).Warn("could not get notification status")
-			return nil, err
+			return err
 		}
 
-		return nStatus.ToStatusAPI(), nil
+		for _, nStatus := range notificationStatusList {
+			statusesToRelease = append(statusesToRelease, nStatus.ToStatusAPI())
+		}
 	}
+
+	if len(statusesToRelease) > 0 {
+		err = stream.Send(&notificationV1.ReleaseResponse{Data: statusesToRelease})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
@@ -308,7 +345,7 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 
 	ctx := stream.Context()
 
-	logger := nb.service.L(ctx).WithField("request", search)
+	logger := nb.service.Log(ctx).WithField("request", search)
 
 	logger.Debug("handling search request")
 
@@ -378,7 +415,7 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 	stream notificationV1.NotificationService_TemplateSearchServer) error {
 
 	ctx := stream.Context()
-	logger := nb.service.L(ctx).WithField("request", search)
+	logger := nb.service.Log(ctx).WithField("request", search)
 
 	queryString := search.GetQuery()
 
@@ -451,7 +488,7 @@ func (nb *notificationBusiness) TemplateSearch(search *notificationV1.TemplateSe
 }
 
 func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.Template, error) {
-	logger := nb.service.L(ctx).WithField("request", req)
+	logger := nb.service.Log(ctx).WithField("request", req)
 
 	authClaims := frame.ClaimsFromContext(ctx)
 	logger.WithField("claims", authClaims).Info("handling template request update")

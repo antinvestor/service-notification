@@ -6,7 +6,6 @@ import (
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	"github.com/pitabwire/frame"
-	"gorm.io/datatypes"
 )
 
 const (
@@ -41,7 +40,7 @@ type Template struct {
 	frame.BaseModel
 
 	Name  string `gorm:"type:varchar(255)"`
-	Extra datatypes.JSONMap
+	Extra frame.JSONMap
 }
 
 func (t *Template) ToApi(templateDataList []*notificationV1.TemplateData) *notificationV1.Template {
@@ -97,7 +96,7 @@ type Notification struct {
 
 	NotificationType string `gorm:"type:varchar(10)"`
 	Message          string `gorm:"type:text"`
-	Payload          datatypes.JSONMap
+	Payload          frame.JSONMap
 
 	ReleasedAt  *time.Time
 	State       int32
@@ -181,7 +180,7 @@ type NotificationStatus struct {
 
 	TransientID string `gorm:"type:varchar(50)"`
 	ExternalID  string `gorm:"type:varchar(50)"`
-	Extra       datatypes.JSONMap
+	Extra       frame.JSONMap
 	State       int32
 	Status      int32
 }

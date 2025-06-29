@@ -66,10 +66,8 @@ func (bs *BaseTestSuite) SetupSuite() {
 	err = bs.setupMigrations(ctx)
 	assert.NoError(bs.T(), err)
 
-	nConfig := config.NotificationConfig{}
-
-	err = frame.ConfigProcess("", &nConfig)
-	assert.NoError(bs.T(), err)
+	nConfig,err0 := frame.ConfigFromEnv[config.NotificationConfig]()
+	assert.NoError(bs.T(), err0)
 
 	nConfig.LogLevel = "debug"
 	nConfig.RunServiceSecurely = false
@@ -79,13 +77,13 @@ func (bs *BaseTestSuite) SetupSuite() {
 
 	var service *frame.Service
 	ctx, service = frame.NewServiceWithContext(ctx, "notification tests",
-		frame.Config(&nConfig),
-		frame.Datastore(ctx),
-		frame.NoopDriver())
+		frame.WithConfig(&nConfig),
+		frame.WithDatastore(),
+		frame.WithNoopDriver())
 
 	profileCli := bs.getProfileCli(ctx)
 
-	service.Init(frame.RegisterEvents(
+	service.Init(ctx, frame.WithRegisterEvents(
 		&events.NotificationSave{Service: service},
 		&events.NotificationStatusSave{Service: service},
 		&events.NotificationInRoute{Service: service},

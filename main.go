@@ -1,13 +1,13 @@
 package main
 
 import (
+	"buf.build/go/protovalidate"
 	"fmt"
 	apis "github.com/antinvestor/apis/go/common"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/credentials/insecure"
+	"log/slog"
 	"strings"
 
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
@@ -27,22 +27,21 @@ func main() {
 
 	serviceName := "service_notifications"
 
-	var notificationConfig config.NotificationConfig
-	err := frame.ConfigProcess("", &notificationConfig)
+	notificationConfig, err := frame.ConfigFromEnv[config.NotificationConfig]()
 	if err != nil {
-		logrus.WithError(err).Fatal("could not process configs")
+		slog.With("err", err).Error("could not process configs")
 		return
 	}
 
-	ctx, service := frame.NewService(serviceName, frame.Config(&notificationConfig))
+	ctx, service := frame.NewService(serviceName, frame.WithConfig(&notificationConfig))
 
-	log := service.L(ctx)
+	log := service.Log(ctx)
 
-	serviceOptions := []frame.Option{frame.Datastore(ctx)}
+	serviceOptions := []frame.Option{frame.WithDatastore()}
 
 	if notificationConfig.DoDatabaseMigrate() {
 
-		service.Init(serviceOptions...)
+		service.Init(ctx, serviceOptions...)
 
 		err = service.MigrateDatastore(ctx, notificationConfig.GetDatabaseMigrationPath(),
 			&models.Route{}, &models.Language{}, &models.Template{},
@@ -114,6 +113,7 @@ func main() {
 	)
 
 	implementation := &handlers.NotificationServer{
+
 		Service:      service,
 		ProfileCli:   profileCli,
 		PartitionCli: partitionCli,
@@ -121,7 +121,7 @@ func main() {
 
 	notificationV1.RegisterNotificationServiceServer(grpcServer, implementation)
 
-	grpcServerOpt := frame.GrpcServer(grpcServer)
+	grpcServerOpt := frame.WithGRPCServer(grpcServer)
 	serviceOptions = append(serviceOptions, grpcServerOpt)
 
 	proxyOptions := apis.ProxyOptions{
@@ -135,11 +135,11 @@ func main() {
 		return
 	}
 
-	proxyServerOpt := frame.HttpHandler(proxyMux)
+	proxyServerOpt := frame.WithHTTPHandler(proxyMux)
 	serviceOptions = append(serviceOptions, proxyServerOpt)
 
 	serviceOptions = append(serviceOptions,
-		frame.RegisterEvents(
+		frame.WithRegisterEvents(
 			&events.NotificationSave{Service: service},
 			&events.NotificationStatusSave{Service: service},
 			&events.NotificationInRoute{Service: service},
@@ -147,9 +147,9 @@ func main() {
 			&events.NotificationOutRoute{Service: service, ProfileCli: profileCli},
 			&events.NotificationOutQueue{Service: service, ProfileCli: profileCli}))
 
-	service.Init(serviceOptions...)
+	service.Init(ctx, serviceOptions...)
 
-	log.WithField("server http port", notificationConfig.HttpServerPort).
+	log.WithField("server http port", notificationConfig.HTTPServerPort).
 		WithField("server grpc port", notificationConfig.GrpcServerPort).
 		Info(" Initiating server operations")
 

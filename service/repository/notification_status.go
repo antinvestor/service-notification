@@ -9,6 +9,7 @@ import (
 
 type NotificationStatusRepository interface {
 	GetByID(ctx context.Context, id string) (*models.NotificationStatus, error)
+	GetByIDList(ctx context.Context, id ... string) ([]*models.NotificationStatus, error)
 	GetByNotificationID(ctx context.Context, notificationId string) ([]models.NotificationStatus, error)
 	Save(ctx context.Context, notification *models.NotificationStatus) error
 }
@@ -28,6 +29,15 @@ func (repo *notificationStatusRepository) GetByID(ctx context.Context, id string
 		return nil, err
 	}
 	return &notificationStatus, nil
+}
+
+func (repo *notificationStatusRepository) GetByIDList(ctx context.Context, id ... string) ([]*models.NotificationStatus, error) {
+	var notificationStatuses []*models.NotificationStatus
+	err := repo.readDb(ctx).Find(&notificationStatuses, "id IN ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return notificationStatuses, nil
 }
 
 func (repo *notificationStatusRepository) GetByNotificationID(ctx context.Context, notificationId string) ([]models.NotificationStatus, error) {

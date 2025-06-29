@@ -46,7 +46,7 @@ func (event *NotificationInRoute) Validate(ctx context.Context, payload any) err
 
 func (event *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
-	logger := event.Service.L(ctx).WithField("payload", notificationID).WithField("type", event.Name())
+	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
 	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
@@ -175,7 +175,7 @@ func loadRoute(ctx context.Context, service *frame.Service, routeId string) (*mo
 }
 
 func selectRoute(_ context.Context, routes []*models.Route) (*models.Route, error) {
-	//TODO: find a simple way of routing message mostly by settings
+	// TODO: find a simple way of routing message mostly by settings
 	// or contact and profile preferences
 	if len(routes) == 0 {
 		return nil, errors.New("no routes matched for notification")
