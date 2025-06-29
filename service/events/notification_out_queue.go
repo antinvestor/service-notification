@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"strings"
+	"text/template"
+
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/service/models"
@@ -11,8 +14,6 @@ import (
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/proto"
-	"strings"
-	"text/template"
 )
 
 type NotificationOutQueue struct {

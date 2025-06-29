@@ -3,12 +3,13 @@ package events
 import (
 	"context"
 	"errors"
+	"strings"
+
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
-	"strings"
 )
 
 type NotificationInQueue struct {
@@ -52,10 +53,11 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload any) erro
 		if !strings.Contains(err.Error(), "reference does not exist") {
 
 			if n.RouteID != "" {
-				_, err = loadRoute(ctx, event.Service, n.RouteID)
-				if err != nil {
-					return err
+				route, err0 := loadRoute(ctx, event.Service, n.RouteID)
+				if err0 != nil {
+					return err0
 				}
+				logger.WithField("route", route).Debug("loading route")
 			}
 
 			return err

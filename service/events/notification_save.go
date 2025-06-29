@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"errors"
+
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"

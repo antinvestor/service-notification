@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"context"
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
-	"google.golang.org/grpc"
 
+	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/service/business"
 	"github.com/pitabwire/frame"
+	"google.golang.org/grpc"
 )
 
 type NotificationServer struct {
@@ -56,7 +56,7 @@ func (ns *NotificationServer) Send(req *notificationV1.SendRequest, stream grpc.
 
 	var responses []*commonv1.StatusResponse
 	for range len(req.GetData()) {
-		resp := <- jobResultChannelList
+		resp := <-jobResultChannelList
 		switch v := resp.(type) {
 		case error:
 			err = v
@@ -127,7 +127,6 @@ func (ns *NotificationServer) Receive(req *notificationV1.ReceiveRequest, stream
 		return err
 	}
 
-
 	jobResultChannelList := make(chan any, len(req.GetData()))
 
 	for _, data := range req.GetData() {
@@ -152,7 +151,7 @@ func (ns *NotificationServer) Receive(req *notificationV1.ReceiveRequest, stream
 
 	var responses []*commonv1.StatusResponse
 	for range len(req.GetData()) {
-		resp := <- jobResultChannelList
+		resp := <-jobResultChannelList
 		switch v := resp.(type) {
 		case error:
 			err = v

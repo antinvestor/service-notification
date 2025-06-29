@@ -1,26 +1,24 @@
 package main
 
 import (
-	"buf.build/go/protovalidate"
 	"fmt"
-	apis "github.com/antinvestor/apis/go/common"
-	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
-	"google.golang.org/grpc/credentials/insecure"
 	"log/slog"
 	"strings"
 
+	"buf.build/go/protovalidate"
+	apis "github.com/antinvestor/apis/go/common"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
+	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/events"
-
 	"github.com/antinvestor/service-notification/service/handlers"
 	"github.com/antinvestor/service-notification/service/models"
-
-	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	protovalidateinterceptor "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/pitabwire/frame"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {

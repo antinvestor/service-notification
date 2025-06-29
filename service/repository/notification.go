@@ -11,7 +11,7 @@ import (
 
 type NotificationRepository interface {
 	GetByID(ctx context.Context, id string) (*models.Notification, error)
-	GetByIDList(ctx context.Context, id ... string) ([]*models.Notification, error)
+	GetByIDList(ctx context.Context, id ...string) ([]*models.Notification, error)
 	Search(ctx context.Context, query string) ([]*models.Notification, error)
 	Save(ctx context.Context, notification *models.Notification) error
 }
@@ -42,7 +42,7 @@ func (repo *notificationRepository) GetByID(ctx context.Context, id string) (*mo
 	return &notification, nil
 }
 
-func (repo *notificationRepository) GetByIDList(ctx context.Context, id ... string) ([]*models.Notification, error) {
+func (repo *notificationRepository) GetByIDList(ctx context.Context, id ...string) ([]*models.Notification, error) {
 	var notifications []*models.Notification
 	err := repo.readDb(ctx).Find(&notifications, "id IN ?", id).Error
 	if err != nil {

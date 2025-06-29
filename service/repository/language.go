@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/antinvestor/service-notification/config"
 
+	"github.com/antinvestor/service-notification/config"
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/pitabwire/frame"
 )

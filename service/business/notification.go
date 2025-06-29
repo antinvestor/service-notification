@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"google.golang.org/grpc"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -13,6 +12,7 @@ import (
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
+	"google.golang.org/grpc"
 )
 
 type NotificationBusiness interface {
@@ -94,10 +94,10 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 	if message.GetTemplate() != "" {
 		templateRepo := repository.NewTemplateRepository(ctx, nb.service)
-		t, err := templateRepo.GetByName(ctx, message.GetTemplate())
-		if err != nil {
-			logger.WithError(err).Warn("could not get template")
-			return nil, err
+		t, err0 := templateRepo.GetByName(ctx, message.GetTemplate())
+		if err0 != nil {
+			logger.WithError(err0).Warn("could not get template")
+			return nil, err0
 		}
 
 		n.TemplateID = t.GetID()

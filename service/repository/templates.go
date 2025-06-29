@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/pitabwire/frame"
 	"strings"
 
 	"github.com/antinvestor/service-notification/service/models"
+	"github.com/pitabwire/frame"
 )
 
 type TemplateRepository interface {

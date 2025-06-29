@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"errors"
+
 	"github.com/antinvestor/service-notification/service/models"
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"

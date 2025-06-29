@@ -2,6 +2,9 @@ package business_test
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
@@ -11,8 +14,6 @@ import (
 	"github.com/antinvestor/service-notification/service/repository"
 	"github.com/pitabwire/frame"
 	"github.com/stretchr/testify/suite"
-	"testing"
-	"time"
 )
 
 type NotificationTestSuite struct {
@@ -275,6 +276,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 		})
 	}
 }
+
 //
 // func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 //
@@ -314,7 +316,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 // 				Id:         "c2f4j7au6s7f91uqnojg",
 // 				State:      commonv1.STATE_ACTIVE,
 // 				Status:     commonv1.STATUS_QUEUED,
-// 				ExternalId: "total_externalization",
+// 				ExternalId: "total_externalisation",
 // 			},
 // 		},
 // 	}
@@ -617,7 +619,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 					Id:         "testingQueue_out",
 					State:      commonv1.STATE_INACTIVE,
 					Status:     commonv1.STATUS_SUCCESSFUL,
-					ExternalId: "total_externalization",
+					ExternalId: "total_externalisation",
 				},
 			},
 			wantErr: false,
@@ -625,7 +627,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 				Id:         "c2f4j7au6s7f91uqnojg",
 				State:      commonv1.STATE_INACTIVE,
 				Status:     commonv1.STATUS_SUCCESSFUL,
-				ExternalId: "total_externalization",
+				ExternalId: "total_externalisation",
 			},
 		},
 	}

@@ -3,6 +3,9 @@ package business_test
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/antinvestor/apis/go/common"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
@@ -17,8 +20,6 @@ import (
 	tcPostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"go.uber.org/mock/gomock"
-	"net"
-	"time"
 )
 
 const PostgresqlDbImage = "postgres:17"
@@ -66,7 +67,7 @@ func (bs *BaseTestSuite) SetupSuite() {
 	err = bs.setupMigrations(ctx)
 	assert.NoError(bs.T(), err)
 
-	nConfig,err0 := frame.ConfigFromEnv[config.NotificationConfig]()
+	nConfig, err0 := frame.ConfigFromEnv[config.NotificationConfig]()
 	assert.NoError(bs.T(), err0)
 
 	nConfig.LogLevel = "debug"
