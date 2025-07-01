@@ -19,7 +19,7 @@ require (
 	go.uber.org/mock v0.5.2
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
-	gorm.io/datatypes v1.2.5
+	gorm.io/datatypes v1.2.6
 	gorm.io/gorm v1.30.0
 )
 
