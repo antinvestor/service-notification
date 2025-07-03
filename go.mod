@@ -3,7 +3,7 @@ module github.com/antinvestor/service-notification
 go 1.23.0
 
 require (
-	github.com/antinvestor/apis/go/common v1.33.0
+	github.com/antinvestor/apis/go/common v1.35.2
 	github.com/antinvestor/apis/go/notification v1.33.0
 	github.com/antinvestor/apis/go/partition v1.33.0
 	github.com/antinvestor/apis/go/profile v1.30.1
@@ -24,7 +24,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.5-20250130201111-63bb56e20495.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250613105001-9f2d3c737feb.1 // indirect
 	cel.dev/expr v0.23.0 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -108,7 +108,7 @@ require (
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
 	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/oauth2 v0.28.0 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
