@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/antinvestor/apis/go/common v1.33.0
 	github.com/antinvestor/apis/go/notification v1.33.0
-	github.com/antinvestor/apis/go/partition v1.33.0
+	github.com/antinvestor/apis/go/partition v1.35.3
 	github.com/antinvestor/apis/go/profile v1.30.1
 	github.com/bufbuild/protovalidate-go v0.9.2
 	github.com/docker/docker v28.3.1+incompatible
