@@ -214,6 +214,8 @@ github.com/googleapis/enterprise-certificate-proxy v0.3.6 h1:GW/XbdyBFQ8Qe+YAmFU
 github.com/googleapis/enterprise-certificate-proxy v0.3.6/go.mod h1:MkHOF77EYAE7qfSuSS9PU6g4Nt4e11cnsDUowfwewLA=
 github.com/googleapis/gax-go/v2 v2.14.1 h1:hb0FFeiPaQskmvakKu5EbCbpntQn48jyHuvrkurSS/Q=
 github.com/googleapis/gax-go/v2 v2.14.1/go.mod h1:Hb/NubMaVM88SrNkvl8X/o8XWwDJEPqouaLeN2IUxoA=
+github.com/googleapis/gax-go/v2 v2.14.2 h1:eBLnkZ9635krYIPD+ag1USrOAI0Nr0QYF3+/3GqO0k0=
+github.com/googleapis/gax-go/v2 v2.14.2/go.mod h1:ON64QhlJkhVtSqp4v1uaK92VyZ2gmvDQsweuyLV+8+w=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gorilla/context v1.1.1/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
 github.com/gorilla/handlers v1.5.2 h1:cLTUSsNkgcwhgRqvCNmdbRWG0A3N4F+M2nWKdScwyEE=
@@ -400,6 +402,8 @@ github.com/pierrec/lz4 v1.0.2-0.20190131084431-473cd7ce01a1/go.mod h1:3/3N9NVKO0
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pitabwire/frame v1.49.0 h1:hV4tSamo4pPgg1I4uBI0nFpxBQNn/NcZC+BgvPzJ3sM=
 github.com/pitabwire/frame v1.49.0/go.mod h1:groNGGuYi7WAOiqdb18HFQp1p/5ReslJ1AkWGDBcYLo=
+github.com/pitabwire/frame v1.49.1 h1:edLsnbDnApczhK37a6CLlAO2hF/cF4df20Hk9kixYw4=
+github.com/pitabwire/frame v1.49.1/go.mod h1:zmE3K5docBwc+UrVJ7kUKoGRUo251nxICpG+9tFbkoE=
 github.com/pitabwire/natspubsub v0.6.9 h1:+1yd80fnj9lz9V7SIyr3kmn2TtMeB1ZM1TOaoN9FWfU=
 github.com/pitabwire/natspubsub v0.6.9/go.mod h1:fxAKe9c9Kf0NIxZZ7tLM7DXuq1OGv4+AsaoaWOPScrI=
 github.com/pitabwire/util v0.2.5 h1:UsxC8T2CmQgNVyi5sYYfpQiyoj5wQIySO9mPLxzJBoA=
@@ -553,6 +557,8 @@ go.uber.org/zap v1.10.0/go.mod h1:vwi/ZaCAaUcBkycHslxD9B2zi4UTXhF60s6SWpuDF0Q=
 go.uber.org/zap v1.13.0/go.mod h1:zwrFLgMcdUuIBviXEYEH1YKNaOBnKXsx2IPda5bBwHM=
 gocloud.dev v0.41.0 h1:qBKd9jZkBKEghYbP/uThpomhedK5s2Gy6Lz7h/zYYrM=
 gocloud.dev v0.41.0/go.mod h1:IetpBcWLUwroOOxKr90lhsZ8vWxeSkuszBnW62sbcf0=
+gocloud.dev v0.42.0 h1:qzG+9ItUL3RPB62/Amugws28n+4vGZXEoJEAMfjutzw=
+gocloud.dev v0.42.0/go.mod h1:zkaYAapZfQisXOA4bzhsbA4ckiStGQ3Psvs9/OQ5dPM=
 golang.org/x/crypto v0.0.0-20180904163835-0709b304e793/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20181029021203-45a5f77698d3/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
@@ -691,6 +697,8 @@ golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da/go.mod h1:NDW/Ps6MPRej6f
 google.golang.org/api v0.3.1/go.mod h1:6wY9I6uQWHQ8EM57III9mq/AjF+i8G65rmVagqKMtkk=
 google.golang.org/api v0.228.0 h1:X2DJ/uoWGnY5obVjewbp8icSL5U4FzuCfy9OjbLSnLs=
 google.golang.org/api v0.228.0/go.mod h1:wNvRS1Pbe8r4+IfBIniV8fwCpGwTrYa+kMUDiC5z5a4=
+google.golang.org/api v0.235.0 h1:C3MkpQSRxS1Jy6AkzTGKKrpSCOd2WOGrezZ+icKSkKo=
+google.golang.org/api v0.235.0/go.mod h1:QpeJkemzkFKe5VCE/PMv7GsUfn9ZF+u+q1Q7w6ckxTg=
 google.golang.org/appengine v1.1.0/go.mod h1:EbEs0AVv82hx2wNQdGPgUI5lhzA/G0D9YwlJXL52JkM=
 google.golang.org/appengine v1.2.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
 google.golang.org/appengine v1.4.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
