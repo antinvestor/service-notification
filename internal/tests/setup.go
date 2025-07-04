@@ -71,7 +71,7 @@ func (opt *DependancyOption) Queue() string {
 	return opt.queue
 }
 
-// setupTestResources initializes the testing resources (databases, queues) that will be shared across tests
+// setupTestResources initialises the testing resources (databases, queues) that will be shared across tests
 func (s *NotificationTestSuite) setupTestResources(ctx context.Context) error {
 
 	var setupErr error

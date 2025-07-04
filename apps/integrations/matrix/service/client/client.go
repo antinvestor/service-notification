@@ -3,12 +3,13 @@ package client
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	"github.com/antinvestor/gomatrix"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/config"
 	"github.com/pitabwire/util"
-	"strings"
 )
 
 const (
@@ -82,7 +83,7 @@ func (ms *Client) Send(ctx context.Context, notification *notificationV1.Notific
 }
 
 // sendEvent sends a custom activity event
-func (ms *Client) sendEvent(ctx context.Context, roomID string, eventType string, notification *notificationV1.Notification) (*gomatrix.RespSendEvent, error) {
+func (ms *Client) sendEvent(_ context.Context, roomID string, eventType string, notification *notificationV1.Notification) (*gomatrix.RespSendEvent, error) {
 
 	if metaType, ok := notification.GetExtras()["event_type"]; ok {
 		eventType = metaType

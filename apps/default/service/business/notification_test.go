@@ -2,9 +2,6 @@ package business_test
 
 import (
 	"context"
-	"github.com/antinvestor/service-notification/apps/default/service/business"
-	"github.com/antinvestor/service-notification/apps/default/service/models"
-	repository2 "github.com/antinvestor/service-notification/apps/default/service/repository"
 	"testing"
 	"time"
 
@@ -12,6 +9,9 @@ import (
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	"github.com/antinvestor/service-notification/apps/default/service/business"
+	"github.com/antinvestor/service-notification/apps/default/service/models"
+	repository2 "github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame"
 	"github.com/stretchr/testify/suite"
 )

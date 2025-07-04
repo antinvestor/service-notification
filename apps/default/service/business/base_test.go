@@ -3,14 +3,14 @@ package business_test
 import (
 	"context"
 	"fmt"
-	"github.com/antinvestor/service-notification/apps/default/config"
-	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
 	"net"
 	"time"
 
 	"github.com/antinvestor/apis/go/common"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	"github.com/antinvestor/service-notification/apps/default/config"
+	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 	"github.com/pitabwire/frame"

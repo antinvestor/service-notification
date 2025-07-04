@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
+	"strings"
+
 	apis "github.com/antinvestor/apis/go/common"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/config"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/service/events"
-	"log/slog"
-	"strings"
-
 	"github.com/pitabwire/frame"
 )
 
@@ -64,7 +64,7 @@ func main() {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
 
-	matrixCl, err := client.NewClient(logger, cfg.MatrixServerURL, cfg.MatrixUserID, cfg.MatrixAccessToken)
+	matrixCl, err := client.NewClient(logger, &cfg)
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}

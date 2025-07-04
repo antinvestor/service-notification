@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"strings"
 
+	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/pitabwire/frame"
 )
 

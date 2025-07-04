@@ -42,7 +42,7 @@ import (
 // Returns the connection string to use and a close function which must be called when the test finishes.
 // Calling this function twice will return the same database, which will have data from previous tests
 // unless close() is called.
-func (s *NotificationTestSuite) prepareQueueConnection(ctx context.Context, randomnesPrefix string, testOpts DependancyOption) (connStr string, close func(ctx context.Context), err error) {
+func (s *NotificationTestSuite) prepareQueueConnection(ctx context.Context, _ string, testOpts DependancyOption) (connStr string, close func(ctx context.Context), err error) {
 
 	if testOpts.Queue() != DefaultQueue {
 		return "", func(ctx context.Context) {}, fmt.Errorf(" %s is unsupported, only nats is the supported queue for now", testOpts.Queue())

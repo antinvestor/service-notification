@@ -3,12 +3,12 @@ package events
 import (
 	"context"
 	"errors"
-	"github.com/antinvestor/service-notification/apps/default/service/models"
-	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"strings"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	"github.com/antinvestor/service-notification/apps/default/service/models"
+	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame"
 )
 

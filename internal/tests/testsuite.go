@@ -1,9 +1,13 @@
 package tests
 
 import (
-	"buf.build/go/protovalidate"
 	"context"
 	"fmt"
+	"log/slog"
+	"strings"
+	"testing"
+
+	"buf.build/go/protovalidate"
 	apis "github.com/antinvestor/apis/go/common"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
@@ -24,9 +28,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"log/slog"
-	"strings"
-	"testing"
 )
 
 // StdoutLogConsumer is a LogConsumer that prints the log to stdout
@@ -47,7 +48,7 @@ type NotificationTestSuite struct {
 	MockCtrl *gomock.Controller
 }
 
-// SetupSuite initializes the test environment for the test suite
+// SetupSuite initialises the test environment for the test suite
 func (s *NotificationTestSuite) SetupSuite() {
 
 	t := s.T()
@@ -126,7 +127,7 @@ func (s *NotificationTestSuite) GetService(t *testing.T, testOpts DependancyOpti
 		frame.WithDatastore(),
 		frame.WithNoopDriver())
 
-	// Initialize mock clients
+	// Initialise mock clients
 	profileCli := s.getProfileCli()
 	partitionCli := s.getPartitionCli()
 
@@ -180,7 +181,7 @@ func (s *NotificationTestSuite) GetService(t *testing.T, testOpts DependancyOpti
 			&events2.NotificationOutQueue{Service: svc, ProfileCli: profileCli},
 		))
 
-	// Explicitly initialize the database pool to avoid nil pointer dereference
+	// Explicitly initialise the database pool to avoid nil pointer dereference
 	svc.Init(ctx, serviceOptions...)
 
 	err = svc.MigrateDatastore(ctx, cfg.GetDatabaseMigrationPath(),

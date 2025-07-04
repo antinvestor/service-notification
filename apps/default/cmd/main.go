@@ -2,10 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/antinvestor/service-notification/apps/default/config"
-	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
-	"github.com/antinvestor/service-notification/apps/default/service/handlers"
-	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"log/slog"
 	"strings"
 
@@ -14,6 +10,10 @@ import (
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	"github.com/antinvestor/service-notification/apps/default/config"
+	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
+	"github.com/antinvestor/service-notification/apps/default/service/handlers"
+	"github.com/antinvestor/service-notification/apps/default/service/models"
 	protovalidateinterceptor "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/pitabwire/frame"

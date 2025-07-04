@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"github.com/antinvestor/service-notification/apps/default/service/models"
 
+	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/pitabwire/frame"
 )
 

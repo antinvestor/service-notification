@@ -3,9 +3,9 @@ package events
 import (
 	"context"
 	"errors"
+
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-
 	"github.com/pitabwire/frame"
 	"gorm.io/gorm/clause"
 )

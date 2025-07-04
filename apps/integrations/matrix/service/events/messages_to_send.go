@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"errors"
+
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
 	profileV1 "github.com/antinvestor/apis/go/profile/v1"
