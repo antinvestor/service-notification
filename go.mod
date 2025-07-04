@@ -5,11 +5,11 @@ go 1.24.0
 toolchain go1.24.4
 
 require (
-	buf.build/go/protovalidate v0.12.0
+	buf.build/go/protovalidate v0.13.1
 	github.com/antinvestor/apis/go/common v1.35.2
 	github.com/antinvestor/apis/go/notification v1.35.3
 	github.com/antinvestor/apis/go/partition v1.35.3
-	github.com/antinvestor/apis/go/profile v1.30.1
+	github.com/antinvestor/apis/go/profile v1.35.3
 	github.com/antinvestor/gomatrix v0.1.4
 	github.com/docker/docker v28.3.0+incompatible
 	github.com/docker/go-connections v0.5.0

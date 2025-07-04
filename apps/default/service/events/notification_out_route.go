@@ -57,7 +57,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 	contact := filterContactFromProfileByID(p, n.RecipientContactID)
 	switch contact.Type {
-	case profileV1.ContactType_PHONE:
+	case profileV1.ContactType_MSISDN:
 		n.NotificationType = models.RouteTypeShortForm
 	case profileV1.ContactType_EMAIL:
 		n.NotificationType = models.RouteTypeLongForm
