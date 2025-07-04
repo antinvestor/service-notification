@@ -1,15 +1,16 @@
-FROM golang:1.23 as builder
+FROM golang:1.24 as builder
 
-WORKDIR /
+WORKDIR /app
 
-COPY ../../go.mod .
-COPY ../../go.sum .
+# Copy go.mod and go.sum files from the project root
+COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the local package files to the container's workspace.
-COPY ../.. .
+# Copy the source code
+COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o notification_binary .
+# Build the binary from the cmd directory
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /app/integration_binary ./apps/integrations/matrix/cmd/
 
 FROM gcr.io/distroless/static:nonroot
 
@@ -19,11 +20,7 @@ EXPOSE 50051
 
 WORKDIR /
 
-COPY --from=builder /matrix_binary /notification_matrix
-COPY --from=builder /migrations /migrations
+COPY --from=builder /app/integration_binary /integrationapp
 
 # Run the service command by default when the container starts.
-ENTRYPOINT ["/notification_matrix"]
-
-
-
+ENTRYPOINT ["/integrationapp"]
