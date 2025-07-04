@@ -1,4 +1,3 @@
-
 ENV_LOCAL_TEST=\
   TEST_DATABASE_URL=postgres://ant:secret@localhost:5436/service_notification?sslmode=disable \
   POSTGRES_PASSWORD=secret \
@@ -62,7 +61,7 @@ pg_wait:
 tests: ## runs all system tests
 	$(ENV_LOCAL_TEST) \
 	FILES=$(go list ./...  | grep -v /vendor/);\
-	go test ./... -v -run=$(INTEGRATION_TEST_SUITE_PATH)  -coverprofile=coverage.out;\
+	go test ./... -v -timeout=45s -run=$(INTEGRATION_TEST_SUITE_PATH)  -coverprofile=coverage.out;\
 	RETURNCODE=$$?;\
 	if [ "$$RETURNCODE" -ne 0 ]; then\
 		echo "unit tests failed with error code: $$RETURNCODE" >&2;\
@@ -71,5 +70,4 @@ tests: ## runs all system tests
 	go tool cover -html=coverage.out -o coverage.html
 
 
-build: clean fmt vet tests ## run all preliminary steps and tests the setup
-
+build: clean fmt vet internal/tests ## run all preliminary steps and tests the setup

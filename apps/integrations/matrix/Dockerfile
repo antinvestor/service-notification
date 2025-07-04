@@ -1,0 +1,29 @@
+FROM golang:1.23 as builder
+
+WORKDIR /
+
+COPY ../../go.mod .
+COPY ../../go.sum .
+RUN go mod download
+
+# Copy the local package files to the container's workspace.
+COPY ../.. .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o notification_binary .
+
+FROM gcr.io/distroless/static:nonroot
+
+USER 65532:65532
+EXPOSE 80
+EXPOSE 50051
+
+WORKDIR /
+
+COPY --from=builder /matrix_binary /notification_matrix
+COPY --from=builder /migrations /migrations
+
+# Run the service command by default when the container starts.
+ENTRYPOINT ["/notification_matrix"]
+
+
+

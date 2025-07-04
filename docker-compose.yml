@@ -10,7 +10,7 @@ services:
         - "5436:5432"
 
     migrate:
-      build: ./
+      build: .apps/default/
 
       depends_on:
         - notification_db
