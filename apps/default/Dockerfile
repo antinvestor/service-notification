@@ -21,7 +21,7 @@ EXPOSE 50051
 WORKDIR /
 
 COPY --from=builder /app/notification_binary /notification
-COPY --from=builder /app/migrations /migrations
+COPY --from=builder /app/apps/defaultmigrations /migrations
 
 # Run the service command by default when the container starts.
 ENTRYPOINT ["/notification"]
