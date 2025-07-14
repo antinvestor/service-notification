@@ -1,6 +1,6 @@
 module github.com/antinvestor/service-notification
 
-go 1.24.0
+go 1.24.5
 
 require (
 	buf.build/go/protovalidate v0.13.1
