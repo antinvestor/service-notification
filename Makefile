@@ -70,4 +70,4 @@ tests: ## runs all system tests
 	go tool cover -html=coverage.out -o coverage.html
 
 
-build: clean fmt vet internal/tests ## run all preliminary steps and tests the setup
+build: clean fmt vet tests ## run all preliminary steps and tests the setup
