@@ -6,11 +6,12 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code
-COPY . .
+# Copy project files
+COPY ./apps/integrations/matrix ./apps/integrations/matrix
+COPY ./internal ./internal
 
 # Build the binary from the cmd directory
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /app/integration_binary ./apps/integrations/matrix/cmd/
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /app/binary ./apps/integrations/matrix/cmd/
 
 FROM gcr.io/distroless/static:nonroot
 
@@ -20,7 +21,7 @@ EXPOSE 50051
 
 WORKDIR /
 
-COPY --from=builder /app/integration_binary /integrationapp
+COPY --from=builder /app/binary /integration
 
 # Run the service command by default when the container starts.
-ENTRYPOINT ["/integrationapp"]
+ENTRYPOINT ["/integration"]
