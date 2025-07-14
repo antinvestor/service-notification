@@ -36,10 +36,9 @@ func (ns *NotificationServer) Send(req *notificationV1.SendRequest, stream grpc.
 
 	for _, data := range req.GetData() {
 
-		job := frame.NewJob(func(ctx context.Context, result frame.JobResultPipe) error {
+		job := frame.NewJob(func(ctx context.Context, result frame.JobResultPipe[*commonv1.StatusResponse]) error {
 			resp, jobErr := notificationBusiness.QueueOut(ctx, data)
 			if jobErr != nil {
-
 				jobResultChannelList <- jobErr
 				return nil
 			}
@@ -131,7 +130,7 @@ func (ns *NotificationServer) Receive(req *notificationV1.ReceiveRequest, stream
 
 	for _, data := range req.GetData() {
 
-		job := frame.NewJob(func(ctx context.Context, result frame.JobResultPipe) error {
+		job := frame.NewJob(func(ctx context.Context, result frame.JobResultPipe[*commonv1.StatusResponse]) error {
 			resp, jobErr := notificationBusiness.QueueIn(ctx, data)
 			if jobErr != nil {
 
