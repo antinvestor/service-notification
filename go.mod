@@ -14,7 +14,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/pitabwire/frame v1.49.1
-	github.com/pitabwire/util v0.2.5
+	github.com/pitabwire/util v0.3.1
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
 	github.com/testcontainers/testcontainers-go/modules/nats v0.37.0
