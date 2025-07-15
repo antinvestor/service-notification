@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"log/slog"
 	"strings"
 
 	apis "github.com/antinvestor/apis/go/common"
-	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
-	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
+	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/config"
-	"github.com/antinvestor/service-notification/apps/integrations/matrix/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/service/events"
 	"github.com/pitabwire/frame"
 )
@@ -44,7 +44,7 @@ func main() {
 		audienceList = strings.Split(cfg.Oauth2ServiceAudience, ",")
 	}
 
-	notificationCli, err := notificationV1.NewNotificationClient(ctx,
+	notificationCli, err := notificationv1.NewNotificationClient(ctx,
 		apis.WithEndpoint(cfg.NotificationServiceURI),
 		apis.WithTokenEndpoint(oauth2ServiceURL),
 		apis.WithTokenUsername(srv.JwtClientID()),
@@ -54,7 +54,7 @@ func main() {
 		logger.WithError(err).Fatal("could not setup notification client")
 	}
 
-	profileCli, err := profileV1.NewProfileClient(ctx,
+	profileCli, err := profilev1.NewProfileClient(ctx,
 		apis.WithEndpoint(cfg.ProfileServiceURI),
 		apis.WithTokenEndpoint(oauth2ServiceURL),
 		apis.WithTokenUsername(srv.JwtClientID()),

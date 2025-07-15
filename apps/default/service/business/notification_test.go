@@ -7,9 +7,9 @@ import (
 
 	commonmocks "github.com/antinvestor/apis/go/common/mocks"
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
-	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
@@ -46,7 +46,7 @@ func (nts *NotificationTestSuite) TestNewNotificationBusiness() {
 
 		type args struct {
 			ctxService   *ctxSrv
-			profileCli   *profileV1.ProfileClient
+			profileCli   *profilev1.ProfileClient
 			partitionCli *partitionV1.PartitionClient
 		}
 		testcases := []struct {
@@ -92,13 +92,13 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueIn() {
 
 	tests := []struct {
 		name    string
-		message *notificationV1.Notification
+		message *notificationv1.Notification
 		want    *commonv1.StatusResponse
 		wantErr bool
 	}{
 		{name: "NormalPassingQueueIn",
 
-			message: &notificationV1.Notification{
+			message: &notificationv1.Notification{
 				Id:        "justtestingId",
 				Language:  "en",
 				Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
@@ -113,7 +113,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueIn() {
 			},
 		},
 		{name: "NormalWithIDQueueIn",
-			message: &notificationV1.Notification{
+			message: &notificationv1.Notification{
 				Id:        "c2f4j7au6s7f91uqnojg",
 				Language:  "en",
 				Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
@@ -165,12 +165,12 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 
 	testcases := []struct {
 		name    string
-		message *notificationV1.Notification
+		message *notificationv1.Notification
 		want    *commonv1.StatusResponse
 		wantErr bool
 	}{
 		{name: "NormalQueueOut",
-			message: &notificationV1.Notification{
+			message: &notificationv1.Notification{
 				Id:        "testingQueue_out",
 				Language:  "en",
 				Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
@@ -185,7 +185,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 		},
 
 		{name: "NormalQueueOutWithXID",
-			message: &notificationV1.Notification{
+			message: &notificationv1.Notification{
 				Id:        "c2f4j7au6s7f91uqnojg",
 				Language:  "en",
 				Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
@@ -240,13 +240,13 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 
 	testcases := []struct {
 		name       string
-		releaseReq *notificationV1.ReleaseRequest
+		releaseReq *notificationv1.ReleaseRequest
 		want       *commonv1.StatusResponse
 		wantErr    bool
 	}{
 		{name: "NormalRelease",
 
-			releaseReq: &notificationV1.ReleaseRequest{
+			releaseReq: &notificationv1.ReleaseRequest{
 				Id:      []string{"testingQueue_out"},
 				Comment: "testing releasing messages",
 			},
@@ -297,7 +297,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 				}
 				tt.releaseReq.Id = []string{n.GetID()}
 
-				responseStream := commonmocks.NewMockServerStream[notificationV1.ReleaseResponse](ctx)
+				responseStream := commonmocks.NewMockServerStream[notificationv1.ReleaseResponse](ctx)
 
 				err = nb.Release(ctx, tt.releaseReq, responseStream)
 				if (err != nil) != tt.wantErr {
@@ -398,7 +398,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 					return
 				}
 
-				serverStream := commonmocks.NewMockServerStream[notificationV1.SearchResponse](ctx)
+				serverStream := commonmocks.NewMockServerStream[notificationv1.SearchResponse](ctx)
 
 				err = nb.Search(tt.search, serverStream)
 				if (err != nil) != tt.wantErr {
@@ -615,12 +615,12 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //	type fields struct {
 //		ctxService *ctxSrv
 //
-//		profileCli  *profileV1.ProfileClient
+//		profileCli  *profilev1.ProfileClient
 //		partitionCl *partitionV1.PartitionClient
 //		resultCount int
 //	}
 //	type args struct {
-//		search *notificationV1.TemplateSearchRequest
+//		search *notificationv1.TemplateSearchRequest
 //	}
 //	testcases := []struct {
 //		name    string
@@ -638,7 +638,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //				resultCount: 1,
 //			},
 //			args: args{
-//				search: &notificationV1.TemplateSearchRequest{Query: "Normal Search"},
+//				search: &notificationv1.TemplateSearchRequest{Query: "Normal Search"},
 //			},
 //			wantErr: false,
 //		},
@@ -651,7 +651,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //				resultCount: 0,
 //			},
 //			args: args{
-//				search: &notificationV1.TemplateSearchRequest{Query: "alien cryptic template"},
+//				search: &notificationv1.TemplateSearchRequest{Query: "alien cryptic template"},
 //			},
 //			wantErr: false,
 //		},
@@ -664,7 +664,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //				resultCount: 3,
 //			},
 //			args: args{
-//				search: &notificationV1.TemplateSearchRequest{
+//				search: &notificationv1.TemplateSearchRequest{
 //					Query: "",
 //					Page:  0,
 //					Count: 3,
@@ -676,10 +676,10 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //	for _, tt := range testcases {
 //		t.Run(tt.name, func(t *testing.T) {
 //
-//			nsSs := notificationV1.NewMockServerStream(ctrl)
+//			nsSs := notificationv1.NewMockServerStream(ctrl)
 //			nsSs.EXPECT().Context().Return(ctx).AnyTimes()
 //			nsSs.EXPECT().Send(gomock.Any()).MinTimes(1).DoAndReturn(
-//				func(arg *notificationV1.TemplateSearchResponse) any {
+//				func(arg *notificationv1.TemplateSearchResponse) any {
 //
 //					if len(arg.Data) != tt.fields.resultCount {
 //						t.Errorf("TemplateSearch() expected result items %v don't match %v", tt.fields.resultCount, len(arg.Data))

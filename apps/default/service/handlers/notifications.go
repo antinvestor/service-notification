@@ -4,9 +4,9 @@ import (
 	"context"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
-	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	"github.com/pitabwire/frame"
 	"google.golang.org/grpc"
@@ -14,10 +14,10 @@ import (
 
 type NotificationServer struct {
 	Service      *frame.Service
-	ProfileCli   *profileV1.ProfileClient
+	ProfileCli   *profilev1.ProfileClient
 	PartitionCli *partitionv1.PartitionClient
 
-	notificationV1.UnimplementedNotificationServiceServer
+	notificationv1.UnimplementedNotificationServiceServer
 }
 
 func (ns *NotificationServer) newNotificationBusiness(ctx context.Context) (business.NotificationBusiness, error) {
@@ -25,7 +25,7 @@ func (ns *NotificationServer) newNotificationBusiness(ctx context.Context) (busi
 }
 
 // Send method for queueing massages as requested
-func (ns *NotificationServer) Send(req *notificationV1.SendRequest, stream grpc.ServerStreamingServer[notificationV1.SendResponse]) error {
+func (ns *NotificationServer) Send(req *notificationv1.SendRequest, stream grpc.ServerStreamingServer[notificationv1.SendResponse]) error {
 	ctx := stream.Context()
 	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
@@ -69,7 +69,7 @@ func (ns *NotificationServer) Send(req *notificationV1.SendRequest, stream grpc.
 		return err
 	}
 
-	err = stream.Send(&notificationV1.SendResponse{Data: responses})
+	err = stream.Send(&notificationv1.SendResponse{Data: responses})
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (ns *NotificationServer) StatusUpdate(ctx context.Context, req *commonv1.St
 }
 
 // Release method for releasing queued massages and returns if notification status if released
-func (ns *NotificationServer) Release(req *notificationV1.ReleaseRequest, stream grpc.ServerStreamingServer[notificationV1.ReleaseResponse]) error {
+func (ns *NotificationServer) Release(req *notificationv1.ReleaseRequest, stream grpc.ServerStreamingServer[notificationv1.ReleaseResponse]) error {
 	ctx := stream.Context()
 	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
@@ -118,7 +118,7 @@ func (ns *NotificationServer) Release(req *notificationV1.ReleaseRequest, stream
 }
 
 // Receive method is for client request for particular notification responses from system
-func (ns *NotificationServer) Receive(req *notificationV1.ReceiveRequest, stream grpc.ServerStreamingServer[notificationV1.ReceiveResponse]) error {
+func (ns *NotificationServer) Receive(req *notificationv1.ReceiveRequest, stream grpc.ServerStreamingServer[notificationv1.ReceiveResponse]) error {
 
 	ctx := stream.Context()
 	notificationBusiness, err := ns.newNotificationBusiness(ctx)
@@ -164,7 +164,7 @@ func (ns *NotificationServer) Receive(req *notificationV1.ReceiveRequest, stream
 		return err
 	}
 
-	err = stream.Send(&notificationV1.ReceiveResponse{Data: responses})
+	err = stream.Send(&notificationv1.ReceiveResponse{Data: responses})
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (ns *NotificationServer) Receive(req *notificationV1.ReceiveRequest, stream
 }
 
 // Search method is for client request for particular notification details from system
-func (ns *NotificationServer) Search(req *commonv1.SearchRequest, stream grpc.ServerStreamingServer[notificationV1.SearchResponse]) error {
+func (ns *NotificationServer) Search(req *commonv1.SearchRequest, stream grpc.ServerStreamingServer[notificationv1.SearchResponse]) error {
 
 	notificationBusiness, err := ns.newNotificationBusiness(stream.Context())
 	if err != nil {
@@ -184,7 +184,7 @@ func (ns *NotificationServer) Search(req *commonv1.SearchRequest, stream grpc.Se
 }
 
 // TemplateSearch method is for client request for templates matching criteria from system
-func (ns *NotificationServer) TemplateSearch(req *notificationV1.TemplateSearchRequest, stream grpc.ServerStreamingServer[notificationV1.TemplateSearchResponse]) error {
+func (ns *NotificationServer) TemplateSearch(req *notificationv1.TemplateSearchRequest, stream grpc.ServerStreamingServer[notificationv1.TemplateSearchResponse]) error {
 
 	notificationBusiness, err := ns.newNotificationBusiness(stream.Context())
 	if err != nil {
@@ -194,7 +194,7 @@ func (ns *NotificationServer) TemplateSearch(req *notificationV1.TemplateSearchR
 
 }
 
-func (ns *NotificationServer) TemplateSave(ctx context.Context, req *notificationV1.TemplateSaveRequest) (*notificationV1.TemplateSaveResponse, error) {
+func (ns *NotificationServer) TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.TemplateSaveResponse, error) {
 	notificationBusiness, err := ns.newNotificationBusiness(ctx)
 	if err != nil {
 		return nil, err
@@ -205,5 +205,5 @@ func (ns *NotificationServer) TemplateSave(ctx context.Context, req *notificatio
 		return nil, err
 	}
 
-	return &notificationV1.TemplateSaveResponse{Data: response}, nil
+	return &notificationv1.TemplateSaveResponse{Data: response}, nil
 }

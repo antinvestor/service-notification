@@ -8,9 +8,9 @@ import (
 
 	"buf.build/go/protovalidate"
 	apis "github.com/antinvestor/apis/go/common"
-	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
-	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/config"
 	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/handlers"
@@ -59,7 +59,7 @@ func main() {
 		audienceList = strings.Split(cfg.Oauth2ServiceAudience, ",")
 	}
 
-	profileCli, err := profileV1.NewProfileClient(ctx,
+	profileCli, err := profilev1.NewProfileClient(ctx,
 		apis.WithEndpoint(cfg.ProfileServiceURI),
 		apis.WithTokenEndpoint(oauth2ServiceURL),
 		apis.WithTokenUsername(svc.JwtClientID()),
@@ -110,7 +110,7 @@ func main() {
 		PartitionCli: partitionCli,
 	}
 
-	notificationV1.RegisterNotificationServiceServer(grpcServer, implementation)
+	notificationv1.RegisterNotificationServiceServer(grpcServer, implementation)
 
 	grpcServerOpt := frame.WithGRPCServer(grpcServer)
 	serviceOptions = append(serviceOptions, grpcServerOpt)
@@ -120,7 +120,7 @@ func main() {
 		GrpcServerDialOpts: []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 	}
 
-	proxyMux, err := notificationV1.CreateProxyHandler(ctx, proxyOptions)
+	proxyMux, err := notificationv1.CreateProxyHandler(ctx, proxyOptions)
 	if err != nil {
 		log.WithError(err).Fatal("could not create proxy handler")
 		return

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	"github.com/antinvestor/gomatrix"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/config"
 	"github.com/pitabwire/util"
@@ -54,7 +54,7 @@ func (ms *Client) profileIDToUserID(_ context.Context, contact *commonv1.Contact
 	return fmt.Sprintf("@%s:%s", contact.GetProfileId(), ms.cfg.MatrixServerDomain)
 }
 
-func (ms *Client) Send(ctx context.Context, notification *notificationV1.Notification) (*gomatrix.RespSendEvent, error) {
+func (ms *Client) Send(ctx context.Context, notification *notificationv1.Notification) (*gomatrix.RespSendEvent, error) {
 
 	recipient := notification.GetRecipient()
 
@@ -83,7 +83,7 @@ func (ms *Client) Send(ctx context.Context, notification *notificationV1.Notific
 }
 
 // sendEvent sends a custom activity event
-func (ms *Client) sendEvent(_ context.Context, roomID string, eventType string, notification *notificationV1.Notification) (*gomatrix.RespSendEvent, error) {
+func (ms *Client) sendEvent(_ context.Context, roomID string, eventType string, notification *notificationv1.Notification) (*gomatrix.RespSendEvent, error) {
 
 	if metaType, ok := notification.GetExtras()["event_type"]; ok {
 		eventType = metaType
@@ -100,14 +100,14 @@ func (ms *Client) sendEvent(_ context.Context, roomID string, eventType string, 
 }
 
 // sendMessage sends a regular message event
-func (ms *Client) sendMessage(ctx context.Context, roomID string, notification *notificationV1.Notification) (*gomatrix.RespSendEvent, error) {
+func (ms *Client) sendMessage(ctx context.Context, roomID string, notification *notificationv1.Notification) (*gomatrix.RespSendEvent, error) {
 	content := ms.extractMessageContent(ctx, notification)
 	// Send the message to the room
 	return ms.matrix.SendMessageEvent(roomID, "m.room.message", content)
 }
 
 // sendUserNotice sends a system notice event (appears differently than regular messages)
-func (ms *Client) sendUserNotice(ctx context.Context, userID string, notification *notificationV1.Notification) (*gomatrix.RespSendEvent, error) {
+func (ms *Client) sendUserNotice(ctx context.Context, userID string, notification *notificationv1.Notification) (*gomatrix.RespSendEvent, error) {
 
 	content := ms.extractMessageContent(ctx, notification)
 
@@ -122,7 +122,7 @@ func (ms *Client) sendUserNotice(ctx context.Context, userID string, notificatio
 	return &resp, err
 }
 
-func (ms *Client) extractMessageContent(_ context.Context, notification *notificationV1.Notification) map[string]any {
+func (ms *Client) extractMessageContent(_ context.Context, notification *notificationv1.Notification) map[string]any {
 	content := map[string]any{
 		"msgtype": "m.text",
 		"body":    notification.GetData(),

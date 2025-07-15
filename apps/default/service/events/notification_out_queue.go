@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	repository2 "github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame"
@@ -18,7 +18,7 @@ import (
 
 type NotificationOutQueue struct {
 	Service    *frame.Service
-	ProfileCli *profileV1.ProfileClient
+	ProfileCli *profilev1.ProfileClient
 }
 
 func (event *NotificationOutQueue) Name() string {

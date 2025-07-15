@@ -4,7 +4,7 @@ import (
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
+	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	"github.com/pitabwire/frame"
 )
 
@@ -26,8 +26,8 @@ type Language struct {
 	Description string `gorm:"type:text"`
 }
 
-func (l *Language) ToApi() *notificationV1.Language {
-	return &notificationV1.Language{
+func (l *Language) ToApi() *notificationv1.Language {
+	return &notificationv1.Language{
 		Id:    l.GetID(),
 		Code:  l.Code,
 		Name:  l.Name,
@@ -43,9 +43,9 @@ type Template struct {
 	Extra frame.JSONMap
 }
 
-func (t *Template) ToApi(templateDataList []*notificationV1.TemplateData) *notificationV1.Template {
+func (t *Template) ToApi(templateDataList []*notificationv1.TemplateData) *notificationv1.Template {
 
-	return &notificationV1.Template{
+	return &notificationv1.Template{
 		Id:    t.GetID(),
 		Name:  t.Name,
 		Data:  templateDataList,
@@ -62,9 +62,9 @@ type TemplateData struct {
 	Detail     string `gorm:"type:text"`
 }
 
-func (td *TemplateData) ToApi(language *notificationV1.Language) *notificationV1.TemplateData {
+func (td *TemplateData) ToApi(language *notificationv1.Language) *notificationv1.TemplateData {
 
-	tData := &notificationV1.TemplateData{
+	tData := &notificationv1.TemplateData{
 		Id:       td.GetID(),
 		Type:     td.Type,
 		Detail:   td.Detail,
@@ -111,7 +111,7 @@ func (model *Notification) IsReleased() bool {
 	return model.ReleasedAt != nil && !model.ReleasedAt.IsZero()
 }
 
-func (model *Notification) ToApi(status *NotificationStatus, language *Language, message map[string]string) *notificationV1.Notification {
+func (model *Notification) ToApi(status *NotificationStatus, language *Language, message map[string]string) *notificationv1.Notification {
 
 	extra := make(map[string]string)
 	extra["tenant_id"] = model.TenantID
@@ -154,7 +154,7 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 		ContactId:   model.RecipientContactID,
 	}
 
-	notification := notificationV1.Notification{
+	notification := notificationv1.Notification{
 		Id:          model.ID,
 		Source:      source,
 		Recipient:   recipient,
@@ -168,7 +168,7 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 		RouteId:     model.RouteID,
 		Status:      status.ToStatusAPI(),
 		Extras:      extra,
-		Priority:    notificationV1.PRIORITY(model.Priority),
+		Priority:    notificationv1.PRIORITY(model.Priority),
 	}
 	return &notification
 }

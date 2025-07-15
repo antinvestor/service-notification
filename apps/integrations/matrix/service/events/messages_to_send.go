@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationV1 "github.com/antinvestor/apis/go/notification/v1"
-	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
+	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/gomatrix"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/service/client"
 	"github.com/pitabwire/frame"
@@ -15,8 +15,8 @@ import (
 
 type MessageToSend struct {
 	Service         *frame.Service
-	ProfileCli      *profileV1.ProfileClient
-	NotificationCli *notificationV1.NotificationClient
+	ProfileCli      *profilev1.ProfileClient
+	NotificationCli *notificationv1.NotificationClient
 	MatrixCli       *client.Client
 }
 
@@ -24,7 +24,7 @@ func (ms *MessageToSend) Handle(ctx context.Context, _ map[string]string, payloa
 
 	log := ms.Service.Log(ctx)
 
-	notification := &notificationV1.Notification{}
+	notification := &notificationv1.Notification{}
 
 	err := proto.Unmarshal(payload, notification)
 	if err != nil {

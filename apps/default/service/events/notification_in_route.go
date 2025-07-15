@@ -7,13 +7,13 @@ import (
 	"strings"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	repository2 "github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame"
 )
 
-func filterContactFromProfileByID(profile *profileV1.ProfileObject, contactID string) *profileV1.ContactObject {
+func filterContactFromProfileByID(profile *profilev1.ProfileObject, contactID string) *profilev1.ContactObject {
 
 	for _, contact := range profile.GetContacts() {
 		if contact.GetId() == contactID {

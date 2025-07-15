@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	profileV1 "github.com/antinvestor/apis/go/profile/v1"
+	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame"
@@ -14,7 +14,7 @@ import (
 
 type NotificationOutRoute struct {
 	Service    *frame.Service
-	ProfileCli *profileV1.ProfileClient
+	ProfileCli *profilev1.ProfileClient
 }
 
 func (event *NotificationOutRoute) Name() string {
@@ -57,9 +57,9 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 	contact := filterContactFromProfileByID(p, n.RecipientContactID)
 	switch contact.Type {
-	case profileV1.ContactType_MSISDN:
+	case profilev1.ContactType_MSISDN:
 		n.NotificationType = models.RouteTypeShortForm
-	case profileV1.ContactType_EMAIL:
+	case profilev1.ContactType_EMAIL:
 		n.NotificationType = models.RouteTypeLongForm
 	default:
 		n.NotificationType = models.RouteTypeAny
