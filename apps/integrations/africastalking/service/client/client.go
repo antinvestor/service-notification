@@ -5,15 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
-	settingsv1 "github.com/antinvestor/apis/go/settings/v1"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
-	"github.com/antinvestor/service-notification/internal/constants"
 	"io"
 	"net/http"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
+	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	settingsv1 "github.com/antinvestor/apis/go/settings/v1"
+	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
+	"github.com/antinvestor/service-notification/internal/constants"
 	"github.com/pitabwire/util"
 )
 
@@ -211,7 +211,7 @@ func (ms *Client) SendBulkSMS(ctx context.Context, apiKey, idempotencyKey string
 	return &response, nil
 }
 
-func (ms *Client) Categorize(ctx context.Context, payload map[string]any) string {
+func (ms *Client) Categorise(ctx context.Context, payload map[string]any) string {
 	// Check for Delivery Report
 	// Fields: id, status, phoneNumber, networkCode, failureReason
 	_, hasId := payload["id"]
@@ -244,6 +244,6 @@ func (ms *Client) Categorize(ctx context.Context, payload map[string]any) string
 		return SubscriptionNotifications
 	}
 
-	// If we can't categorize, return empty string
+	// If we can't categorise, return empty string
 	return ""
 }

@@ -66,7 +66,7 @@ var FailureReasonOnRejectedOrFailedMap = map[string]string{
 	"InsufficientCredit":         "This occurs when the subscriber doesn’t have enough airtime for a premium subscription service/message",
 	"InvalidLinkId":              "This occurs when a message is sent with an invalid linkId for an onDemand service",
 	"UserIsInactive":             "This occurs when the subscriber is inactive or the account deactivated by the MSP (Mobile Service Provider).",
-	"UserInBlackList":            "This occurs if the user has been blacklisted not to receive messages from a paricular service (shortcode or keyword)",
+	"UserInBlackList":            "This occurs if the user has been blacklisted not to receive messages from a particular service (shortcode or keyword)",
 	"UserAccountSuspended":       "This occurs when the mobile subscriber has been suspended by the MSP.",
 	"NotNetworkSubcriber":        "This occurs when the message is passed to an MSP where the subscriber doesn’t belong.",
 	"UserNotSubscribedToProduct": "This occurs when the message from a subscription product is sent to a phone number that has not subscribed to the product.",

@@ -13,7 +13,7 @@ type AfricasTalkingConfig struct {
 	PartitionServiceURI    string `default:"127.0.0.1:7003" envconfig:"PARTITION_SERVICE_URI"`
 	NotificationServiceURI string `default:"127.0.0.1:7005" envconfig:"NOTIFICATION_SERVICE_URI"`
 
-	// Africas talking configuration
+	// Africans talking configuration
 	QueueATDequeueName string `default:"africastalking.natifications.dequeue" envconfig:"QUEUE_NOTIFICATION_AFRICASTALKING_DEQUEUE_NAME"`
 	QueueATDequeueURI  string `default:"mem://africastalking.natifications.de.queue" envconfig:"QUEUE_NOTIFICATION_AFRICASTALKING_DEQUEUE_URI"`
 

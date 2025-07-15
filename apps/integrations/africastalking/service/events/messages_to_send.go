@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
-	"github.com/antinvestor/service-notification/internal/apperrors"
 	"strconv"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
+	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame"
 	"google.golang.org/protobuf/proto"
 )

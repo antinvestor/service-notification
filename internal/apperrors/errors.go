@@ -8,7 +8,7 @@ import (
 const (
 	// Non-retriable errors (400-499)
 	BadRequest      = 400
-	Unauthorized    = 401
+	Unauthorised    = 401
 	Forbidden       = 403
 	NotFound        = 404
 	Conflict        = 409
@@ -77,15 +77,15 @@ var (
 	}
 
 	ErrUnauthorizedAccess = Error{
-		code:    Unauthorized,
-		message: "Unauthorized access attempt",
+		code:    Unauthorised,
+		message: "Unauthorised access attempt",
 	}
 	ErrForbiddenAccess = Error{
 		code:    Forbidden,
 		message: "Access forbidden",
 	}
 	ErrInvalidCredentials = Error{
-		code:    Unauthorized,
+		code:    Unauthorised,
 		message: "Invalid credentials provided",
 	}
 )

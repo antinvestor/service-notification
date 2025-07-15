@@ -2,18 +2,17 @@ package main
 
 import (
 	"fmt"
-	settingsv1 "github.com/antinvestor/apis/go/settings/v1"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/events"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/handlers"
 	"log/slog"
 	"strings"
 
 	apis "github.com/antinvestor/apis/go/common"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
-
+	settingsv1 "github.com/antinvestor/apis/go/settings/v1"
+	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
+	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
+	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/events"
+	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/handlers"
 	"github.com/pitabwire/frame"
 )
 

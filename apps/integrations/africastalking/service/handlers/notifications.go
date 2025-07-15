@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame"
-	"net/http"
 )
 
 type ATServer struct {
@@ -63,7 +64,7 @@ func (ps *ATServer) ReceiveNotification(rw http.ResponseWriter, req *http.Reques
 
 	rawIPData := frame.GetIP(req)
 
-	notificationCategory := ps.AfricasTalkingCli.Categorize(ctx, payload)
+	notificationCategory := ps.AfricasTalkingCli.Categorise(ctx, payload)
 
 	var appErr *apperrors.Error
 	switch notificationCategory {
@@ -130,10 +131,11 @@ func (ps *ATServer) handleDeliveryReport(ctx context.Context, routeID, ip string
 		internalStatus = commonv1.STATUS_FAILED
 	}
 
-	var extra map[string]string
+	extra := map[string]string{}
 	for k, v := range payload {
 		extra[k] = fmt.Sprintf("%v", v)
 	}
+	extra["route"] = routeID
 	extra["ip"] = ip
 	networkCode, ok := payload["networkCode"]
 	if ok {
@@ -176,7 +178,7 @@ func (ps *ATServer) handleBulkSMSOptOut(ctx context.Context, routeID, ip string,
 //
 // To receive premium sms subscription notifications, you need to set a subscription notification callback URL. From the dashboard select SMS -> SMS Callback URLs -> Subscription Notifications.
 //
-// Subscription notification contents
+// # Subscription notification contents
 //
 // Parameter
 // phoneNumber String
@@ -198,7 +200,7 @@ func (ps *ATServer) handleSubscriptionNotifications(ctx context.Context, routeID
 // handleIncomingMessages Sent whenever a message is sent to any of your registered shortcodes.
 // To receive incoming messages, you need to set an incoming messages callback URL. From the dashboard select SMS -> SMS Callback URLs -> Incoming Messages.
 //
-// Incoming message notification contents
+// # Incoming message notification contents
 //
 // Parameter
 // date String
@@ -224,7 +226,6 @@ func (ps *ATServer) handleSubscriptionNotifications(ctx context.Context, routeID
 //
 // networkCode String
 // A unique identifier for the telco that handled the message.
-//
 func (ps *ATServer) handleIncomingMessages(ctx context.Context, routeID, ip string, payload map[string]any) *apperrors.Error {
 
 	return nil
