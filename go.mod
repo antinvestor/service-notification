@@ -14,6 +14,7 @@ require (
 	github.com/pitabwire/frame v1.50.17
 	github.com/pitabwire/util v0.3.1
 	github.com/stretchr/testify v1.10.0
+	github.com/wneessen/go-mail v0.6.2
 	go.uber.org/mock v0.5.2
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6

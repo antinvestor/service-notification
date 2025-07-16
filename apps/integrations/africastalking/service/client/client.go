@@ -29,8 +29,11 @@ type Client struct {
 func NewClient(logger *util.LogEntry, cfg *config.AfricasTalkingConfig, profileCli *profilev1.ProfileClient, settingsCli *settingsv1.SettingsClient) (*Client, error) {
 
 	return &Client{
-		logger: logger,
-		cfg:    cfg,
+		cfg:         cfg,
+		httpClient:  http.Client{},
+		logger:      logger,
+		profileCli:  profileCli,
+		settingsCli: settingsCli,
 	}, nil
 }
 
@@ -47,8 +50,9 @@ func (ms *Client) contactLinkToPhoneNumber(ctx context.Context, contact *commonv
 
 	for _, c := range profile.GetContacts() {
 		if c.GetId() == contact.GetContactId() {
-			return c.GetDetail(), nil
-
+			if c.GetType() == profilev1.ContactType_MSISDN {
+				return c.GetDetail(), nil
+			}
 		}
 	}
 

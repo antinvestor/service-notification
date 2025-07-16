@@ -9,18 +9,18 @@ import (
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	settingsv1 "github.com/antinvestor/apis/go/settings/v1"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/events"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/handlers"
+	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/config"
+	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
+	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/events"
+	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/handlers"
 	"github.com/pitabwire/frame"
 )
 
 func main() {
 
-	serviceName := "integration_notification_africastalking"
+	serviceName := "integration_notification_emailsmtp"
 
-	cfg, err := frame.ConfigFromEnv[config.AfricasTalkingConfig]()
+	cfg, err := frame.ConfigFromEnv[config.EmailSMTPConfig]()
 	if err != nil {
 		slog.With("err", err).Error("could not process configs")
 		return
@@ -76,28 +76,28 @@ func main() {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
 
-	africastalkingCl, err := client.NewClient(logger, &cfg, profileCli, settingsCli)
+	emailSMTPCli, err := client.NewClient(logger, &cfg, profileCli, settingsCli)
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
 
 	var serviceOptions []frame.Option
 
-	implementation := &handlers.ATServer{
-		Service:           svc,
-		ProfileCli:        profileCli,
-		NotificationCli:   notificationCli,
-		AfricasTalkingCli: africastalkingCl,
+	implementation := &handlers.SMTPServer{
+		Service:         svc,
+		ProfileCli:      profileCli,
+		NotificationCli: notificationCli,
+		EmailSMTPCli:    emailSMTPCli,
 	}
 
 	serviceOptions = append(serviceOptions,
 		frame.WithHTTPHandler(implementation.NewRouterV1()),
 		frame.WithRegisterSubscriber(cfg.QueueATDequeueName, cfg.QueueATDequeueURI,
 			&events.MessageToSend{
-				Service:           svc,
-				NotificationCli:   notificationCli,
-				ProfileCli:        profileCli,
-				AfricasTalkingCli: africastalkingCl,
+				Service:         svc,
+				NotificationCli: notificationCli,
+				ProfileCli:      profileCli,
+				EmailSMTPCli:    emailSMTPCli,
 			}),
 	)
 
