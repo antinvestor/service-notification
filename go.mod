@@ -6,7 +6,7 @@ require (
 	buf.build/go/protovalidate v0.14.0
 	github.com/antinvestor/apis/go/common v1.37.1
 	github.com/antinvestor/apis/go/notification v1.36.4
-	github.com/antinvestor/apis/go/partition v1.36.4
+	github.com/antinvestor/apis/go/partition v1.37.3
 	github.com/antinvestor/apis/go/profile v1.36.4
 	github.com/antinvestor/apis/go/settings v1.36.4
 	github.com/antinvestor/gomatrix v0.1.4
@@ -142,8 +142,8 @@ require (
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.242.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250715232539-7130f93afb79 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250715232539-7130f93afb79 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250728155136-f173205681a0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250721164621-a45f3dfb1074 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
 )
