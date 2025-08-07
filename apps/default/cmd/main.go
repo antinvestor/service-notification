@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strings"
 
 	"buf.build/go/protovalidate"
@@ -27,13 +26,15 @@ func main() {
 
 	serviceName := "service_notifications"
 
-	cfg, err := frame.ConfigFromEnv[config.NotificationConfig]()
+	ctx := context.Background()
+
+	cfg, err := frame.ConfigLoadWithOIDC[config.NotificationConfig](ctx)
 	if err != nil {
-		slog.With("err", err).Error("could not process configs")
+		util.Log(ctx).With("err", err).Error("could not process configs")
 		return
 	}
 
-	ctx, svc := frame.NewService(serviceName, frame.WithConfig(&cfg))
+	ctx, svc := frame.NewServiceWithContext(ctx, serviceName, frame.WithConfig(&cfg))
 
 	log := svc.Log(ctx)
 

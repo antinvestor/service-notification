@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
@@ -80,7 +81,6 @@ func (ms *Client) Send(ctx context.Context, _ map[string]string, notification *n
 }
 
 // SendEmail immediately sends out messages using the configured settings.
-//
 func (ms *Client) SendEmail(ctx context.Context, messageID, senderEmail, recipientEmail string, subject string, message string) error {
 
 	msg := mail.NewMsg()

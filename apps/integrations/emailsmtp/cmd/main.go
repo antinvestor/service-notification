@@ -8,7 +8,6 @@ import (
 	apis "github.com/antinvestor/apis/go/common"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
-	settingsv1 "github.com/antinvestor/apis/go/settings/v1"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/events"
@@ -66,17 +65,7 @@ func main() {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
 
-	settingsCli, err := settingsv1.NewsettingsClient(ctx,
-		apis.WithEndpoint(cfg.SettingsServiceURI),
-		apis.WithTokenEndpoint(oauth2ServiceURL),
-		apis.WithTokenUsername(svc.JwtClientID()),
-		apis.WithTokenPassword(svc.JwtClientSecret()),
-		apis.WithAudiences(audienceList...))
-	if err != nil {
-		logger.WithError(err).Fatal("could not setup profile client")
-	}
-
-	emailSMTPCli, err := client.NewClient(logger, &cfg, profileCli, settingsCli)
+	emailSMTPCli, err := client.NewClient(logger, &cfg, profileCli)
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
