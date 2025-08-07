@@ -12,6 +12,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame"
+	"github.com/pitabwire/util"
 )
 
 type ATServer struct {
@@ -62,7 +63,7 @@ func (ps *ATServer) ReceiveNotification(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	rawIPData := frame.GetIP(req)
+	rawIPData := util.GetIP(req)
 
 	notificationCategory := ps.AfricasTalkingCli.Categorise(ctx, payload)
 

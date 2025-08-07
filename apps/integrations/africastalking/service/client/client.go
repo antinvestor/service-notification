@@ -95,7 +95,7 @@ func (ms *Client) extractCredentials(ctx context.Context, headers map[string]str
 		},
 	}
 
-	settingResp, err := ms.settingsCli.Client.Get(ctx, settingReq)
+	settingResp, err := ms.settingsCli.Svc().Get(ctx, settingReq)
 	if err != nil {
 		return nil, err
 	}
