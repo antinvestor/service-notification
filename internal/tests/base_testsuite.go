@@ -10,9 +10,9 @@ import (
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
-	"github.com/pitabwire/frame/tests"
-	"github.com/pitabwire/frame/tests/deps/testpostgres"
-	"github.com/pitabwire/frame/tests/testdef"
+	"github.com/pitabwire/frame/frametests"
+	"github.com/pitabwire/frame/frametests/definition"
+	"github.com/pitabwire/frame/frametests/deps/testpostgres"
 	"github.com/pitabwire/util"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
@@ -25,12 +25,12 @@ const (
 )
 
 type BaseTestSuite struct {
-	tests.FrameBaseTestSuite
+	frametests.FrameBaseTestSuite
 }
 
-func initResources(_ context.Context) []testdef.TestResource {
-	pg := testpostgres.NewPGDepWithCred(PostgresqlDBImage, "ant", "s3cr3t", "service_profile")
-	resources := []testdef.TestResource{pg}
+func initResources(_ context.Context) []definition.TestResource {
+	pg := testpostgres.NewWithOpts("service_notification", definition.WithUserName("ant"), definition.WithPassword("s3cr3t"))
+	resources := []definition.TestResource{pg}
 	return resources
 }
 
@@ -124,10 +124,10 @@ func (bs *BaseTestSuite) TearDownSuite() {
 }
 
 // WithTestDependancies Creates subtests with each known DependancyOption.
-func (bs *BaseTestSuite) WithTestDependancies(t *testing.T, testFn func(t *testing.T, dep *testdef.DependancyOption)) {
-	options := []*testdef.DependancyOption{
-		testdef.NewDependancyOption("default", util.RandomString(DefaultRandomStringLength), bs.Resources()),
+func (bs *BaseTestSuite) WithTestDependancies(t *testing.T, testFn func(t *testing.T, dep *definition.DependancyOption)) {
+	options := []*definition.DependancyOption{
+		definition.NewDependancyOption("default", util.RandomString(DefaultRandomStringLength), bs.Resources()),
 	}
 
-	tests.WithTestDependancies(t, options, testFn)
+	frametests.WithTestDependancies(t, options, testFn)
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/antinvestor/service-notification/apps/default/service/tests"
 	"github.com/pitabwire/frame"
-	"github.com/pitabwire/frame/tests/testdef"
+	"github.com/pitabwire/frame/frametests/definition"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -40,7 +40,7 @@ type ctxSrv struct {
 
 func (nts *NotificationTestSuite) TestNewNotificationBusiness() {
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *testdef.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 
@@ -128,7 +128,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueIn() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *testdef.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -200,7 +200,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *testdef.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -260,7 +260,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *testdef.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -346,7 +346,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *testdef.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -438,7 +438,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Status() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *testdef.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -542,7 +542,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *testdef.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
