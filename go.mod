@@ -6,7 +6,7 @@ require (
 	buf.build/go/protovalidate v0.14.0
 	github.com/antinvestor/apis/go/common v1.38.0
 	github.com/antinvestor/apis/go/notification v1.39.0
-	github.com/antinvestor/apis/go/partition v1.38.2
+	github.com/antinvestor/apis/go/partition v1.39.0
 	github.com/antinvestor/apis/go/profile v1.38.2
 	github.com/antinvestor/apis/go/settings v1.38.2
 	github.com/antinvestor/gomatrix v0.1.4
