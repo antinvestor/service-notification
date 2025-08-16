@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"buf.build/go/protovalidate"
 	apis "github.com/antinvestor/apis/go/common"
@@ -50,22 +49,12 @@ func main() {
 		log.WithError(err).Fatal("main -- could not register fo jwt")
 	}
 
-	oauth2ServiceHost := cfg.GetOauth2ServiceURI()
-	oauth2ServiceURL := fmt.Sprintf("%s/oauth2/token", oauth2ServiceHost)
-	oauth2ServiceSecret := cfg.Oauth2ServiceClientSecret
-
-	audienceList := make([]string, 0)
-
-	if cfg.Oauth2ServiceAudience != "" {
-		audienceList = strings.Split(cfg.Oauth2ServiceAudience, ",")
-	}
-
 	profileCli, err := profilev1.NewProfileClient(ctx,
 		apis.WithEndpoint(cfg.ProfileServiceURI),
-		apis.WithTokenEndpoint(oauth2ServiceURL),
+		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(svc.JwtClientID()),
-		apis.WithTokenPassword(oauth2ServiceSecret),
-		apis.WithAudiences(audienceList...))
+		apis.WithTokenPassword(svc.JwtClientSecret()),
+		apis.WithAudiences("service_profile"))
 	if err != nil {
 		log.WithError(err).Fatal("could not setup profile client")
 	}
@@ -73,10 +62,10 @@ func main() {
 	partitionCli, err := partitionV1.NewPartitionsClient(
 		ctx,
 		apis.WithEndpoint(cfg.PartitionServiceURI),
-		apis.WithTokenEndpoint(oauth2ServiceURL),
+		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(svc.JwtClientID()),
-		apis.WithTokenPassword(oauth2ServiceSecret),
-		apis.WithAudiences(audienceList...))
+		apis.WithTokenPassword(svc.JwtClientSecret()),
+		apis.WithAudiences("service_partition"))
 	if err != nil {
 		log.WithError(err).Fatal("could not setup partition client")
 	}
@@ -94,12 +83,12 @@ func main() {
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandlerContext(frame.RecoveryHandlerFun)),
-			svc.UnaryAuthInterceptor(jwtAudience, cfg.Oauth2JwtVerifyIssuer),
+			svc.UnaryAuthInterceptor(jwtAudience, cfg.GetOauth2Issuer()),
 			protovalidateinterceptor.UnaryServerInterceptor(validator),
 		),
 		grpc.ChainStreamInterceptor(
 			recovery.StreamServerInterceptor(recovery.WithRecoveryHandlerContext(frame.RecoveryHandlerFun)),
-			svc.StreamAuthInterceptor(jwtAudience, cfg.Oauth2JwtVerifyIssuer),
+			svc.StreamAuthInterceptor(jwtAudience, cfg.GetOauth2Issuer()),
 			protovalidateinterceptor.StreamServerInterceptor(validator),
 		),
 	)
