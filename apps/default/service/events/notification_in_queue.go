@@ -12,13 +12,26 @@ import (
 	"github.com/pitabwire/frame"
 )
 
+// NotificationInQueueEvent is the event name for queuing incoming notifications
+const NotificationInQueueEvent = "notification.in.queue"
+
 type NotificationInQueue struct {
-	Service    *frame.Service
-	ProfileCli *profilev1.ProfileClient
+	Service          *frame.Service
+	ProfileCli       *profilev1.ProfileClient
+	NotificationRepo repository.NotificationRepository
+}
+
+// NewNotificationInQueue creates a new NotificationInQueue event handler
+func NewNotificationInQueue(ctx context.Context, service *frame.Service, profileCli *profilev1.ProfileClient) *NotificationInQueue {
+	return &NotificationInQueue{
+		Service:          service,
+		ProfileCli:       profileCli,
+		NotificationRepo: repository.NewNotificationRepository(ctx, service),
+	}
 }
 
 func (event *NotificationInQueue) Name() string {
-	return "notification.in.queue"
+	return NotificationInQueueEvent
 }
 
 func (event *NotificationInQueue) PayloadType() any {
@@ -39,9 +52,7 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload any) erro
 	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
-	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
-
-	n, err := notificationRepo.GetByID(ctx, notificationID)
+	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		return err
 	}
@@ -78,8 +89,7 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload any) erro
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	eventStatus := NotificationStatusSave{}
-	err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
+	err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		return err
 	}

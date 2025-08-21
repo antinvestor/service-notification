@@ -50,12 +50,12 @@ func (bs *BaseTestSuite) CreateService(
 	profileCli := bs.GetProfileCli(ctx)
 
 	svc.Init(ctx, frame.WithRegisterEvents(
-		&events.NotificationSave{Service: svc},
-		&events.NotificationStatusSave{Service: svc},
-		&events.NotificationInRoute{Service: svc},
-		&events.NotificationInQueue{Service: svc, ProfileCli: profileCli},
-		&events.NotificationOutRoute{Service: svc, ProfileCli: profileCli},
-		&events.NotificationOutQueue{Service: svc, ProfileCli: profileCli}))
+		events.NewNotificationSave(ctx, svc),
+		events.NewNotificationStatusSave(ctx, svc),
+		events.NewNotificationInRoute(ctx, svc),
+		events.NewNotificationInQueue(ctx, svc, profileCli),
+		events.NewNotificationOutRoute(ctx, svc, profileCli),
+		events.NewNotificationOutQueue(ctx, svc, profileCli)))
 
 	err = repository.Migrate(ctx, svc, "../../migrations/0001")
 	require.NoError(t, err)

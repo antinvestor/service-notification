@@ -123,12 +123,12 @@ func main() {
 
 	serviceOptions = append(serviceOptions,
 		frame.WithRegisterEvents(
-			&events2.NotificationSave{Service: svc},
-			&events2.NotificationStatusSave{Service: svc},
-			&events2.NotificationInRoute{Service: svc},
-			&events2.NotificationInQueue{Service: svc, ProfileCli: profileCli},
-			&events2.NotificationOutRoute{Service: svc, ProfileCli: profileCli},
-			&events2.NotificationOutQueue{Service: svc, ProfileCli: profileCli}))
+			events2.NewNotificationSave(ctx, svc),
+			events2.NewNotificationStatusSave(ctx, svc),
+			events2.NewNotificationInRoute(ctx, svc),
+			events2.NewNotificationInQueue(ctx, svc, profileCli),
+			events2.NewNotificationOutRoute(ctx, svc, profileCli),
+			events2.NewNotificationOutQueue(ctx, svc, profileCli)))
 
 	svc.Init(ctx, serviceOptions...)
 

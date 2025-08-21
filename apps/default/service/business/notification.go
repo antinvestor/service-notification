@@ -75,6 +75,17 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
+	templateID := ""
+	if message.GetTemplate() != "" {
+		t, err0 := nb.templateRepo.GetByName(ctx, message.GetTemplate())
+		if err0 != nil {
+			logger.WithError(err0).Warn("could not get template")
+			return nil, err0
+		}
+
+		templateID = t.GetID()
+	}
+
 	n := models.Notification{
 		ParentID:          message.GetParentId(),
 		TransientID:       message.GetId(),
@@ -89,6 +100,8 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		LanguageID: language.GetID(),
 		OutBound:   true,
 
+		TemplateID: templateID,
+
 		Payload: frame.DBPropertiesFromMap(message.Payload),
 		Message: message.GetData(),
 
@@ -102,16 +115,6 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		n.ID = message.GetId()
 	}
 
-	if message.GetTemplate() != "" {
-		t, err0 := nb.templateRepo.GetByName(ctx, message.GetTemplate())
-		if err0 != nil {
-			logger.WithError(err0).Warn("could not get template")
-			return nil, err0
-		}
-
-		n.TemplateID = t.GetID()
-	}
-
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
 		State:          int32(commonv1.STATE_CREATED.Number()),
@@ -121,16 +124,14 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	nStatus.GenID(ctx)
 
 	// Queue out message for further processing
-	event := events.NotificationSave{}
-	err = nb.service.Emit(ctx, event.Name(), n)
+	err = nb.service.Emit(ctx, events.NotificationSaveEvent, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit event save")
 		return nil, err
 	}
 
 	// Queue out notification status for further processing
-	eventStatus := events.NotificationStatusSave{}
-	err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
+	err = nb.service.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not save status")
 		return nil, err
@@ -188,16 +189,14 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	nStatus.GenID(ctx)
 
 	// Queue in message for further processing
-	event := events.NotificationSave{}
-	err = nb.service.Emit(ctx, event.Name(), n)
+	err = nb.service.Emit(ctx, events.NotificationSaveEvent, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit notification")
 		return nil, err
 	}
 
 	// Queue out notification status for further processing
-	eventStatus := events.NotificationStatusSave{}
-	err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
+	err = nb.service.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit notification status")
 		return nil, err
@@ -245,8 +244,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	eventStatus := events.NotificationStatusSave{}
-	err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
+	err = nb.service.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not save status")
 		return nil, err
@@ -285,8 +283,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	var statusesToRelease []*commonv1.StatusResponse
 	for _, n := range notificationsToUpdate {
 
-		event := events.NotificationSave{}
-		err = nb.service.Emit(ctx, event.Name(), n)
+		err = nb.service.Emit(ctx, events.NotificationSaveEvent, n)
 		if err != nil {
 			logger.WithError(err).Warn("could not emit notification save")
 			return err
@@ -301,8 +298,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		nStatus.GenID(ctx)
 
 		// Release notification status save for further processing
-		eventStatus := events.NotificationStatusSave{}
-		err = nb.service.Emit(ctx, eventStatus.Name(), nStatus)
+		err = nb.service.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
 		if err != nil {
 			logger.WithError(err).Warn("could not emit notification status")
 			return err

@@ -13,6 +13,9 @@ import (
 	"github.com/pitabwire/frame"
 )
 
+// NotificationInRouteEvent is the event name for routing incoming notifications
+const NotificationInRouteEvent = "notification.in.route"
+
 func filterContactFromProfileByID(profile *profilev1.ProfileObject, contactID string) *profilev1.ContactObject {
 
 	for _, contact := range profile.GetContacts() {
@@ -25,11 +28,20 @@ func filterContactFromProfileByID(profile *profilev1.ProfileObject, contactID st
 }
 
 type NotificationInRoute struct {
-	Service *frame.Service
+	Service          *frame.Service
+	NotificationRepo repository.NotificationRepository
+}
+
+// NewNotificationInRoute creates a new NotificationInRoute event handler
+func NewNotificationInRoute(ctx context.Context, service *frame.Service) *NotificationInRoute {
+	return &NotificationInRoute{
+		Service:          service,
+		NotificationRepo: repository.NewNotificationRepository(ctx, service),
+	}
 }
 
 func (event *NotificationInRoute) Name() string {
-	return "notification.in.route"
+	return NotificationInRouteEvent
 }
 
 func (event *NotificationInRoute) PayloadType() any {
@@ -50,9 +62,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
-	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
-
-	n, err := notificationRepo.GetByID(ctx, notificationID)
+	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		return err
 	}
@@ -73,8 +83,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 
 			nStatus.GenID(ctx)
 
-			eventStatus := NotificationStatusSave{}
-			err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
+			err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 			if err != nil {
 				logger.WithError(err).Warn("could not emit status for save")
 				return err
@@ -88,14 +97,13 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 
 	n.RouteID = route.ID
 
-	err = notificationRepo.Save(ctx, n)
+	err = event.NotificationRepo.Save(ctx, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not save routed notification to db")
 		return err
 	}
 
-	evt := NotificationInQueue{}
-	err = event.Service.Emit(ctx, evt.Name(), n.GetID())
+	err = event.Service.Emit(ctx, NotificationInQueueEvent, n.GetID())
 	if err != nil {
 		logger.WithError(err).Warn("could not queue out notification")
 		return err
@@ -110,8 +118,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	eventStatus := NotificationStatusSave{}
-	err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
+	err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit status for save")
 		return err

@@ -7,15 +7,24 @@ import (
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/pitabwire/frame"
-	"gorm.io/gorm/clause"
 )
+
+// NotificationSaveEvent is the event name for saving notification records
+const NotificationSaveEvent = "notification.save"
 
 type NotificationSave struct {
 	Service *frame.Service
 }
 
+// NewNotificationSave creates a new NotificationSave event handler
+func NewNotificationSave(ctx context.Context, service *frame.Service) *NotificationSave {
+	return &NotificationSave{
+		Service: service,
+	}
+}
+
 func (e *NotificationSave) Name() string {
-	return "notification.save"
+	return NotificationSaveEvent
 }
 
 func (e *NotificationSave) PayloadType() any {
@@ -41,21 +50,16 @@ func (e *NotificationSave) Execute(ctx context.Context, payload any) error {
 	logger := e.Service.Log(ctx).WithField("type", e.Name())
 	logger.WithField("payload", notification).Debug("handling event")
 
-	result := e.Service.DB(ctx, false).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "id"}},
-		UpdateAll: true,
-	}).Create(notification)
-
+	result := e.Service.DB(ctx, false).Create(notification)
 	err := result.Error
 	if err != nil {
 		logger.WithError(err).Warn("could not save to db")
 		return err
 	}
-	logger.WithField("rows affected", result.RowsAffected).Debug("successfully saved record to db")
+	logger.WithField("rows affected", result.RowsAffected).Debug("successfully saved notification to db")
 
 	if !notification.OutBound {
-		event := NotificationInRoute{}
-		err = e.Service.Emit(ctx, event.Name(), notification.GetID())
+		err = e.Service.Emit(ctx, NotificationInRouteEvent, notification.GetID())
 		if err != nil {
 			return err
 		}
@@ -64,8 +68,7 @@ func (e *NotificationSave) Execute(ctx context.Context, payload any) error {
 	}
 
 	if notification.IsReleased() {
-		event := NotificationOutRoute{}
-		err = e.Service.Emit(ctx, event.Name(), notification.GetID())
+		err = e.Service.Emit(ctx, NotificationOutRouteEvent, notification.GetID())
 		if err != nil {
 			logger.WithError(err).Warn("could not emit for queue out")
 			return err
@@ -80,8 +83,7 @@ func (e *NotificationSave) Execute(ctx context.Context, payload any) error {
 		nStatus.GenID(ctx)
 
 		// Queue out notification status for further processing
-		eventStatus := NotificationStatusSave{}
-		err = e.Service.Emit(ctx, eventStatus.Name(), nStatus)
+		err = e.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 		if err != nil {
 			logger.WithError(err).Warn("could not emit status")
 			return err

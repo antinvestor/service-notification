@@ -16,13 +16,32 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// NotificationOutQueueEvent is the event name for queuing outgoing notifications
+const NotificationOutQueueEvent = "notification.out.queue"
+
 type NotificationOutQueue struct {
-	Service    *frame.Service
-	ProfileCli *profilev1.ProfileClient
+	Service                *frame.Service
+	ProfileCli             *profilev1.ProfileClient
+	NotificationRepo       repository.NotificationRepository
+	NotificationStatusRepo repository.NotificationStatusRepository
+	LanguageRepo           repository.LanguageRepository
+	TemplateDataRepo       repository.TemplateDataRepository
+}
+
+// NewNotificationOutQueue creates a new NotificationOutQueue event handler
+func NewNotificationOutQueue(ctx context.Context, service *frame.Service, profileCli *profilev1.ProfileClient) *NotificationOutQueue {
+	return &NotificationOutQueue{
+		Service:                service,
+		ProfileCli:             profileCli,
+		NotificationRepo:       repository.NewNotificationRepository(ctx, service),
+		NotificationStatusRepo: repository.NewNotificationStatusRepository(ctx, service),
+		LanguageRepo:           repository.NewLanguageRepository(ctx, service),
+		TemplateDataRepo:       repository.NewTemplateDataRepository(ctx, service),
+	}
 }
 
 func (event *NotificationOutQueue) Name() string {
-	return "notification.out.queue"
+	return NotificationOutQueueEvent
 }
 
 func (event *NotificationOutQueue) PayloadType() any {
@@ -44,21 +63,18 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
-	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
-	n, err := notificationRepo.GetByID(ctx, notificationID)
+	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		return err
 	}
 
-	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, event.Service)
-	nStatus, err := notificationStatusRepo.GetByID(ctx, n.StatusID)
+	nStatus, err := event.NotificationStatusRepo.GetByID(ctx, n.StatusID)
 	if err != nil {
 		logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status")
 		return err
 	}
 
-	languageRepo := repository.NewLanguageRepository(ctx, event.Service)
-	language, err := languageRepo.GetByID(ctx, n.LanguageID)
+	language, err := event.LanguageRepo.GetByID(ctx, n.LanguageID)
 	if err != nil {
 		logger.WithError(err).WithField("language_id", n.LanguageID).Warn(" could not get language")
 		return err
@@ -101,7 +117,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 		WithField("message", templateMap).
 		Debug(" We have successfully queued out message")
 
-	err = notificationRepo.Save(ctx, n)
+	err = event.NotificationRepo.Save(ctx, n)
 	if err != nil {
 		return err
 	}
@@ -115,8 +131,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	eventStatus := NotificationStatusSave{}
-	err = event.Service.Emit(ctx, eventStatus.Name(), nStatus)
+	err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		return err
 	}
@@ -137,8 +152,7 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 		return nil, errors.New("no template id specified")
 	}
 
-	templateDataRepository := repository.NewTemplateDataRepository(ctx, event.Service)
-	tmplDataList, err0 := templateDataRepository.GetByTemplateIDAndLanguage(ctx, n.TemplateID, n.LanguageID)
+	tmplDataList, err0 := event.TemplateDataRepo.GetByTemplateIDAndLanguage(ctx, n.TemplateID, n.LanguageID)
 	if err0 != nil {
 		logger.WithError(err0).
 			WithField("template id", n.TemplateID).

@@ -175,6 +175,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 				Language:  "en",
 				Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
 				Data:      "Hello we are just testing things out",
+				Template:  "template.profilev1.contact.verification",
 			},
 			wantErr: false,
 			want: &commonv1.StatusResponse{
