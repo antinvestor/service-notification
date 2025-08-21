@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log/slog"
+	"context"
 
 	apis "github.com/antinvestor/apis/go/common"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
@@ -12,19 +12,21 @@ import (
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/events"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/handlers"
 	"github.com/pitabwire/frame"
+	"github.com/pitabwire/util"
 )
 
 func main() {
 
 	serviceName := "integration_notification_africastalking"
+	ctx := context.Background()
 
-	cfg, err := frame.ConfigFromEnv[config.AfricasTalkingConfig]()
+	cfg, err := frame.ConfigLoadWithOIDC[config.AfricasTalkingConfig](ctx)
 	if err != nil {
-		slog.With("err", err).Error("could not process configs")
+		util.Log(ctx).With("err", err).Error("could not process configs")
 		return
 	}
 
-	ctx, svc := frame.NewService(serviceName, frame.WithConfig(&cfg))
+	ctx, svc := frame.NewServiceWithContext(ctx, serviceName, frame.WithConfig(&cfg))
 	defer svc.Stop(ctx)
 
 	logger := svc.Log(ctx)
