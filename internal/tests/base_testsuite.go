@@ -8,8 +8,11 @@ import (
 	"github.com/antinvestor/apis/go/common/mocks"
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
+	notificationv1_mocks "github.com/antinvestor/apis/go/notification/v1_mocks"
 	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
+	partitionv1_mocks "github.com/antinvestor/apis/go/partition/v1_mocks"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	profilev1_mocks "github.com/antinvestor/apis/go/profile/v1_mocks"
 	"github.com/pitabwire/frame/frametests"
 	"github.com/pitabwire/frame/frametests/definition"
 	"github.com/pitabwire/frame/frametests/deps/testpostgres"
@@ -40,7 +43,7 @@ func (bs *BaseTestSuite) SetupSuite() {
 }
 
 func (bs *BaseTestSuite) GetNotificationCli(_ context.Context) *notificationv1.NotificationClient {
-	mockNotificationService := notificationv1.NewMockNotificationServiceClient(bs.Ctrl)
+	mockNotificationService := notificationv1_mocks.NewMockNotificationServiceClient(bs.Ctrl)
 	mockNotificationService.EXPECT().Send(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, _ *notificationv1.SendRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[notificationv1.SendResponse], error) {
 			// Return a successful response with a generated message ID
@@ -77,7 +80,7 @@ func (bs *BaseTestSuite) GetProfileCli(_ context.Context) *profilev1.ProfileClie
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockProfileService := profilev1.NewMockProfileServiceClient(ctrl)
+	mockProfileService := profilev1_mocks.NewMockProfileServiceClient(ctrl)
 	mockProfileService.EXPECT().
 		GetById(gomock.Any(), gomock.Any()).
 		Return(&profilev1.GetByIdResponse{
@@ -103,7 +106,7 @@ func (bs *BaseTestSuite) GetPartitionCli(_ context.Context) *partitionv1.Partiti
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockPartitionService := partitionv1.NewMockPartitionServiceClient(ctrl)
+	mockPartitionService := partitionv1_mocks.NewMockPartitionServiceClient(ctrl)
 
 	mockPartitionService.EXPECT().
 		GetAccess(gomock.Any(), gomock.Any()).

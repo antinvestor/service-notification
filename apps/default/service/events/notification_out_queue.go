@@ -10,7 +10,7 @@ import (
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
-	repository2 "github.com/antinvestor/service-notification/apps/default/service/repository"
+	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/proto"
@@ -44,20 +44,20 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
-	notificationRepo := repository2.NewNotificationRepository(ctx, event.Service)
+	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 	n, err := notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		return err
 	}
 
-	notificationStatusRepo := repository2.NewNotificationStatusRepository(ctx, event.Service)
+	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, event.Service)
 	nStatus, err := notificationStatusRepo.GetByID(ctx, n.StatusID)
 	if err != nil {
 		logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status")
 		return err
 	}
 
-	languageRepo := repository2.NewLanguageRepository(ctx, event.Service)
+	languageRepo := repository.NewLanguageRepository(ctx, event.Service)
 	language, err := languageRepo.GetByID(ctx, n.LanguageID)
 	if err != nil {
 		logger.WithError(err).WithField("language_id", n.LanguageID).Warn(" could not get language")
@@ -137,7 +137,7 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 		return nil, errors.New("no template id specified")
 	}
 
-	templateDataRepository := repository2.NewTemplateDataRepository(ctx, event.Service)
+	templateDataRepository := repository.NewTemplateDataRepository(ctx, event.Service)
 	tmplDataList, err0 := templateDataRepository.GetByTemplateIDAndLanguage(ctx, n.TemplateID, n.LanguageID)
 	if err0 != nil {
 		logger.WithError(err0).

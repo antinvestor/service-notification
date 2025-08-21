@@ -54,6 +54,7 @@ func main() {
 		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(svc.JwtClientID()),
 		apis.WithTokenPassword(svc.JwtClientSecret()),
+		apis.WithScopes(frame.ConstInternalSystemScope),
 		apis.WithAudiences("service_profile"))
 	if err != nil {
 		log.WithError(err).Fatal("could not setup profile client")
@@ -65,6 +66,7 @@ func main() {
 		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(svc.JwtClientID()),
 		apis.WithTokenPassword(svc.JwtClientSecret()),
+		apis.WithScopes(frame.ConstInternalSystemScope),
 		apis.WithAudiences("service_partition"))
 	if err != nil {
 		log.WithError(err).Fatal("could not setup partition client")
@@ -130,8 +132,8 @@ func main() {
 
 	svc.Init(ctx, serviceOptions...)
 
-	log.WithField("server http port", cfg.HTTPServerPort).
-		WithField("server grpc port", cfg.GrpcServerPort).
+	log.WithField("server http port", cfg.HTTPPort()).
+		WithField("server grpc port", cfg.GrpcPort()).
 		Info(" Initiating server operations")
 
 	defer implementation.Service.Stop(ctx)

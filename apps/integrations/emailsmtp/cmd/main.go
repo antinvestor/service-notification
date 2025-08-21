@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
-	"strings"
 
 	apis "github.com/antinvestor/apis/go/common"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
@@ -36,31 +34,24 @@ func main() {
 		return
 	}
 
-	oauth2ServiceHost := cfg.GetOauth2ServiceURI()
-	oauth2ServiceURL := fmt.Sprintf("%s/oauth2/token", oauth2ServiceHost)
-
-	audienceList := make([]string, 0)
-
-	if cfg.Oauth2ServiceAudience != "" {
-		audienceList = strings.Split(cfg.Oauth2ServiceAudience, ",")
-	}
-
 	notificationCli, err := notificationv1.NewNotificationClient(ctx,
 		apis.WithEndpoint(cfg.NotificationServiceURI),
-		apis.WithTokenEndpoint(oauth2ServiceURL),
+		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(svc.JwtClientID()),
 		apis.WithTokenPassword(svc.JwtClientSecret()),
-		apis.WithAudiences(audienceList...))
+		apis.WithScopes(frame.ConstInternalSystemScope),
+		apis.WithAudiences("service_notifications"))
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup notification client")
 	}
 
 	profileCli, err := profilev1.NewProfileClient(ctx,
 		apis.WithEndpoint(cfg.ProfileServiceURI),
-		apis.WithTokenEndpoint(oauth2ServiceURL),
+		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(svc.JwtClientID()),
 		apis.WithTokenPassword(svc.JwtClientSecret()),
-		apis.WithAudiences(audienceList...))
+		apis.WithScopes(frame.ConstInternalSystemScope),
+		apis.WithAudiences("service_profile"))
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}

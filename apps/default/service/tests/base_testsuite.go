@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/antinvestor/service-notification/apps/default/config"
-	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
+	"github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	internaltests "github.com/antinvestor/service-notification/internal/tests"
 	"github.com/pitabwire/frame"
@@ -50,12 +50,12 @@ func (bs *BaseTestSuite) CreateService(
 	profileCli := bs.GetProfileCli(ctx)
 
 	svc.Init(ctx, frame.WithRegisterEvents(
-		&events2.NotificationSave{Service: svc},
-		&events2.NotificationStatusSave{Service: svc},
-		&events2.NotificationInRoute{Service: svc},
-		&events2.NotificationInQueue{Service: svc, ProfileCli: profileCli},
-		&events2.NotificationOutRoute{Service: svc, ProfileCli: profileCli},
-		&events2.NotificationOutQueue{Service: svc, ProfileCli: profileCli}))
+		&events.NotificationSave{Service: svc},
+		&events.NotificationStatusSave{Service: svc},
+		&events.NotificationInRoute{Service: svc},
+		&events.NotificationInQueue{Service: svc, ProfileCli: profileCli},
+		&events.NotificationOutRoute{Service: svc, ProfileCli: profileCli},
+		&events.NotificationOutQueue{Service: svc, ProfileCli: profileCli}))
 
 	err = repository.Migrate(ctx, svc, "../../migrations/0001")
 	require.NoError(t, err)

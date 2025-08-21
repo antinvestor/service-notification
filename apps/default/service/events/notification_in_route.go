@@ -9,7 +9,7 @@ import (
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	profilev1 "github.com/antinvestor/apis/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
-	repository2 "github.com/antinvestor/service-notification/apps/default/service/repository"
+	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame"
 )
 
@@ -50,7 +50,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
-	notificationRepo := repository2.NewNotificationRepository(ctx, event.Service)
+	notificationRepo := repository.NewNotificationRepository(ctx, event.Service)
 
 	n, err := notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
@@ -122,7 +122,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 
 func routeNotification(ctx context.Context, service *frame.Service, routeMode string, notification *models.Notification) (*models.Route, error) {
 
-	routeRepository := repository2.NewRouteRepository(ctx, service)
+	routeRepository := repository.NewRouteRepository(ctx, service)
 	if notification.RouteID != "" {
 		route, err := routeRepository.GetByID(ctx, notification.RouteID)
 		if err != nil {
@@ -159,7 +159,7 @@ func loadRoute(ctx context.Context, service *frame.Service, routeId string) (*mo
 		return nil, fmt.Errorf("no route id provided")
 	}
 
-	routeRepository := repository2.NewRouteRepository(ctx, service)
+	routeRepository := repository.NewRouteRepository(ctx, service)
 
 	route, err := routeRepository.GetByID(ctx, routeId)
 	if err != nil {

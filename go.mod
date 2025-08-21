@@ -1,23 +1,23 @@
 module github.com/antinvestor/service-notification
 
-go 1.24.5
+go 1.25
 
 require (
 	buf.build/go/protovalidate v0.14.0
-	github.com/antinvestor/apis/go/common v1.38.0
-	github.com/antinvestor/apis/go/notification v1.39.0
-	github.com/antinvestor/apis/go/partition v1.39.0
-	github.com/antinvestor/apis/go/profile v1.39.0
-	github.com/antinvestor/apis/go/settings v1.39.0
+	github.com/antinvestor/apis/go/common v1.40.1
+	github.com/antinvestor/apis/go/notification v1.40.2
+	github.com/antinvestor/apis/go/partition v1.40.2
+	github.com/antinvestor/apis/go/profile v1.40.4
+	github.com/antinvestor/apis/go/settings v1.40.2
 	github.com/antinvestor/gomatrix v0.1.4
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
-	github.com/pitabwire/frame v1.55.7
+	github.com/pitabwire/frame v1.55.8
 	github.com/pitabwire/util v0.3.4
 	github.com/stretchr/testify v1.10.0
 	github.com/wneessen/go-mail v0.6.2
-	go.uber.org/mock v0.5.2
-	google.golang.org/grpc v1.74.2
-	google.golang.org/protobuf v1.36.7
+	go.uber.org/mock v0.6.0
+	google.golang.org/grpc v1.75.0
+	google.golang.org/protobuf v1.36.8
 	gorm.io/gorm v1.30.1
 )
 
