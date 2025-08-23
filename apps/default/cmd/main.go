@@ -54,7 +54,7 @@ func main() {
 		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(svc.JwtClientID()),
 		apis.WithTokenPassword(svc.JwtClientSecret()),
-		apis.WithScopes(frame.ConstInternalSystemScope),
+		apis.WithScopes(frame.ConstSystemScopeInternal),
 		apis.WithAudiences("service_profile"))
 	if err != nil {
 		log.WithError(err).Fatal("could not setup profile client")
@@ -66,7 +66,7 @@ func main() {
 		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(svc.JwtClientID()),
 		apis.WithTokenPassword(svc.JwtClientSecret()),
-		apis.WithScopes(frame.ConstInternalSystemScope),
+		apis.WithScopes(frame.ConstSystemScopeInternal),
 		apis.WithAudiences("service_partition"))
 	if err != nil {
 		log.WithError(err).Fatal("could not setup partition client")

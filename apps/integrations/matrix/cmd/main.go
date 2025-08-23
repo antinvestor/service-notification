@@ -40,7 +40,7 @@ func main() {
 		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(srv.JwtClientID()),
 		apis.WithTokenPassword(srv.JwtClientSecret()),
-		apis.WithScopes(frame.ConstInternalSystemScope),
+		apis.WithScopes(frame.ConstSystemScopeInternal),
 		apis.WithAudiences("service_notifications"))
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup notification client")
@@ -51,7 +51,7 @@ func main() {
 		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
 		apis.WithTokenUsername(srv.JwtClientID()),
 		apis.WithTokenPassword(srv.JwtClientSecret()),
-		apis.WithScopes(frame.ConstInternalSystemScope),
+		apis.WithScopes(frame.ConstSystemScopeInternal),
 		apis.WithAudiences("service_profile"))
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup profile client")
