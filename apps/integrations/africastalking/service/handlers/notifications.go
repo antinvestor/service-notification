@@ -13,6 +13,7 @@ import (
 	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/util"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type ATServer struct {
@@ -132,22 +133,29 @@ func (ps *ATServer) handleDeliveryReport(ctx context.Context, routeID, ip string
 		internalStatus = commonv1.STATUS_FAILED
 	}
 
-	extra := map[string]string{}
+	extraData := map[string]any{}
 	for k, v := range payload {
-		extra[k] = fmt.Sprintf("%v", v)
+		extraData[k] = fmt.Sprintf("%v", v)
 	}
-	extra["route"] = routeID
-	extra["ip"] = ip
+	extraData["route"] = routeID
+	extraData["ip"] = ip
 	networkCode, ok := payload["networkCode"]
 	if ok {
-		extra["network"] = client.SupportedNetworksMap[networkCode.(int)]
+		extraData["network"] = client.SupportedNetworksMap[networkCode.(int)]
 	}
 	failureReason, ok := payload["failureReason"]
 	if ok {
-		extra["failureReasonDetail"] = client.FailureReasonOnRejectedOrFailedMap[failureReason.(string)]
+		extraData["failureReasonDetail"] = client.FailureReasonOnRejectedOrFailedMap[failureReason.(string)]
 	}
 
-	_, err := ps.NotificationCli.UpdateStatus(ctx, "", commonv1.STATE_INACTIVE, internalStatus, externalID, extra)
+	extra, _ := structpb.NewStruct(extraData)
+	_, err := ps.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+		Id:         "",
+		State:      commonv1.STATE_INACTIVE,
+		Status:     internalStatus,
+		ExternalId: externalID,
+		Extras:     extra,
+	})
 	if err != nil {
 		return apperrors.ErrSystemFailure.Extend(err.Error())
 	}

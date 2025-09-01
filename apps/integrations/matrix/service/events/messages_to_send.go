@@ -11,6 +11,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/service/client"
 	"github.com/pitabwire/frame"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type MessageToSend struct {
@@ -35,33 +36,55 @@ func (ms *MessageToSend) Handle(ctx context.Context, _ map[string]string, payloa
 	if err != nil {
 		log = log.WithError(err)
 
-		extra := map[string]string{
+		extraData := map[string]any{
 			"error": err.Error(),
 		}
+
+		extra, _ := structpb.NewStruct(extraData)
 
 		var respErr gomatrix.RespError
 		if !errors.Is(err, respErr) {
 
 			log.Error("could not publish message")
 
-			_, _ = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_ACTIVE, commonv1.STATUS_UNKNOWN, "", extra)
+			_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+				Id:         notification.GetId(),
+				State:      commonv1.STATE_ACTIVE,
+				Status:     commonv1.STATUS_UNKNOWN,
+				ExternalId: "",
+				Extras:     extra,
+			})
 
 			return err
 		}
 
 		log.Error("server responded in error")
 
-		extra["errcode"] = respErr.ErrCode
+		extraData["errcode"] = respErr.ErrCode
+		extra, _ = structpb.NewStruct(extraData)
 
-		_, _ = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_INACTIVE, commonv1.STATUS_FAILED, "", extra)
+		_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+			Id:         notification.GetId(),
+			State:      commonv1.STATE_INACTIVE,
+			Status:     commonv1.STATUS_FAILED,
+			ExternalId: "",
+			Extras:     extra,
+		})
 
 		return nil
 
 	}
 
-	extra := map[string]string{"status": "ok"}
+	extraData := map[string]any{"status": "ok"}
+	extra, _ := structpb.NewStruct(extraData)
 
-	_, err = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_INACTIVE, commonv1.STATUS_SUCCESSFUL, resp.EventID, extra)
+	_, err = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+		Id:         notification.GetId(),
+		State:      commonv1.STATE_INACTIVE,
+		Status:     commonv1.STATUS_SUCCESSFUL,
+		ExternalId: resp.EventID,
+		Extras:     extra,
+	})
 	if err != nil {
 		log.WithError(err).Warn("could not update status on notification service")
 	}

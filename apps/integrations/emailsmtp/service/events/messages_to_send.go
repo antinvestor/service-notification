@@ -12,6 +12,7 @@ import (
 	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type MessageToSend struct {
@@ -36,25 +37,45 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 	if err != nil {
 		log.WithError(err).Error("server responded in error")
 
-		extra := map[string]string{
+		extraData := map[string]any{
 			"error": err.Error(),
 		}
+		extra, _ := structpb.NewStruct(extraData)
 
 		var appErr *apperrors.Error
 		ok := errors.As(err, &appErr)
 		if !ok || appErr.IsRetriable() {
 
-			_, _ = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_ACTIVE, commonv1.STATUS_UNKNOWN, "", extra)
+			_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+				Id:         notification.GetId(),
+				State:      commonv1.STATE_ACTIVE,
+				Status:     commonv1.STATUS_UNKNOWN,
+				ExternalId: "",
+				Extras:     extra,
+			})
 
 			return err
 		}
 
-		extra["errcode"] = fmt.Sprintf("%v", appErr.ErrorCode())
-		_, _ = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_INACTIVE, commonv1.STATUS_FAILED, "", extra)
+		extraData["errcode"] = fmt.Sprintf("%v", appErr.ErrorCode())
+		extra, _ = structpb.NewStruct(extraData)
+
+		_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+			Id:         notification.GetId(),
+			State:      commonv1.STATE_INACTIVE,
+			Status:     commonv1.STATUS_FAILED,
+			ExternalId: "",
+			Extras:     extra,
+		})
 		return nil
 	}
 
-	_, err = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_INACTIVE, commonv1.STATUS_SUCCESSFUL, "", map[string]string{})
+	_, err = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+		Id:         notification.GetId(),
+		State:      commonv1.STATE_INACTIVE,
+		Status:     commonv1.STATUS_SUCCESSFUL,
+		ExternalId: "",
+	})
 	if err != nil {
 		log.WithError(err).Warn("could not update status on notification service")
 	}

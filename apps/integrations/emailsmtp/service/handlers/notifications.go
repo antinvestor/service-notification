@@ -12,6 +12,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
 	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type SMTPServer struct {
@@ -101,13 +102,20 @@ func (ps *SMTPServer) handleDeliveryReport(ctx context.Context, routeID string, 
 		internalStatus = commonv1.STATUS_FAILED
 	}
 
-	extra := map[string]string{}
+	extraData := map[string]any{}
 	for k, v := range payload {
-		extra[k] = fmt.Sprintf("%v", v)
+		extraData[k] = fmt.Sprintf("%v", v)
 	}
-	extra["route"] = routeID
+	extraData["route"] = routeID
+	extra, _ := structpb.NewStruct(extraData)
 
-	_, err := ps.NotificationCli.UpdateStatus(ctx, fmt.Sprintf("%v", notificationID), commonv1.STATE_INACTIVE, internalStatus, externalID, extra)
+	_, err := ps.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+		Id:         fmt.Sprintf("%v", notificationID),
+		State:      commonv1.STATE_INACTIVE,
+		Status:     internalStatus,
+		ExternalId: externalID,
+		Extras:     extra,
+	})
 	if err != nil {
 		return apperrors.ErrSystemFailure.Extend(err.Error())
 	}

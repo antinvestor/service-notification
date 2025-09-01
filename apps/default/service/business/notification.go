@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"maps"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -102,7 +103,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 		TemplateID: templateID,
 
-		Payload: frame.DBPropertiesFromMap(message.Payload),
+		Payload: message.Payload.AsMap(),
 		Message: message.GetData(),
 
 		NotificationType: message.GetType(),
@@ -169,7 +170,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		LanguageID:           language.GetID(),
 		OutBound:             false,
 
-		Payload:          frame.DBPropertiesFromMap(message.GetPayload()),
+		Payload:          message.GetPayload().AsMap(),
 		Message:          message.GetData(),
 		NotificationType: message.GetType(),
 		ReleasedAt:       &releaseDate,
@@ -238,7 +239,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 		State:          int32(statusReq.GetState()),
 		Status:         int32(statusReq.GetStatus()),
 		ExternalID:     statusReq.GetExternalId(),
-		Extra:          frame.DBPropertiesFromMap(statusReq.GetExtras()),
+		Extra:          statusReq.GetExtras().AsMap(),
 	}
 
 	nStatus.GenID(ctx)
@@ -363,14 +364,14 @@ func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
 		}
 	}
 
-	searchProperties := map[string]any{
+	searchProperties := search.GetExtras().AsMap()
+
+	maps.Insert(searchProperties, maps.All(map[string]any{
 		"profile_id": profileID,
 		"start_date": limits.GetStartDate(),
 		"end_date":   limits.GetEndDate(),
-	}
-	for k, val := range search.GetExtras() {
-		searchProperties[k] = val
-	}
+	}))
+
 	for _, p := range search.GetProperties() {
 		searchProperties[p] = search.GetQuery()
 	}
@@ -520,7 +521,7 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 
 	template := &models.Template{
 		Name:  req.GetName(),
-		Extra: frame.DBPropertiesFromMap(req.GetExtra()),
+		Extra: req.GetExtra().AsMap(),
 	}
 
 	err = nb.templateRepo.Save(ctx, template)
@@ -528,12 +529,12 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 		return nil, err
 	}
 
-	for key, val := range req.GetData() {
+	for key, val := range req.GetData().AsMap() {
 		templateData := &models.TemplateData{
 			TemplateID: template.GetID(),
 			LanguageID: language.GetID(),
 			Type:       key,
-			Detail:     val,
+			Detail:     val.(string),
 		}
 
 		err = nb.templateDataRepo.Save(ctx, templateData)

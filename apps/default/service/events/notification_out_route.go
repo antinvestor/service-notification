@@ -67,7 +67,14 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 	}
 
 	contact := filterContactFromProfileByID(p, n.RecipientContactID)
-	switch contact.Type {
+
+	var contactType profilev1.ContactType
+
+	if contact != nil {
+		contactType = contact.Type
+	}
+
+	switch contactType {
 	case profilev1.ContactType_MSISDN:
 		n.NotificationType = models.RouteTypeShortForm
 	case profilev1.ContactType_EMAIL:
@@ -85,9 +92,9 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 				NotificationID: n.GetID(),
 				State:          int32(commonv1.STATE_INACTIVE),
 				Status:         int32(commonv1.STATUS_FAILED),
-				Extra: frame.DBPropertiesFromMap(map[string]string{
+				Extra: frame.JSONMap{
 					"error": err.Error(),
-				}),
+				},
 			}
 
 			nStatus.GenID(ctx)

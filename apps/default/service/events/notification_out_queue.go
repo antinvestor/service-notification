@@ -160,7 +160,7 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 		tmplDataList = []*models.TemplateData{}
 	}
 
-	payload := frame.DBPropertiesToMap(n.Payload)
+	payload := n.Payload
 
 	for _, templateData := range tmplDataList {
 

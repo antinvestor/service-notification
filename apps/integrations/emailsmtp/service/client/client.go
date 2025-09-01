@@ -44,10 +44,12 @@ func (ms *Client) contactLinkToEmail(ctx context.Context, contact *commonv1.Cont
 		return contact.GetDetail(), nil
 	}
 
-	profile, err := ms.profileCli.GetProfileByContact(ctx, contact.GetContactId())
+	result, err := ms.profileCli.Svc().GetByContact(ctx, &profilev1.GetByContactRequest{Contact: contact.GetContactId()})
 	if err != nil {
 		return "", err
 	}
+
+	profile := result.GetData()
 
 	for _, c := range profile.GetContacts() {
 		if c.GetType() == profilev1.ContactType_EMAIL {
@@ -73,7 +75,14 @@ func (ms *Client) Send(ctx context.Context, _ map[string]string, notification *n
 		return err
 	}
 
-	err = ms.SendEmail(ctx, notification.GetId(), senderEmail, recipientEmail, notification.GetExtras()["subject"], notification.GetData())
+	extrasData := notification.GetExtras().AsMap()
+	notificationSubject := ""
+	dt, ok := extrasData["subject"]
+	if ok {
+		notificationSubject = dt.(string)
+	}
+
+	err = ms.SendEmail(ctx, notification.GetId(), senderEmail, recipientEmail, notificationSubject, notification.GetData())
 	if err != nil {
 		return err
 	}

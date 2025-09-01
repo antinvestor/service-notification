@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -59,7 +60,8 @@ func (ms *Client) Send(ctx context.Context, notification *notificationv1.Notific
 	recipient := notification.GetRecipient()
 
 	// Determine event type from metadata or payload
-	matrixEventType := notification.GetExtras()[ExtraMatrixEventTypeKey]
+	extrasData := notification.GetExtras().AsMap()
+	matrixEventType := extrasData[ExtraMatrixEventTypeKey]
 
 	profileType := strings.ToLower(recipient.GetProfileType())
 
@@ -68,8 +70,10 @@ func (ms *Client) Send(ctx context.Context, notification *notificationv1.Notific
 		// For groups or rooms, use the profile ID as the room ID
 		roomID := ms.groupIDToRoomID(ctx, recipient)
 
+		matrixEventTypeStr := matrixEventType.(string)
+
 		if matrixEventType != "" {
-			return ms.sendEvent(ctx, roomID, matrixEventType, notification)
+			return ms.sendEvent(ctx, roomID, matrixEventTypeStr, notification)
 		}
 
 		return ms.sendMessage(ctx, roomID, notification)
@@ -85,15 +89,12 @@ func (ms *Client) Send(ctx context.Context, notification *notificationv1.Notific
 // sendEvent sends a custom activity event
 func (ms *Client) sendEvent(_ context.Context, roomID string, eventType string, notification *notificationv1.Notification) (*gomatrix.RespSendEvent, error) {
 
-	if metaType, ok := notification.GetExtras()["event_type"]; ok {
-		eventType = metaType
+	extrasData := notification.GetExtras().AsMap()
+	if metaType, ok := extrasData["event_type"]; ok {
+		eventType = metaType.(string)
 	}
 
-	content := map[string]any{}
-
-	for k, v := range notification.GetPayload() {
-		content[k] = v
-	}
+	content := notification.GetPayload().AsMap()
 
 	// Send custom room event - use MatrixCustomActivityEvent as the event type
 	return ms.matrix.SendStateEvent(roomID, eventType, "", content)
@@ -123,13 +124,11 @@ func (ms *Client) sendUserNotice(ctx context.Context, userID string, notificatio
 }
 
 func (ms *Client) extractMessageContent(_ context.Context, notification *notificationv1.Notification) map[string]any {
-	content := map[string]any{
+	content := notification.GetPayload().AsMap()
+	maps.Insert(content, maps.All(map[string]any{
 		"msgtype": "m.text",
 		"body":    notification.GetData(),
-	}
+	}))
 
-	for k, v := range notification.GetPayload() {
-		content[k] = v
-	}
 	return content
 }

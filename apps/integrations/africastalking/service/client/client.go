@@ -43,10 +43,12 @@ func (ms *Client) contactLinkToPhoneNumber(ctx context.Context, contact *commonv
 		return contact.GetDetail(), nil
 	}
 
-	profile, err := ms.profileCli.GetProfileByContact(ctx, contact.GetContactId())
+	result, err := ms.profileCli.Svc().GetByContact(ctx, &profilev1.GetByContactRequest{Contact: contact.GetContactId()})
 	if err != nil {
 		return "", err
 	}
+
+	profile := result.GetData()
 
 	for _, c := range profile.GetContacts() {
 		if c.GetId() == contact.GetContactId() {

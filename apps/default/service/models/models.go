@@ -1,11 +1,13 @@
 package models
 
 import (
+	"maps"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	"github.com/pitabwire/frame"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -27,11 +29,14 @@ type Language struct {
 }
 
 func (l *Language) ToApi() *notificationv1.Language {
+
+	extraData, _ := structpb.NewStruct(map[string]any{"description": l.Description})
+
 	return &notificationv1.Language{
 		Id:    l.GetID(),
 		Code:  l.Code,
 		Name:  l.Name,
-		Extra: map[string]string{"description": l.Description},
+		Extra: extraData,
 	}
 }
 
@@ -45,11 +50,15 @@ type Template struct {
 
 func (t *Template) ToApi(templateDataList []*notificationv1.TemplateData) *notificationv1.Template {
 
+	extraData := frame.JSONMap{}
+	maps.Insert(extraData, maps.All(t.Extra))
+	extra, _ := extraData.ToStructPB()
+
 	return &notificationv1.Template{
 		Id:    t.GetID(),
 		Name:  t.Name,
 		Data:  templateDataList,
-		Extra: frame.DBPropertiesToMap(t.Extra),
+		Extra: extra,
 	}
 }
 
@@ -113,7 +122,7 @@ func (model *Notification) IsReleased() bool {
 
 func (model *Notification) ToApi(status *NotificationStatus, language *Language, message map[string]string) *notificationv1.Notification {
 
-	extra := make(map[string]string)
+	extra := make(map[string]any)
 	extra["tenant_id"] = model.TenantID
 	extra["partition_id"] = model.PartitionID
 	extra["access_id"] = model.AccessID
@@ -154,20 +163,23 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 		ContactId:   model.RecipientContactID,
 	}
 
+	payload, _ := model.Payload.ToStructPB()
+	extraStruct, _ := structpb.NewStruct(extra)
+
 	notification := notificationv1.Notification{
 		Id:          model.ID,
 		Source:      source,
 		Recipient:   recipient,
 		Type:        model.NotificationType,
 		Template:    model.TemplateID,
-		Payload:     frame.DBPropertiesToMap(model.Payload),
+		Payload:     payload,
 		Data:        model.Message,
 		Language:    language.Code,
 		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),
 		RouteId:     model.RouteID,
 		Status:      status.ToStatusAPI(),
-		Extras:      extra,
+		Extras:      extraStruct,
 		Priority:    notificationv1.PRIORITY(model.Priority),
 	}
 	return &notification
@@ -187,9 +199,12 @@ type NotificationStatus struct {
 
 func (model *NotificationStatus) ToStatusAPI() *commonv1.StatusResponse {
 
-	extra := frame.DBPropertiesToMap(model.Extra)
-	extra["CreatedAt"] = model.CreatedAt.String()
-	extra["StatusID"] = model.ID
+	extraData := frame.JSONMap{
+		"CreatedAt": model.CreatedAt.String(),
+		"StatusID":  model.ID,
+	}
+	maps.Insert(extraData, maps.All(model.Extra))
+	extra, _ := extraData.ToStructPB()
 
 	status := commonv1.StatusResponse{
 		Id:          model.NotificationID,

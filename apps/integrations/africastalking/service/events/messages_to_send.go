@@ -13,6 +13,7 @@ import (
 	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type MessageToSend struct {
@@ -37,31 +38,51 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 	if err != nil {
 		log.WithError(err).Error("server responded in error")
 
-		extra := map[string]string{
+		extrasMap := map[string]any{
 			"error": err.Error(),
 		}
+		extra, _ := structpb.NewStruct(extrasMap)
 
 		var appErr *apperrors.Error
 		ok := errors.As(err, &appErr)
 		if !ok || appErr.IsRetriable() {
 
-			_, _ = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_ACTIVE, commonv1.STATUS_UNKNOWN, "", extra)
+			_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+				Id:         notification.GetId(),
+				State:      commonv1.STATE_ACTIVE,
+				Status:     commonv1.STATUS_UNKNOWN,
+				ExternalId: "",
+				Extras:     extra,
+			})
 
 			return err
 		}
 
-		extra["errcode"] = fmt.Sprintf("%v", appErr.ErrorCode())
-		_, _ = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_INACTIVE, commonv1.STATUS_FAILED, "", extra)
+		extrasMap["errcode"] = fmt.Sprintf("%v", appErr.ErrorCode())
+		extra, _ = structpb.NewStruct(extrasMap)
+		_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+			Id:         notification.GetId(),
+			State:      commonv1.STATE_INACTIVE,
+			Status:     commonv1.STATUS_FAILED,
+			ExternalId: "",
+			Extras:     extra,
+		})
 		return nil
 	}
 
 	rs := resp.SMSMessageData.Recipients[0]
 
-	extra := map[string]string{"status": rs.Status, "": rs.Cost, "status code": strconv.Itoa(rs.StatusCode)}
-
+	extrasMap := map[string]any{"status": rs.Status, "": rs.Cost, "status code": strconv.Itoa(rs.StatusCode)}
+	extra, _ := structpb.NewStruct(extrasMap)
 	if rs.StatusCode >= 500 && rs.StatusCode < 502 {
 
-		_, _ = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_ACTIVE, commonv1.STATUS_UNKNOWN, rs.MessageId, extra)
+		_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+			Id:         notification.GetId(),
+			State:      commonv1.STATE_ACTIVE,
+			Status:     commonv1.STATUS_UNKNOWN,
+			ExternalId: rs.MessageId,
+			Extras:     extra,
+		})
 		return fmt.Errorf("server responded in error %v : -> %v", client.StatusCodeMap[rs.StatusCode], rs)
 	}
 
@@ -70,7 +91,13 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 		notificationStatus = commonv1.STATUS_FAILED
 	}
 
-	_, err = ms.NotificationCli.UpdateStatus(ctx, notification.GetId(), commonv1.STATE_INACTIVE, notificationStatus, rs.MessageId, extra)
+	_, err = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+		Id:         notification.GetId(),
+		State:      commonv1.STATE_ACTIVE,
+		Status:     notificationStatus,
+		ExternalId: rs.MessageId,
+		Extras:     extra,
+	})
 	if err != nil {
 		log.WithError(err).Warn("could not update status on notification service")
 	}
