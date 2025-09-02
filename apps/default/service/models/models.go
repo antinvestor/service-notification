@@ -1,7 +1,6 @@
 package models
 
 import (
-	"maps"
 	"time"
 
 	commonv1 "github.com/antinvestor/apis/go/common/v1"
@@ -50,15 +49,11 @@ type Template struct {
 
 func (t *Template) ToApi(templateDataList []*notificationv1.TemplateData) *notificationv1.Template {
 
-	extraData := frame.JSONMap{}
-	maps.Insert(extraData, maps.All(t.Extra))
-	extra, _ := extraData.ToStructPB()
-
 	return &notificationv1.Template{
 		Id:    t.GetID(),
 		Name:  t.Name,
 		Data:  templateDataList,
-		Extra: extra,
+		Extra: t.Extra.ToProtoStruct(),
 	}
 }
 
@@ -122,7 +117,7 @@ func (model *Notification) IsReleased() bool {
 
 func (model *Notification) ToApi(status *NotificationStatus, language *Language, message map[string]string) *notificationv1.Notification {
 
-	extra := make(map[string]any)
+	extra := frame.JSONMap{}
 	extra["tenant_id"] = model.TenantID
 	extra["partition_id"] = model.PartitionID
 	extra["access_id"] = model.AccessID
@@ -163,23 +158,20 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 		ContactId:   model.RecipientContactID,
 	}
 
-	payload, _ := model.Payload.ToStructPB()
-	extraStruct, _ := structpb.NewStruct(extra)
-
 	notification := notificationv1.Notification{
 		Id:          model.ID,
 		Source:      source,
 		Recipient:   recipient,
 		Type:        model.NotificationType,
 		Template:    model.TemplateID,
-		Payload:     payload,
+		Payload:     model.Payload.ToProtoStruct(),
 		Data:        model.Message,
 		Language:    language.Code,
 		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),
 		RouteId:     model.RouteID,
 		Status:      status.ToStatusAPI(),
-		Extras:      extraStruct,
+		Extras:      extra.ToProtoStruct(),
 		Priority:    notificationv1.PRIORITY(model.Priority),
 	}
 	return &notification
@@ -203,8 +195,7 @@ func (model *NotificationStatus) ToStatusAPI() *commonv1.StatusResponse {
 		"CreatedAt": model.CreatedAt.String(),
 		"StatusID":  model.ID,
 	}
-	maps.Insert(extraData, maps.All(model.Extra))
-	extra, _ := extraData.ToStructPB()
+	extraData = extraData.Update(model.Extra)
 
 	status := commonv1.StatusResponse{
 		Id:          model.NotificationID,
@@ -212,7 +203,7 @@ func (model *NotificationStatus) ToStatusAPI() *commonv1.StatusResponse {
 		Status:      commonv1.STATUS(model.Status),
 		TransientId: model.TransientID,
 		ExternalId:  model.ExternalID,
-		Extras:      extra,
+		Extras:      extraData.ToProtoStruct(),
 	}
 
 	return &status
