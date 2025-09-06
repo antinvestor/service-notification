@@ -66,6 +66,8 @@ github.com/distribution/reference v0.6.0 h1:0IXCQ5g4/QMHHkarYzh5l+u8T3t73zM5Qvfr
 github.com/distribution/reference v0.6.0/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=
 github.com/docker/docker v28.3.3+incompatible h1:Dypm25kh4rmk49v1eiVbsAtpAsYURjYkaKubwuBdxEI=
 github.com/docker/docker v28.3.3+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
+github.com/docker/docker v28.4.0+incompatible h1:KVC7bz5zJY/4AZe/78BIvCnPsLaC9T/zh72xnlrTTOk=
+github.com/docker/docker v28.4.0+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/go-connections v0.6.0 h1:LlMG9azAe1TqfR7sO+NJttz1gy6KO7VJBh+pMmjSD94=
 github.com/docker/go-connections v0.6.0/go.mod h1:AahvXYshr6JgfUJGdDCs2b5EZG/vmaMAntpSFH5BFKE=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
@@ -181,6 +183,8 @@ github.com/pitabwire/frame v1.58.6 h1:N8H8sLRRVHi9niK0aB67kN9+CQZrW88hikwX9oSx0v
 github.com/pitabwire/frame v1.58.6/go.mod h1:Ik/AkIHuokeqcgPZbYOoiXyKdHUg5DDjqW2zzjsT32k=
 github.com/pitabwire/frame v1.58.7 h1:CASbHa452lVmGhoep60vIBd+gA0v1MRtUPuu06xnpOQ=
 github.com/pitabwire/frame v1.58.7/go.mod h1:Ik/AkIHuokeqcgPZbYOoiXyKdHUg5DDjqW2zzjsT32k=
+github.com/pitabwire/frame v1.58.8 h1:zDlyp7PGyRTGa2EHN99qYJkXfXrS5zZC0Fl2navD66k=
+github.com/pitabwire/frame v1.58.8/go.mod h1:LP8t4j8RGNROe4ziQKqM+dp34MZaNXkgAKLo5crDbpc=
 github.com/pitabwire/natspubsub v0.7.1 h1:1LLUrVpKSj87rA0W7LdAdUleK8Vvk6yGQa1sZhvf5Oo=
 github.com/pitabwire/natspubsub v0.7.1/go.mod h1:Cu2C9Hy/21mpa9UluuzcqeOotlRyIT4UpYZHG1VIgNc=
 github.com/pitabwire/util v0.3.4 h1:OOsNVgJlqrC4EFNBqXsTwi/GbvENKv0BuK8ZK1E+F/4=
