@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	buf.build/go/protovalidate v0.14.0
-	github.com/antinvestor/apis/go/common v1.41.2
+	github.com/antinvestor/apis/go/common v1.42.0
 	github.com/antinvestor/apis/go/notification v1.41.3
 	github.com/antinvestor/apis/go/partition v1.42.0
 	github.com/antinvestor/apis/go/profile v1.41.3
@@ -118,7 +118,7 @@ require (
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
 	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/oauth2 v0.30.0 // indirect
+	golang.org/x/oauth2 v0.31.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
