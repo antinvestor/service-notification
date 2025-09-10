@@ -16,7 +16,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.6.2
 	go.uber.org/mock v0.6.0
-	google.golang.org/grpc v1.75.0
+	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.9
 	gorm.io/gorm v1.30.5
 )
