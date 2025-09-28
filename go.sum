@@ -39,6 +39,8 @@ github.com/antinvestor/apis/go/common v1.42.0 h1:55ROxJ5poxSFYg8tNea4AZ9WttyPoI4
 github.com/antinvestor/apis/go/common v1.42.0/go.mod h1:TSXCLdqkMewN0ex0P3rVvI5J0+T/tvJeo+mJYbcZXb4=
 github.com/antinvestor/apis/go/common v1.44.1 h1:+z7MTl08YV3styZoGXe4icywBJqMlgvl+zamu1SrpEE=
 github.com/antinvestor/apis/go/common v1.44.1/go.mod h1:pz99UV9oVuqGXXtwijoUJFCwBBEdx5WnyhXF01yKgSk=
+github.com/antinvestor/apis/go/common v1.45.1 h1:YqdcEADWfvl86OVZB/Y4LXJilTyaHQtEcNC+Srqwl50=
+github.com/antinvestor/apis/go/common v1.45.1/go.mod h1:1z2KmKTzaBVv8AuCPj3wogdktBkvsLXGrhD7g9JLOt4=
 github.com/antinvestor/apis/go/notification v1.41.3 h1:zStTi4bmal4hiHhrE4NBZLCNsv6vqcVeqFZrZJS07pc=
 github.com/antinvestor/apis/go/notification v1.41.3/go.mod h1:PZF8AClU2YUdOEGkUSEFf8uP/GY7yAkP90zfQJj0gt4=
 github.com/antinvestor/apis/go/notification v1.42.1 h1:7f2mh3PtKQyQxhc3CK/iK3assNzx1do3ZWkc24cbRCk=
@@ -286,6 +288,8 @@ go.opentelemetry.io/contrib/bridges/otelslog v0.13.0 h1:bwnLpizECbPr1RrQ27waeY2S
 go.opentelemetry.io/contrib/bridges/otelslog v0.13.0/go.mod h1:3nWlOiiqA9UtUnrcNk82mYasNxD8ehOspL0gOfEo6Y4=
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0 h1:rbRJ8BBoVMsQShESYZ0FkvcITu8X8QNwJogcLUmDNNw=
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0/go.mod h1:ru6KHrNtNHxM4nD/vd6QrLVWgKhxPYgblq4VAtNawTQ=
+go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 h1:YH4g8lQroajqUwWbq/tr2QX1JFmEXaDLgG+ew9bLMWo=
+go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0/go.mod h1:fvPi2qXDqFs8M4B4fmJhE92TyQs9Ydjlg3RvfUp+NbQ=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 h1:RbKq8BG0FI8OiXhBfcRtqqHcZcka+gU3cskNuf05R18=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0/go.mod h1:h06DGIukJOevXaj/xrNjhi/2098RZzcLTbc0jDAUbsg=
 go.opentelemetry.io/contrib/propagators/autoprop v0.63.0 h1:S3+4UwR3Y1tUKklruMwOacAFInNvtuOexz4ZTmJNAyw=

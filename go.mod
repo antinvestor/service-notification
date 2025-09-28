@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	buf.build/go/protovalidate v0.14.0
-	github.com/antinvestor/apis/go/common v1.44.1
+	github.com/antinvestor/apis/go/common v1.45.1
 	github.com/antinvestor/apis/go/notification v1.44.1
 	github.com/antinvestor/apis/go/partition v1.42.0
 	github.com/antinvestor/apis/go/profile v1.44.1
@@ -95,6 +95,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/bridges/otelslog v0.13.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 // indirect
 	go.opentelemetry.io/contrib/propagators/autoprop v0.63.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.38.0 // indirect
