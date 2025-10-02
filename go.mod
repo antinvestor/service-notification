@@ -17,7 +17,7 @@ require (
 	github.com/wneessen/go-mail v0.7.2
 	go.uber.org/mock v0.6.0
 	google.golang.org/grpc v1.75.1
-	google.golang.org/protobuf v1.36.9
+	google.golang.org/protobuf v1.36.10
 	gorm.io/gorm v1.31.0
 )
 
