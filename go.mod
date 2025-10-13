@@ -12,7 +12,7 @@ require (
 	github.com/antinvestor/gomatrix v0.1.6
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/pitabwire/frame v1.59.9
-	github.com/pitabwire/util v0.3.4
+	github.com/pitabwire/util v0.3.5
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
 	go.uber.org/mock v0.6.0
