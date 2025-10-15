@@ -41,6 +41,8 @@ github.com/antinvestor/apis/go/common v1.44.1 h1:+z7MTl08YV3styZoGXe4icywBJqMlgv
 github.com/antinvestor/apis/go/common v1.44.1/go.mod h1:pz99UV9oVuqGXXtwijoUJFCwBBEdx5WnyhXF01yKgSk=
 github.com/antinvestor/apis/go/common v1.45.1 h1:YqdcEADWfvl86OVZB/Y4LXJilTyaHQtEcNC+Srqwl50=
 github.com/antinvestor/apis/go/common v1.45.1/go.mod h1:1z2KmKTzaBVv8AuCPj3wogdktBkvsLXGrhD7g9JLOt4=
+github.com/antinvestor/apis/go/common v1.45.4 h1:PucWMWax7NQbnrvIA7sgYtuAMtoMzQ/VYxBB0LEd5Bw=
+github.com/antinvestor/apis/go/common v1.45.4/go.mod h1:6hG1XBE8OGpk5EA2B0x90mrRWWn2pDG0zFwWpAOM0Zw=
 github.com/antinvestor/apis/go/notification v1.41.3 h1:zStTi4bmal4hiHhrE4NBZLCNsv6vqcVeqFZrZJS07pc=
 github.com/antinvestor/apis/go/notification v1.41.3/go.mod h1:PZF8AClU2YUdOEGkUSEFf8uP/GY7yAkP90zfQJj0gt4=
 github.com/antinvestor/apis/go/notification v1.42.1 h1:7f2mh3PtKQyQxhc3CK/iK3assNzx1do3ZWkc24cbRCk=
@@ -454,6 +456,8 @@ golang.org/x/oauth2 v0.30.0 h1:dnDm7JmhM45NNpd8FDDeLhK6FwqbOf4MLCM9zb1BOHI=
 golang.org/x/oauth2 v0.30.0/go.mod h1:B++QgG3ZKulg6sRPGD/mqlHQs5rB3Ml9erfeDY7xKlU=
 golang.org/x/oauth2 v0.31.0 h1:8Fq0yVZLh4j4YA47vHKFTa9Ew5XIrCP8LC6UeNZnLxo=
 golang.org/x/oauth2 v0.31.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
+golang.org/x/oauth2 v0.32.0 h1:jsCblLleRMDrxMN29H3z/k1KliIvpLgCkE6R8FXXNgY=
+golang.org/x/oauth2 v0.32.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
 golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
