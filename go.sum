@@ -75,6 +75,8 @@ github.com/antinvestor/apis/go/settings v1.44.1 h1:IJrTLQKTpt3KImB28t/isPJ8pFvkL
 github.com/antinvestor/apis/go/settings v1.44.1/go.mod h1:hdBw2agi+hY/65pY7oPwh2016QkRNjlZ9Qx2mU8wI6M=
 github.com/antinvestor/apis/go/settings v1.45.2 h1:xZWue8UWTYTN0VQjVNtdvEpr8UgG2ejC/Uk+2JLZJr4=
 github.com/antinvestor/apis/go/settings v1.45.2/go.mod h1:E6T/3sA+7GmrdCdpUtAdd12ISfF06PtmIkrNSYexXRU=
+github.com/antinvestor/apis/go/settings v1.45.3 h1:GU9YdT5sKV12PBoNI93mqFZFnb0Op4UIdfOuIdB6HEA=
+github.com/antinvestor/apis/go/settings v1.45.3/go.mod h1:E6T/3sA+7GmrdCdpUtAdd12ISfF06PtmIkrNSYexXRU=
 github.com/antinvestor/gomatrix v0.1.4 h1:VAnFZlZJfKRRvZNlYIHjPoPeekPjfpsAtQ6Fapf1c1M=
 github.com/antinvestor/gomatrix v0.1.4/go.mod h1:AWqCA5n5cpLwbde76MeSLBod5Lb4H2rSqvLVNgRCZ0Q=
 github.com/antinvestor/gomatrix v0.1.6 h1:jQBRodQP/xy1xFc5fvYglLQacVAUwCeJA5flJa4++AY=
