@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	buf.build/go/protovalidate v0.14.0
-	github.com/antinvestor/apis/go/common v1.46.4
+	github.com/antinvestor/apis/go/common v1.46.6
 	github.com/antinvestor/apis/go/notification v1.45.3
 	github.com/antinvestor/apis/go/partition v1.42.0
 	github.com/antinvestor/apis/go/profile v1.46.2
