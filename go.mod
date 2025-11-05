@@ -11,7 +11,7 @@ require (
 	github.com/antinvestor/apis/go/settings v1.47.4
 	github.com/antinvestor/gomatrix v0.1.6
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
-	github.com/pitabwire/frame v1.59.9
+	github.com/pitabwire/frame v1.64.17
 	github.com/pitabwire/util v0.3.5
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
