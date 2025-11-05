@@ -4,11 +4,11 @@ go 1.25.0
 
 require (
 	buf.build/go/protovalidate v0.14.0
-	github.com/antinvestor/apis/go/common v1.47.4
+	github.com/antinvestor/apis/go/common v1.47.9
 	github.com/antinvestor/apis/go/notification v1.45.3
 	github.com/antinvestor/apis/go/partition v1.42.0
 	github.com/antinvestor/apis/go/profile v1.47.4
-	github.com/antinvestor/apis/go/settings v1.47.4
+	github.com/antinvestor/apis/go/settings v1.47.13
 	github.com/antinvestor/gomatrix v0.1.6
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/pitabwire/frame v1.59.9
@@ -22,7 +22,9 @@ require (
 )
 
 require (
+	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.10-20251103151128-9c9b418cbc9a.1 // indirect
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
+	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.10-20230414000709-087bc8072ce4.1 // indirect
 	cel.dev/expr v0.24.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
