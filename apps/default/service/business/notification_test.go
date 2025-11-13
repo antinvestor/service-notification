@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	commonmocks "github.com/antinvestor/apis/go/common/mocks"
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
@@ -40,7 +42,7 @@ type ctxSrv struct {
 
 func (nts *NotificationTestSuite) TestNewNotificationBusiness() {
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 
@@ -128,7 +130,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueIn() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -201,7 +203,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -261,7 +263,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -291,7 +293,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 				n.TenantID = "test_tenant-id"
 
 				nRepo := repository.NewNotificationRepository(ctx, svc)
-				err = nRepo.Save(ctx, &n)
+				err = nRepo.Create(ctx, &n)
 				if err != nil {
 					t.Errorf("Status() error = %v could not store a notification for status checking", err)
 					return
@@ -347,7 +349,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -384,7 +386,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 				n.PartitionID = "test_partition-id"
 
 				nRepo := repository.NewNotificationRepository(ctx, svc)
-				err = nRepo.Save(ctx, &n)
+				err = nRepo.Create(ctx, &n)
 				if err != nil {
 					t.Errorf("Search() error = %v could not store a notification", err)
 					return
@@ -393,7 +395,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 				nStatus.NotificationID = n.GetID()
 
 				nStatusRepo := repository.NewNotificationStatusRepository(ctx, svc)
-				err = nStatusRepo.Save(ctx, &nStatus)
+				err = nStatusRepo.Create(ctx, &nStatus)
 				if err != nil {
 					t.Errorf("Search() error = %v could not store a notification status", err)
 					return
@@ -401,7 +403,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 
 				serverStream := commonmocks.NewMockServerStream[notificationv1.SearchResponse](ctx)
 
-				err = nb.Search(tt.search, serverStream)
+				res, err = nb.Search(tt.search, serverStream)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("Search() error = %v, wantErr %v", err, tt.wantErr)
 				}
@@ -439,7 +441,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Status() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -484,7 +486,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Status() {
 				n.TenantID = "test_tenant-id"
 
 				nRepo := repository.NewNotificationRepository(ctx, svc)
-				err = nRepo.Save(ctx, &n)
+				err = nRepo.Create(ctx, &n)
 				if err != nil {
 					t.Errorf("Status() error = %v could not store a notification for status checking", err)
 					return
@@ -492,7 +494,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Status() {
 
 				nStatus.NotificationID = n.GetID()
 				nSRepo := repository.NewNotificationStatusRepository(ctx, svc)
-				err = nSRepo.Save(ctx, &nStatus)
+				err = nSRepo.Create(ctx, &nStatus)
 				if err != nil {
 					t.Errorf("Status() error = %v could not store a notification Status for status checking", err)
 					return
@@ -543,7 +545,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 		},
 	}
 
-	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependancyOption) {
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
 		svc, ctx := nts.CreateService(t, dep)
 		profileCli := nts.GetProfileCli(ctx)
@@ -574,7 +576,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 				n.PartitionID = "test_partition-id"
 
 				nRepo := repository.NewNotificationRepository(ctx, svc)
-				err = nRepo.Save(ctx, &n)
+				err = nRepo.Create(ctx, &n)
 				if err != nil {
 					t.Errorf("Status() error = %v could not store a notification for status checking", err)
 					return

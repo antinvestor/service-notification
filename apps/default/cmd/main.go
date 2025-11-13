@@ -2,33 +2,36 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 
-	"buf.build/go/protovalidate"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"connectrpc.com/connect"
+	"connectrpc.com/otelconnect"
 	apis "github.com/antinvestor/apis/go/common"
-	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	partitionV1 "buf.build/gen/go/antinvestor/partition/protocolbuffers/go/partition/v1"
+	"github.com/antinvestor/apis/go/partition"
+	"github.com/antinvestor/apis/go/profile"
+	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/datastore"
-
-	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
+	"github.com/pitabwire/frame/security"
+	securityconnect "github.com/pitabwire/frame/security/interceptors/connect"
+	"github.com/pitabwire/frame/security/openid"
+	"github.com/pitabwire/frame/workerpool"
+	"github.com/pitabwire/util"
 
 	aconfig "github.com/antinvestor/service-notification/apps/default/config"
+	"github.com/antinvestor/service-notification/apps/default/service/business"
 	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/handlers"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	protovalidateinterceptor "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
-	"github.com/pitabwire/frame"
-	"github.com/pitabwire/util"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
-
 	ctx := context.Background()
 
+	// Initialize configuration
 	cfg, err := config.LoadWithOIDC[aconfig.NotificationConfig](ctx)
 	if err != nil {
 		util.Log(ctx).With("err", err).Error("could not process configs")
@@ -39,8 +42,13 @@ func main() {
 		cfg.ServiceName = "service_notifications"
 	}
 
-	ctx, svc := frame.NewServiceWithContext(ctx, frame.WithConfig(&cfg), frame.WithRegisterServerOauth2Client(), frame.WithDatastore())
-
+	// Create service
+	ctx, svc := frame.NewServiceWithContext(
+		ctx,
+		frame.WithConfig(&cfg),
+		frame.WithRegisterServerOauth2Client(),
+	)
+	defer svc.Stop(ctx)
 	log := svc.Log(ctx)
 
 	// Handle database migration if requested
@@ -48,10 +56,26 @@ func main() {
 		return
 	}
 
-	// Initialize repositories
-	dbPool := svc.DatastoreManager().GetPool(ctx, datastore.DefaultPoolName)
-	workMan := svc.WorkManager()
+	sm := svc.SecurityManager()
 
+	// Setup clients
+	profileCli, err := setupProfileClient(ctx, sm, cfg)
+	if err != nil {
+		log.WithError(err).Fatal("main -- Could not setup profile client")
+	}
+
+	partitionCli, err := setupPartitionClient(ctx, sm, cfg)
+	if err != nil {
+		log.WithError(err).Fatal("main -- Could not setup partition client")
+	}
+
+	workMan := svc.WorkManager()
+	dbPool := svc.DatastoreManager().GetPool(ctx, datastore.DefaultPoolName)
+
+	evtsMan := svc.EventsManager()
+	qMan := svc.QueueManager()
+
+	// Initialize repositories
 	notificationRepo := repository.NewNotificationRepository(ctx, dbPool, workMan)
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, dbPool, workMan)
 	languageRepo := repository.NewLanguageRepository(ctx, dbPool, workMan)
@@ -59,97 +83,37 @@ func main() {
 	templateDataRepo := repository.NewTemplateDataRepository(ctx, dbPool, workMan)
 	routeRepo := repository.NewRouteRepository(ctx, dbPool, workMan)
 
-	profileCli, err := profilev1.NewProfileClient(ctx,
-		apis.WithEndpoint(cfg.ProfileServiceURI),
-		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
-		apis.WithTokenUsername(svc.JwtClientID()),
-		apis.WithTokenPassword(svc.JwtClientSecret()),
-		apis.WithScopes(frame.ConstSystemScopeInternal),
-		apis.WithAudiences("service_profile"))
-	if err != nil {
-		log.WithError(err).Fatal("could not setup profile client")
-	}
+	// Create business logic with all dependencies
+	notificationBusiness := business.NewNotificationBusiness(ctx, evtsMan, profileCli, partitionCli, notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
 
-	partitionCli, err := partitionV1.NewPartitionsClient(
-		ctx,
-		apis.WithEndpoint(cfg.PartitionServiceURI),
-		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
-		apis.WithTokenUsername(svc.JwtClientID()),
-		apis.WithTokenPassword(svc.JwtClientSecret()),
-		apis.WithScopes(frame.ConstSystemScopeInternal),
-		apis.WithAudiences("service_partition"))
-	if err != nil {
-		log.WithError(err).Fatal("could not setup partition client")
-	}
+	// Register event handlers
 
-	jwtAudience := cfg.Oauth2JwtVerifyAudience
-	if jwtAudience == "" {
-		jwtAudience = serviceName
-	}
-
-	validator, err := protovalidate.New()
-	if err != nil {
-		log.WithError(err).Fatal("could not load validator for proto messages")
-	}
-
-	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(
-			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandlerContext(frame.RecoveryHandlerFun)),
-			svc.UnaryAuthInterceptor(jwtAudience, cfg.GetOauth2Issuer()),
-			protovalidateinterceptor.UnaryServerInterceptor(validator),
-		),
-		grpc.ChainStreamInterceptor(
-			recovery.StreamServerInterceptor(recovery.WithRecoveryHandlerContext(frame.RecoveryHandlerFun)),
-			svc.StreamAuthInterceptor(jwtAudience, cfg.GetOauth2Issuer()),
-			protovalidateinterceptor.StreamServerInterceptor(validator),
-		),
-	)
-
-	implementation := &handlers.NotificationServer{
-
-		Service:      svc,
-		ProfileCli:   profileCli,
-		PartitionCli: partitionCli,
-	}
-
-	notificationv1.RegisterNotificationServiceServer(grpcServer, implementation)
-
-	grpcServerOpt := frame.WithGRPCServer(grpcServer)
-	serviceOptions = append(serviceOptions, grpcServerOpt)
-
-	proxyOptions := apis.ProxyOptions{
-		GrpcServerEndpoint: fmt.Sprintf("localhost:%s", cfg.GrpcServerPort),
-		GrpcServerDialOpts: []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
-	}
-
-	proxyMux, err := notificationv1.CreateProxyHandler(ctx, proxyOptions)
-	if err != nil {
-		log.WithError(err).Fatal("could not create proxy handler")
-		return
-	}
-
-	proxyServerOpt := frame.WithHTTPHandler(proxyMux)
-	serviceOptions = append(serviceOptions, proxyServerOpt)
-
-	serviceOptions = append(serviceOptions,
+	serviceOptions := []frame.Option{frame.WithDatastore(),
 		frame.WithRegisterEvents(
-			events2.NewNotificationSave(ctx, svc.EventsManager(), notificationRepo),
+			events2.NewNotificationSave(ctx, evtsMan, notificationRepo),
 			events2.NewNotificationStatusSave(ctx, notificationRepo, notificationStatusRepo),
-			events2.NewNotificationInRoute(ctx, svc.QueueManager(), svc.EventsManager(), notificationRepo, routeRepo),
-			events2.NewNotificationInQueue(ctx, svc.QueueManager(), svc.EventsManager(), notificationRepo, routeRepo, profileCli),
-			events2.NewNotificationOutRoute(ctx, svc.EventsManager(), profileCli, notificationRepo, routeRepo),
-			events2.NewNotificationOutQueue(ctx, svc.QueueManager(), svc.EventsManager(), profileCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)))
+			events2.NewNotificationInRoute(ctx, qMan, evtsMan, notificationRepo, routeRepo),
+			events2.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, routeRepo, profileCli),
+			events2.NewNotificationOutRoute(ctx, evtsMan, profileCli, notificationRepo, routeRepo),
+			events2.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo))}
 
+	// Setup Connect server
+	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
+
+	// Setup HTTP handlers and event system
+	serviceOptions = append(serviceOptions, frame.WithHTTPHandler(connectHandler))
+
+	// Initialize the service with all options
 	svc.Init(ctx, serviceOptions...)
 
+	// Start the service
 	log.WithField("server http port", cfg.HTTPPort()).
 		WithField("server grpc port", cfg.GrpcPort()).
 		Info(" Initiating server operations")
 
-	defer implementation.Service.Stop(ctx)
-	err = implementation.Service.Run(ctx, "")
+	err = svc.Run(ctx, "")
 	if err != nil {
-		log.WithError(err).Fatal("could not run Server ")
+		log.WithError(err).Fatal("could not run Server")
 	}
 }
 
@@ -172,4 +136,60 @@ func handleDatabaseMigration(
 		return true
 	}
 	return false
+}
+
+// setupProfileClient creates and configures the profile client.
+func setupProfileClient(
+	ctx context.Context,
+	clHolder security.InternalOauth2ClientHolder,
+	cfg aconfig.NotificationConfig) (profilev1connect.ProfileServiceClient, error) {
+	return profile.NewClient(ctx,
+		apis.WithEndpoint(cfg.ProfileServiceURI),
+		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
+		apis.WithTokenUsername(clHolder.JwtClientID()),
+		apis.WithTokenPassword(clHolder.JwtClientSecret()),
+		apis.WithScopes(openid.ConstSystemScopeInternal),
+		apis.WithAudiences("service_profile"))
+}
+
+// setupPartitionClient creates and configures the partition client.
+func setupPartitionClient(
+	ctx context.Context,
+	clHolder security.InternalOauth2ClientHolder,
+	cfg aconfig.NotificationConfig) (partitionv1connect.PartitionServiceClient, error) {
+	return partition.NewClient(ctx,
+		apis.WithEndpoint(cfg.PartitionServiceURI),
+		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
+		apis.WithTokenUsername(clHolder.JwtClientID()),
+		apis.WithTokenPassword(clHolder.JwtClientSecret()),
+		apis.WithScopes(openid.ConstSystemScopeInternal),
+		apis.WithAudiences("service_partition"))
+}
+
+// setupConnectServer initializes and configures the Connect RPC server.
+func setupConnectServer(ctx context.Context, sm security.Manager, workMan workerpool.Manager, notificationBusiness business.NotificationBusiness) http.Handler {
+
+	otelInterceptor, err := otelconnect.NewInterceptor()
+	if err != nil {
+		util.Log(ctx).WithError(err).Fatal("could not configure open telemetry")
+	}
+
+	validateInterceptor, err := securityconnect.NewValidationInterceptor()
+	if err != nil {
+		util.Log(ctx).WithError(err).Fatal("could not configure validation interceptor")
+	}
+
+	authenticator := sm.GetAuthenticator(ctx)
+	authInterceptor := securityconnect.NewAuthInterceptor(authenticator)
+
+	// Create handler with injected dependencies
+	implementation := handlers.NewNotificationServer(workMan, notificationBusiness)
+
+	_, serverHandler := notificationv1connect.NewNotificationServiceHandler(
+		implementation, connect.WithInterceptors(authInterceptor, otelInterceptor, validateInterceptor))
+
+	mux := http.NewServeMux()
+	mux.Handle("/", serverHandler)
+
+	return mux
 }

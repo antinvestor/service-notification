@@ -12,14 +12,11 @@ import (
 	"github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/data"
-	"github.com/pitabwire/frame/datastore"
 	fevents "github.com/pitabwire/frame/events"
 	"github.com/pitabwire/frame/security"
 	"github.com/pitabwire/frame/workerpool"
 	"github.com/pitabwire/util"
-	"google.golang.org/grpc"
 )
 
 type NotificationBusiness interface {
@@ -27,31 +24,32 @@ type NotificationBusiness interface {
 	QueueIn(ctx context.Context, in *notificationv1.Notification) (*commonv1.StatusResponse, error)
 	Status(ctx context.Context, status *commonv1.StatusRequest) (*commonv1.StatusResponse, error)
 	StatusUpdate(ctx context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error)
-	Release(ctx context.Context, req *notificationv1.ReleaseRequest, stream grpc.ServerStreamingServer[notificationv1.ReleaseResponse]) error
+	Release(ctx context.Context, req *notificationv1.ReleaseRequest) (workerpool.JobResultPipe[*notificationv1.ReleaseResponse], error)
 	Search(ctx context.Context, search *commonv1.SearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Notification], error)
 	TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.Template, error)
 	TemplateSearch(ctx context.Context, search *notificationv1.TemplateSearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Template], error)
 }
 
-func NewNotificationBusiness(ctx context.Context, service *frame.Service, profileCli profilev1connect.ProfileServiceClient, partitionCli partitionv1connect.PartitionServiceClient) (NotificationBusiness, error) {
-
-	if service == nil || profileCli == nil || partitionCli == nil {
-		return nil, ErrorInitializationFail
-	}
-
-	dbPool := service.DatastoreManager().GetPool(ctx, datastore.DefaultPoolName)
-	workMan := service.WorkManager()
-
+func NewNotificationBusiness(_ context.Context, eventsMan fevents.Manager,
+	profileCli profilev1connect.ProfileServiceClient, partitionCli partitionv1connect.PartitionServiceClient,
+	notificationRepo repository.NotificationRepository,
+	notificationStatusRepo repository.NotificationStatusRepository,
+	languageRepo repository.LanguageRepository,
+	templateRepo repository.TemplateRepository,
+	templateDataRepo repository.TemplateDataRepository,
+	routeRepo repository.RouteRepository,
+) NotificationBusiness {
 	return &notificationBusiness{
-		eventsMan:              service.EventsManager(),
+		eventsMan:              eventsMan,
 		profileCli:             profileCli,
 		partitionCli:           partitionCli,
-		notificationRepo:       repository.NewNotificationRepository(ctx, dbPool, workMan),
-		notificationStatusRepo: repository.NewNotificationStatusRepository(ctx, dbPool, workMan),
-		languageRepo:           repository.NewLanguageRepository(ctx, dbPool, workMan),
-		templateRepo:           repository.NewTemplateRepository(ctx, dbPool, workMan),
-		templateDataRepo:       repository.NewTemplateDataRepository(ctx, dbPool, workMan),
-	}, nil
+		notificationRepo:       notificationRepo,
+		notificationStatusRepo: notificationStatusRepo,
+		languageRepo:           languageRepo,
+		templateRepo:           templateRepo,
+		templateDataRepo:       templateDataRepo,
+		routeRepo:              routeRepo,
+	}
 }
 
 type notificationBusiness struct {
@@ -63,6 +61,7 @@ type notificationBusiness struct {
 	languageRepo           repository.LanguageRepository
 	templateRepo           repository.TemplateRepository
 	templateDataRepo       repository.TemplateDataRepository
+	routeRepo              repository.RouteRepository
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationv1.Notification) (*commonv1.StatusResponse, error) {
@@ -262,89 +261,94 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 	return nStatus.ToStatusAPI(), nil
 }
 
-func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationv1.ReleaseRequest, stream grpc.ServerStreamingServer[notificationv1.ReleaseResponse]) error {
+func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationv1.ReleaseRequest) (workerpool.JobResultPipe[*notificationv1.ReleaseResponse], error) {
 
-	logger := util.Log(ctx).WithField("request", releaseReq)
-	logger.Debug("handling release request")
+	job := workerpool.NewJob(func(ctx context.Context, resultPipe workerpool.JobResultPipe[*notificationv1.ReleaseResponse]) error {
 
-	notificationList, err := nb.notificationRepo.GetByIDList(ctx, releaseReq.GetId()...)
-	if err != nil {
-		logger.WithError(err).Warn("could not fetch by id")
-		return err
-	}
+		logger := util.Log(ctx).WithField("request", releaseReq)
+		logger.Debug("handling release request")
 
-	var releasedStatusIDs []string
-	var notificationsToUpdate []*models.Notification
-
-	releaseDate := time.Now()
-
-	for _, n := range notificationList {
-
-		if n.IsReleased() {
-			releasedStatusIDs = append(releasedStatusIDs, n.StatusID)
-		} else {
-			n.ReleasedAt = &releaseDate
-			notificationsToUpdate = append(notificationsToUpdate, n)
-		}
-
-	}
-
-	var statusesToRelease []*commonv1.StatusResponse
-	for _, n := range notificationsToUpdate {
-
-		err = nb.eventsMan.Emit(ctx, events.NotificationSaveEvent, n)
+		notificationList, err := nb.notificationRepo.GetByIDList(ctx, releaseReq.GetId()...)
 		if err != nil {
-			logger.WithError(err).Warn("could not emit notification save")
+			logger.WithError(err).Warn("could not fetch by id")
 			return err
 		}
 
-		nStatus := models.NotificationStatus{
-			NotificationID: n.GetID(),
-			State:          int32(commonv1.STATE_ACTIVE.Number()),
-			Status:         int32(commonv1.STATUS_QUEUED.Number()),
+		var releasedStatusIDs []string
+		var notificationsToUpdate []*models.Notification
+
+		releaseDate := time.Now()
+
+		for _, n := range notificationList {
+
+			if n.IsReleased() {
+				releasedStatusIDs = append(releasedStatusIDs, n.StatusID)
+			} else {
+				n.ReleasedAt = &releaseDate
+				notificationsToUpdate = append(notificationsToUpdate, n)
+			}
+
 		}
 
-		nStatus.GenID(ctx)
+		var statusesToRelease []*commonv1.StatusResponse
+		for _, n := range notificationsToUpdate {
 
-		// Release notification status save for further processing
-		err = nb.eventsMan.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
-		if err != nil {
-			logger.WithError(err).Warn("could not emit notification status")
-			return err
-		}
+			err = nb.eventsMan.Emit(ctx, events.NotificationSaveEvent, n)
+			if err != nil {
+				logger.WithError(err).Warn("could not emit notification save")
+				return err
+			}
 
-		statusesToRelease = append(statusesToRelease, nStatus.ToStatusAPI())
-	}
+			nStatus := models.NotificationStatus{
+				NotificationID: n.GetID(),
+				State:          int32(commonv1.STATE_ACTIVE.Number()),
+				Status:         int32(commonv1.STATUS_QUEUED.Number()),
+			}
 
-	if len(statusesToRelease) > 0 {
-		err = stream.Send(&notificationv1.ReleaseResponse{Data: statusesToRelease})
-		if err != nil {
-			return err
-		}
-	}
+			nStatus.GenID(ctx)
 
-	statusesToRelease = nil
-	var notificationStatusList []*models.NotificationStatus
-	if len(releasedStatusIDs) > 0 {
-		notificationStatusList, err = nb.notificationStatusRepo.GetByIDList(ctx, releasedStatusIDs...)
-		if err != nil {
-			logger.WithError(err).Warn("could not get notification status")
-			return err
-		}
+			// Release notification status save for further processing
+			err = nb.eventsMan.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
+			if err != nil {
+				logger.WithError(err).Warn("could not emit notification status")
+				return err
+			}
 
-		for _, nStatus := range notificationStatusList {
 			statusesToRelease = append(statusesToRelease, nStatus.ToStatusAPI())
 		}
-	}
 
-	if len(statusesToRelease) > 0 {
-		err = stream.Send(&notificationv1.ReleaseResponse{Data: statusesToRelease})
-		if err != nil {
-			return err
+		if len(statusesToRelease) > 0 {
+			err = resultPipe.WriteResult(ctx, &notificationv1.ReleaseResponse{Data: statusesToRelease})
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	return nil
+		statusesToRelease = nil
+		var notificationStatusList []*models.NotificationStatus
+		if len(releasedStatusIDs) > 0 {
+			notificationStatusList, err = nb.notificationStatusRepo.GetByIDList(ctx, releasedStatusIDs...)
+			if err != nil {
+				logger.WithError(err).Warn("could not get notification status")
+				return err
+			}
+
+			for _, nStatus := range notificationStatusList {
+				statusesToRelease = append(statusesToRelease, nStatus.ToStatusAPI())
+			}
+		}
+
+		if len(statusesToRelease) > 0 {
+			err = resultPipe.WriteResult(ctx, &notificationv1.ReleaseResponse{Data: statusesToRelease})
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return job, nil
 }
 
 func (nb *notificationBusiness) convertNotificationsToAPI(
@@ -662,21 +666,21 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 
 	templateDataList, err0 := nb.templateDataRepo.GetByTemplateID(ctx, template.GetID())
 	if err0 != nil {
-		logger.WithError(err0).Debug("could not get existing template data")
+		logger.WithError(err0).Debug("could not get existing template tData")
 		return nil, err
 	}
-	for _, data := range templateDataList {
+	for _, tData := range templateDataList {
 
-		lang, ok := languageMap[data.LanguageID]
+		lang, ok := languageMap[tData.LanguageID]
 		if !ok {
 
-			lang, err = nb.languageRepo.GetByID(ctx, data.LanguageID)
+			lang, err = nb.languageRepo.GetByID(ctx, tData.LanguageID)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		apiTemplateDataList = append(apiTemplateDataList, data.ToApi(lang.ToApi()))
+		apiTemplateDataList = append(apiTemplateDataList, tData.ToApi(lang.ToApi()))
 	}
 
 	return template.ToApi(apiTemplateDataList), nil
