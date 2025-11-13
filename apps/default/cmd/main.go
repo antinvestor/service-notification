@@ -12,6 +12,11 @@ import (
 	apis "github.com/antinvestor/apis/go/common"
 	"github.com/antinvestor/apis/go/partition"
 	"github.com/antinvestor/apis/go/profile"
+	aconfig "github.com/antinvestor/service-notification/apps/default/config"
+	"github.com/antinvestor/service-notification/apps/default/service/business"
+	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
+	"github.com/antinvestor/service-notification/apps/default/service/handlers"
+	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/datastore"
@@ -20,18 +25,12 @@ import (
 	"github.com/pitabwire/frame/security/openid"
 	"github.com/pitabwire/frame/workerpool"
 	"github.com/pitabwire/util"
-
-	aconfig "github.com/antinvestor/service-notification/apps/default/config"
-	"github.com/antinvestor/service-notification/apps/default/service/business"
-	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
-	"github.com/antinvestor/service-notification/apps/default/service/handlers"
-	"github.com/antinvestor/service-notification/apps/default/service/repository"
 )
 
 func main() {
 	ctx := context.Background()
 
-	// Initialize configuration
+	// Initialise configuration
 	cfg, err := config.LoadWithOIDC[aconfig.NotificationConfig](ctx)
 	if err != nil {
 		util.Log(ctx).With("err", err).Error("could not process configs")
@@ -75,7 +74,7 @@ func main() {
 	evtsMan := svc.EventsManager()
 	qMan := svc.QueueManager()
 
-	// Initialize repositories
+	// Initialise repositories
 	notificationRepo := repository.NewNotificationRepository(ctx, dbPool, workMan)
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, dbPool, workMan)
 	languageRepo := repository.NewLanguageRepository(ctx, dbPool, workMan)
@@ -84,7 +83,7 @@ func main() {
 	routeRepo := repository.NewRouteRepository(ctx, dbPool, workMan)
 
 	// Create business logic with all dependencies
-	notificationBusiness := business.NewNotificationBusiness(ctx, evtsMan, profileCli, partitionCli, notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
+	notificationBusiness := business.NewNotificationBusiness(ctx, workMan, evtsMan, profileCli, partitionCli, notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
 
 	// Register event handlers
 
@@ -103,7 +102,7 @@ func main() {
 	// Setup HTTP handlers and event system
 	serviceOptions = append(serviceOptions, frame.WithHTTPHandler(connectHandler))
 
-	// Initialize the service with all options
+	// Initialise the service with all options
 	svc.Init(ctx, serviceOptions...)
 
 	// Start the service
@@ -166,7 +165,7 @@ func setupPartitionClient(
 		apis.WithAudiences("service_partition"))
 }
 
-// setupConnectServer initializes and configures the Connect RPC server.
+// setupConnectServer initialises and configures the Connect RPC server.
 func setupConnectServer(ctx context.Context, sm security.Manager, workMan workerpool.Manager, notificationBusiness business.NotificationBusiness) http.Handler {
 
 	otelInterceptor, err := otelconnect.NewInterceptor()

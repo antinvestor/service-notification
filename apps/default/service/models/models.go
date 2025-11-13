@@ -4,9 +4,7 @@ import (
 	"time"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-
 	"github.com/pitabwire/frame/data"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -172,7 +170,7 @@ func (model *Notification) ToAPI(status *NotificationStatus, language *Language,
 		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),
 		RouteId:     model.RouteID,
-		Status:      status.ToStatusAPI(),
+		Status:      status.ToAPI(),
 		Extras:      extra.ToProtoStruct(),
 		Priority:    notificationv1.PRIORITY(model.Priority),
 	}
@@ -191,7 +189,11 @@ type NotificationStatus struct {
 	Status      int32
 }
 
-func (model *NotificationStatus) ToStatusAPI() *commonv1.StatusResponse {
+func (model *NotificationStatus) ToAPI() *commonv1.StatusResponse {
+
+	if model == nil {
+		return nil
+	}
 
 	extraData := data.JSONMap{
 		"CreatedAt": model.CreatedAt.String(),

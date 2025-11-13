@@ -1,6 +1,7 @@
 package business_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -217,7 +218,18 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 					t.Errorf("Status() error = %v could not store a notification for status checking", err)
 					return
 				}
+
+				// Verify notification was created and can be retrieved
+				retrievedNotifications, getErr := resources.NotificationRepo.GetByIDList(ctx, n.GetID())
+				if getErr != nil {
+					t.Errorf("Could not retrieve created notification: %v", getErr)
+					return
+				}
+				t.Logf("Retrieved %d notifications after creation", len(retrievedNotifications))
+
 				tt.releaseReq.Id = []string{n.GetID()}
+
+				t.Logf("Releasing notification with ID: %s, IsReleased: %v", n.GetID(), n.IsReleased())
 
 				resultPipe, err := resources.NotificationBusiness.Release(ctx, tt.releaseReq)
 				if (err != nil) != tt.wantErr {
@@ -230,12 +242,19 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 					return
 				}
 
-				// Consume the results from the JobResultPipe
+				// Consume the results from the JobResultPipe with timeout
 				responseCount := 0
 				var got *commonv1.StatusResponse
+
+				// Create a context with timeout - give more time for async event processing
+				timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+				defer cancel()
+
+				t.Logf("Starting to read results from pipe...")
 				for {
-					result, ok := resultPipe.ReadResult(ctx)
+					result, ok := resultPipe.ReadResult(timeoutCtx)
 					if !ok {
+						t.Logf("Result pipe closed, received %d responses", responseCount)
 						break // Channel closed
 					}
 					if result.IsError() {
@@ -244,6 +263,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 					}
 					releaseResp := result.Item() // Returns *notificationv1.ReleaseResponse
 					responseCount++
+					t.Logf("Received response %d with %d status items", responseCount, len(releaseResp.Data))
 					if len(releaseResp.Data) > 0 && got == nil {
 						// Get the first status response for comparison
 						got = releaseResp.Data[0]
@@ -330,11 +350,18 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 					return
 				}
 
-				// Consume the results from the JobResultPipe
+				// Consume the results from the JobResultPipe with timeout
 				resultCount := 0
+
+				// Create a context with timeout - give more time for async event processing
+				timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+				defer cancel()
+
+				t.Logf("Starting to read search results from pipe...")
 				for {
-					result, ok := resultPipe.ReadResult(ctx)
+					result, ok := resultPipe.ReadResult(timeoutCtx)
 					if !ok {
+						t.Logf("Search result pipe closed, received %d total notifications", resultCount)
 						break // Channel closed
 					}
 					if result.IsError() {
@@ -343,6 +370,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 					}
 					notifications := result.Item()
 					resultCount += len(notifications)
+					t.Logf("Received batch of %d notifications, total so far: %d", len(notifications), resultCount)
 				}
 
 				require.GreaterOrEqual(t, resultCount, tt.leastCount, "Search() expected at least %d results", tt.leastCount)

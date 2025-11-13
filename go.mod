@@ -1,6 +1,6 @@
 module github.com/antinvestor/service-notification
 
-go 1.25.0
+go 1.25.2
 
 require (
 	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.10-20251104183629-02dfa9355307.1

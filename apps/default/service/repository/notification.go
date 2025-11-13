@@ -9,7 +9,6 @@ import (
 	"github.com/pitabwire/frame/workerpool"
 )
 
-
 type NotificationRepository interface {
 	datastore.BaseRepository[*models.Notification]
 	GetByIDList(ctx context.Context, id ...string) ([]*models.Notification, error)
@@ -44,4 +43,3 @@ func (repo *notificationRepository) GetByIDList(ctx context.Context, id ...strin
 	}
 	return notifications, nil
 }
-

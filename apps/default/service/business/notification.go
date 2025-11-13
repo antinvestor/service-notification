@@ -30,7 +30,8 @@ type NotificationBusiness interface {
 	TemplateSearch(ctx context.Context, search *notificationv1.TemplateSearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Template], error)
 }
 
-func NewNotificationBusiness(_ context.Context, eventsMan fevents.Manager,
+func NewNotificationBusiness(_ context.Context,
+	workMan workerpool.Manager, eventsMan fevents.Manager,
 	profileCli profilev1connect.ProfileServiceClient, partitionCli partitionv1connect.PartitionServiceClient,
 	notificationRepo repository.NotificationRepository,
 	notificationStatusRepo repository.NotificationStatusRepository,
@@ -40,6 +41,7 @@ func NewNotificationBusiness(_ context.Context, eventsMan fevents.Manager,
 	routeRepo repository.RouteRepository,
 ) NotificationBusiness {
 	return &notificationBusiness{
+		workMan:                workMan,
 		eventsMan:              eventsMan,
 		profileCli:             profileCli,
 		partitionCli:           partitionCli,
@@ -54,6 +56,7 @@ func NewNotificationBusiness(_ context.Context, eventsMan fevents.Manager,
 
 type notificationBusiness struct {
 	eventsMan              fevents.Manager
+	workMan                workerpool.Manager
 	profileCli             profilev1connect.ProfileServiceClient
 	partitionCli           partitionv1connect.PartitionServiceClient
 	notificationRepo       repository.NotificationRepository
@@ -145,7 +148,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		return nil, err
 	}
 
-	return nStatus.ToStatusAPI(), nil
+	return nStatus.ToAPI(), nil
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationv1.Notification) (*commonv1.StatusResponse, error) {
@@ -210,7 +213,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		return nil, err
 	}
 
-	return nStatus.ToStatusAPI(), nil
+	return nStatus.ToAPI(), nil
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
@@ -228,7 +231,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 		logger.WithError(err).Warn("unable to get by status id")
 		return nil, err
 	}
-	return nStatus.ToStatusAPI(), nil
+	return nStatus.ToAPI(), nil
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error) {
@@ -258,7 +261,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 		return nil, err
 	}
 
-	return nStatus.ToStatusAPI(), nil
+	return nStatus.ToAPI(), nil
 }
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationv1.ReleaseRequest) (workerpool.JobResultPipe[*notificationv1.ReleaseResponse], error) {
@@ -314,7 +317,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 				return err
 			}
 
-			statusesToRelease = append(statusesToRelease, nStatus.ToStatusAPI())
+			statusesToRelease = append(statusesToRelease, nStatus.ToAPI())
 		}
 
 		if len(statusesToRelease) > 0 {
@@ -334,7 +337,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 			}
 
 			for _, nStatus := range notificationStatusList {
-				statusesToRelease = append(statusesToRelease, nStatus.ToStatusAPI())
+				statusesToRelease = append(statusesToRelease, nStatus.ToAPI())
 			}
 		}
 
@@ -348,6 +351,11 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		return nil
 	})
 
+	err := workerpool.SubmitJob(ctx, nb.workMan, job)
+	if err != nil {
+		return nil, err
+	}
+
 	return job, nil
 }
 
@@ -358,7 +366,7 @@ func (nb *notificationBusiness) convertNotificationsToAPI(
 	var responsesList []*notificationv1.Notification
 
 	var statusIDList []string
-	var languageIDMap map[string]struct{}
+	languageIDMap := map[string]struct{}{}
 
 	for _, p := range notificationList {
 		statusIDList = append(statusIDList, p.StatusID)
@@ -454,7 +462,7 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 		return nil, err
 	}
 
-	processRes := workerpool.NewJob[[]*notificationv1.Notification](
+	transformationJob := workerpool.NewJob[[]*notificationv1.Notification](
 		func(ctx context.Context, pipe workerpool.JobResultPipe[[]*notificationv1.Notification]) error {
 			cancelCtx, cancel := context.WithCancel(ctx)
 			defer cancel()
@@ -482,10 +490,14 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 		},
 	)
 
-	return processRes, nil
+	err = workerpool.SubmitJob(ctx, nb.workMan, transformationJob)
+	if err != nil {
+		return nil, err
+	}
+	return transformationJob, nil
 }
 
-func (nb *notificationBusiness) convertTemplatesToAPI(ctx context.Context, language *models.Language, templateList []*models.Template, ) ([]*notificationv1.Template, error) {
+func (nb *notificationBusiness) convertTemplatesToAPI(ctx context.Context, language *models.Language, templateList []*models.Template) ([]*notificationv1.Template, error) {
 	var responsesList []*notificationv1.Template
 
 	var templateIDList []string
@@ -510,7 +522,7 @@ func (nb *notificationBusiness) convertTemplatesToAPI(ctx context.Context, langu
 		}
 	}
 
-	var languageIDMap map[string]struct{}
+	languageIDMap := map[string]struct{}{}
 
 	for _, tData := range templateDataList {
 		languageIDMap[tData.LanguageID] = struct{}{}
@@ -586,7 +598,7 @@ func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery 
 		return nil, err
 	}
 
-	processRes := workerpool.NewJob[[]*notificationv1.Template](
+	transformationJob := workerpool.NewJob[[]*notificationv1.Template](
 		func(ctx context.Context, pipe workerpool.JobResultPipe[[]*notificationv1.Template]) error {
 			cancelCtx, cancel := context.WithCancel(ctx)
 			defer cancel()
@@ -614,7 +626,12 @@ func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery 
 		},
 	)
 
-	return processRes, nil
+	err = workerpool.SubmitJob(ctx, nb.workMan, transformationJob)
+	if err != nil {
+		return nil, err
+	}
+
+	return transformationJob, nil
 }
 
 func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.Template, error) {

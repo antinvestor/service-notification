@@ -73,7 +73,7 @@ func (bs *BaseTestSuite) CreateService(
 	evtsMan := svc.EventsManager()
 	qMan := svc.QueueManager()
 
-	// Initialize repositories (same as main.go lines 79-84)
+	// Initialise repositories (same as main.go lines 79-84)
 	notificationRepo := repository.NewNotificationRepository(ctx, dbPool, workMan)
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, dbPool, workMan)
 	languageRepo := repository.NewLanguageRepository(ctx, dbPool, workMan)
@@ -105,6 +105,7 @@ func (bs *BaseTestSuite) CreateService(
 	partitionCli := bs.GetPartitionCli(ctx)
 	notificationBusiness := business.NewNotificationBusiness(
 		ctx,
+		workMan,
 		evtsMan,
 		profileCli,
 		partitionCli,
@@ -127,8 +128,8 @@ func (bs *BaseTestSuite) CreateService(
 		NotificationBusiness:   notificationBusiness,
 	}
 
-	// Note: We don't call svc.Run() in tests since it tries to initialize publishers and start the server
-	// Tests just need the service initialized with all dependencies
+	// Note: We don't call svc.Run() in tests since it tries to initialise publishers and start the server
+	// Tests just need the service initialised with all dependencies
 
 	return svc, ctx, resources
 }
