@@ -3,9 +3,11 @@ package models
 import (
 	"time"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	"github.com/pitabwire/frame"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+
+	"github.com/pitabwire/frame/data"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -21,7 +23,7 @@ const (
 
 // Language Our simple table holding all the supported languages
 type Language struct {
-	frame.BaseModel
+	data.BaseModel
 	Name        string `gorm:"type:varchar(50)"`
 	Code        string `gorm:"type:varchar(10)"`
 	Description string `gorm:"type:text"`
@@ -41,10 +43,10 @@ func (l *Language) ToApi() *notificationv1.Language {
 
 // Template Table holds the template details
 type Template struct {
-	frame.BaseModel
+	data.BaseModel
 
 	Name  string `gorm:"type:varchar(255)"`
-	Extra frame.JSONMap
+	Extra data.JSONMap
 }
 
 func (t *Template) ToApi(templateDataList []*notificationv1.TemplateData) *notificationv1.Template {
@@ -58,7 +60,7 @@ func (t *Template) ToApi(templateDataList []*notificationv1.TemplateData) *notif
 }
 
 type TemplateData struct {
-	frame.BaseModel
+	data.BaseModel
 
 	TemplateID string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
 	LanguageID string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
@@ -80,7 +82,7 @@ func (td *TemplateData) ToApi(language *notificationv1.Language) *notificationv1
 
 // Notification table holding all the payload of message in transit in and out of the system
 type Notification struct {
-	frame.BaseModel
+	data.BaseModel
 
 	ParentID string `gorm:"type:varchar(50)"`
 
@@ -100,7 +102,7 @@ type Notification struct {
 
 	NotificationType string `gorm:"type:varchar(10)"`
 	Message          string `gorm:"type:text"`
-	Payload          frame.JSONMap
+	Payload          data.JSONMap
 
 	ReleasedAt  *time.Time
 	State       int32
@@ -115,9 +117,9 @@ func (model *Notification) IsReleased() bool {
 	return model.ReleasedAt != nil && !model.ReleasedAt.IsZero()
 }
 
-func (model *Notification) ToApi(status *NotificationStatus, language *Language, message map[string]string) *notificationv1.Notification {
+func (model *Notification) ToAPI(status *NotificationStatus, language *Language, message map[string]string) *notificationv1.Notification {
 
-	extra := frame.JSONMap{}
+	extra := data.JSONMap{}
 	extra["tenant_id"] = model.TenantID
 	extra["partition_id"] = model.PartitionID
 	extra["access_id"] = model.AccessID
@@ -179,19 +181,19 @@ func (model *Notification) ToApi(status *NotificationStatus, language *Language,
 
 // NotificationStatus table holding all the statuses of notifications in our system
 type NotificationStatus struct {
-	frame.BaseModel
+	data.BaseModel
 	NotificationID string `gorm:"type:varchar(50)"`
 
 	TransientID string `gorm:"type:varchar(50)"`
 	ExternalID  string `gorm:"type:varchar(50)"`
-	Extra       frame.JSONMap
+	Extra       data.JSONMap
 	State       int32
 	Status      int32
 }
 
 func (model *NotificationStatus) ToStatusAPI() *commonv1.StatusResponse {
 
-	extraData := frame.JSONMap{
+	extraData := data.JSONMap{
 		"CreatedAt": model.CreatedAt.String(),
 		"StatusID":  model.ID,
 	}
@@ -211,7 +213,7 @@ func (model *NotificationStatus) ToStatusAPI() *commonv1.StatusResponse {
 
 // Route Our simple table holding all the payload of message in transit in and out of the system
 type Route struct {
-	frame.BaseModel
+	data.BaseModel
 
 	CounterID   string `gorm:"type:varchar(50)"`
 	Name        string `gorm:"type:varchar(50)"`

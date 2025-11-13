@@ -8,9 +8,9 @@ import (
 	"io"
 	"net/http"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	settingsv1 "github.com/antinvestor/apis/go/settings/v1"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
 	"github.com/antinvestor/service-notification/internal/constants"
@@ -22,11 +22,11 @@ type Client struct {
 	httpClient http.Client
 	logger     *util.LogEntry
 
-	profileCli  *profilev1.ProfileClient
+	profileCli  profilev1connect.ProfileServiceClient
 	settingsCli *settingsv1.SettingsClient
 }
 
-func NewClient(logger *util.LogEntry, cfg *config.AfricasTalkingConfig, profileCli *profilev1.ProfileClient, settingsCli *settingsv1.SettingsClient) (*Client, error) {
+func NewClient(logger *util.LogEntry, cfg *config.AfricasTalkingConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli *settingsv1.SettingsClient) (*Client, error) {
 
 	return &Client{
 		cfg:         cfg,

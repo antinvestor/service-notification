@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame"
+	"github.com/pitabwire/frame/data"
+	"github.com/pitabwire/frame/events"
+	"github.com/pitabwire/frame/queue"
+	"github.com/pitabwire/util"
 )
 
 // NotificationInRouteEvent is the event name for routing incoming notifications
@@ -28,28 +31,34 @@ func filterContactFromProfileByID(profile *profilev1.ProfileObject, contactID st
 }
 
 type NotificationInRoute struct {
-	Service          *frame.Service
-	NotificationRepo repository.NotificationRepository
+	qMan     queue.Manager
+	eventMan events.Manager
+
+	notificationRepo repository.NotificationRepository
+	routeRepo        repository.RouteRepository
 }
 
 // NewNotificationInRoute creates a new NotificationInRoute event handler
-func NewNotificationInRoute(ctx context.Context, service *frame.Service) *NotificationInRoute {
+func NewNotificationInRoute(ctx context.Context, qMan queue.Manager, eventMan events.Manager, notificationRepo repository.NotificationRepository, routeRepo repository.RouteRepository) *NotificationInRoute {
+
 	return &NotificationInRoute{
-		Service:          service,
-		NotificationRepo: repository.NewNotificationRepository(ctx, service),
+		qMan:             qMan,
+		eventMan:         eventMan,
+		notificationRepo: notificationRepo,
+		routeRepo:        routeRepo,
 	}
 }
 
-func (event *NotificationInRoute) Name() string {
+func (e *NotificationInRoute) Name() string {
 	return NotificationInRouteEvent
 }
 
-func (event *NotificationInRoute) PayloadType() any {
+func (e *NotificationInRoute) PayloadType() any {
 	pType := ""
 	return &pType
 }
 
-func (event *NotificationInRoute) Validate(ctx context.Context, payload any) error {
+func (e *NotificationInRoute) Validate(ctx context.Context, payload any) error {
 	if _, ok := payload.(*string); !ok {
 		return errors.New(" payload is not of type string")
 	}
@@ -57,17 +66,17 @@ func (event *NotificationInRoute) Validate(ctx context.Context, payload any) err
 	return nil
 }
 
-func (event *NotificationInRoute) Execute(ctx context.Context, payload any) error {
+func (e *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
-	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
-	logger.Debug("handling event")
+	logger := util.Log(ctx).WithField("payload", notificationID).WithField("type", e.Name())
+	logger.Debug("handling e")
 
-	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
+	n, err := e.notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		return err
 	}
 
-	route, err := routeNotification(ctx, event.Service, models.RouteModeReceive, n)
+	route, err := routeNotification(ctx, e.routeRepo, models.RouteModeReceive, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not route notification")
 
@@ -76,14 +85,14 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 				NotificationID: n.GetID(),
 				State:          int32(commonv1.STATE_INACTIVE),
 				Status:         int32(commonv1.STATUS_FAILED),
-				Extra: frame.JSONMap{
+				Extra: data.JSONMap{
 					"error": err.Error(),
 				},
 			}
 
 			nStatus.GenID(ctx)
 
-			err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+			err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 			if err != nil {
 				logger.WithError(err).Warn("could not emit status for save")
 				return err
@@ -97,13 +106,13 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 
 	n.RouteID = route.ID
 
-	err = event.NotificationRepo.Save(ctx, n)
+	_, err = e.notificationRepo.Update(ctx, n, "route_id")
 	if err != nil {
 		logger.WithError(err).Warn("could not save routed notification to db")
 		return err
 	}
 
-	err = event.Service.Emit(ctx, NotificationInQueueEvent, n.GetID())
+	err = e.eventMan.Emit(ctx, NotificationInQueueEvent, n.GetID())
 	if err != nil {
 		logger.WithError(err).Warn("could not queue out notification")
 		return err
@@ -118,7 +127,7 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+	err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit status for save")
 		return err
@@ -127,9 +136,8 @@ func (event *NotificationInRoute) Execute(ctx context.Context, payload any) erro
 	return nil
 }
 
-func routeNotification(ctx context.Context, service *frame.Service, routeMode string, notification *models.Notification) (*models.Route, error) {
+func routeNotification(ctx context.Context, routeRepository repository.RouteRepository, routeMode string, notification *models.Notification) (*models.Route, error) {
 
-	routeRepository := repository.NewRouteRepository(ctx, service)
 	if notification.RouteID != "" {
 		route, err := routeRepository.GetByID(ctx, notification.RouteID)
 		if err != nil {
@@ -160,20 +168,18 @@ func routeNotification(ctx context.Context, service *frame.Service, routeMode st
 
 }
 
-func loadRoute(ctx context.Context, service *frame.Service, routeId string) (*models.Route, error) {
+func loadRoute(ctx context.Context, qMan queue.Manager, routeRepository repository.RouteRepository, routeId string) (*models.Route, error) {
 
 	if routeId == "" {
 		return nil, fmt.Errorf("no route id provided")
 	}
-
-	routeRepository := repository.NewRouteRepository(ctx, service)
 
 	route, err := routeRepository.GetByID(ctx, routeId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = service.AddPublisher(ctx, route.ID, route.Uri)
+	err = qMan.AddPublisher(ctx, route.ID, route.Uri)
 	if err != nil {
 		return route, err
 	}

@@ -6,8 +6,8 @@ import (
 	"maps"
 	"strings"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"github.com/antinvestor/gomatrix"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/config"
 	"github.com/pitabwire/util"

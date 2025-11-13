@@ -2,18 +2,23 @@ package business
 
 import (
 	"context"
-	"maps"
+	"fmt"
 	"time"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame"
-	"github.com/pitabwire/frame/framedata"
+	"github.com/pitabwire/frame/data"
+	"github.com/pitabwire/frame/datastore"
+	fevents "github.com/pitabwire/frame/events"
+	"github.com/pitabwire/frame/security"
+	"github.com/pitabwire/frame/workerpool"
+	"github.com/pitabwire/util"
 	"google.golang.org/grpc"
 )
 
@@ -23,33 +28,36 @@ type NotificationBusiness interface {
 	Status(ctx context.Context, status *commonv1.StatusRequest) (*commonv1.StatusResponse, error)
 	StatusUpdate(ctx context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error)
 	Release(ctx context.Context, req *notificationv1.ReleaseRequest, stream grpc.ServerStreamingServer[notificationv1.ReleaseResponse]) error
-	Search(search *commonv1.SearchRequest, stream grpc.ServerStreamingServer[notificationv1.SearchResponse]) error
+	Search(ctx context.Context, search *commonv1.SearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Notification], error)
 	TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.Template, error)
-	TemplateSearch(search *notificationv1.TemplateSearchRequest, stream grpc.ServerStreamingServer[notificationv1.TemplateSearchResponse]) error
+	TemplateSearch(ctx context.Context, search *notificationv1.TemplateSearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Template], error)
 }
 
-func NewNotificationBusiness(ctx context.Context, service *frame.Service, profileCli *profilev1.ProfileClient, partitionCli *partitionV1.PartitionClient) (NotificationBusiness, error) {
+func NewNotificationBusiness(ctx context.Context, service *frame.Service, profileCli profilev1connect.ProfileServiceClient, partitionCli partitionv1connect.PartitionServiceClient) (NotificationBusiness, error) {
 
 	if service == nil || profileCli == nil || partitionCli == nil {
 		return nil, ErrorInitializationFail
 	}
 
+	dbPool := service.DatastoreManager().GetPool(ctx, datastore.DefaultPoolName)
+	workMan := service.WorkManager()
+
 	return &notificationBusiness{
-		service:                service,
+		eventsMan:              service.EventsManager(),
 		profileCli:             profileCli,
 		partitionCli:           partitionCli,
-		notificationRepo:       repository.NewNotificationRepository(ctx, service),
-		notificationStatusRepo: repository.NewNotificationStatusRepository(ctx, service),
-		languageRepo:           repository.NewLanguageRepository(ctx, service),
-		templateRepo:           repository.NewTemplateRepository(ctx, service),
-		templateDataRepo:       repository.NewTemplateDataRepository(ctx, service),
+		notificationRepo:       repository.NewNotificationRepository(ctx, dbPool, workMan),
+		notificationStatusRepo: repository.NewNotificationStatusRepository(ctx, dbPool, workMan),
+		languageRepo:           repository.NewLanguageRepository(ctx, dbPool, workMan),
+		templateRepo:           repository.NewTemplateRepository(ctx, dbPool, workMan),
+		templateDataRepo:       repository.NewTemplateDataRepository(ctx, dbPool, workMan),
 	}, nil
 }
 
 type notificationBusiness struct {
-	service                *frame.Service
-	profileCli             *profilev1.ProfileClient
-	partitionCli           *partitionV1.PartitionClient
+	eventsMan              fevents.Manager
+	profileCli             profilev1connect.ProfileServiceClient
+	partitionCli           partitionv1connect.PartitionServiceClient
 	notificationRepo       repository.NotificationRepository
 	notificationStatusRepo repository.NotificationStatusRepository
 	languageRepo           repository.LanguageRepository
@@ -58,9 +66,9 @@ type notificationBusiness struct {
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationv1.Notification) (*commonv1.StatusResponse, error) {
-	logger := nb.service.Log(ctx).WithField("request", message)
+	logger := util.Log(ctx).WithField("request", message)
 
-	authClaim := frame.ClaimsFromContext(ctx)
+	authClaim := security.ClaimsFromContext(ctx)
 
 	logger.WithField("auth claim", authClaim).Info("handling queue out request")
 
@@ -125,14 +133,14 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 	nStatus.GenID(ctx)
 
 	// Queue out message for further processing
-	err = nb.service.Emit(ctx, events.NotificationSaveEvent, n)
+	err = nb.eventsMan.Emit(ctx, events.NotificationSaveEvent, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit event save")
 		return nil, err
 	}
 
 	// Queue out notification status for further processing
-	err = nb.service.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
+	err = nb.eventsMan.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not save status")
 		return nil, err
@@ -142,9 +150,9 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationv1.Notification) (*commonv1.StatusResponse, error) {
-	logger := nb.service.Log(ctx).WithField("request", message)
+	logger := util.Log(ctx).WithField("request", message)
 
-	authClaim := frame.ClaimsFromContext(ctx)
+	authClaim := security.ClaimsFromContext(ctx)
 	logger.WithField("auth claim", authClaim).Info("handling queue in request")
 
 	releaseDate := time.Now()
@@ -190,14 +198,14 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	nStatus.GenID(ctx)
 
 	// Queue in message for further processing
-	err = nb.service.Emit(ctx, events.NotificationSaveEvent, n)
+	err = nb.eventsMan.Emit(ctx, events.NotificationSaveEvent, n)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit notification")
 		return nil, err
 	}
 
 	// Queue out notification status for further processing
-	err = nb.service.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
+	err = nb.eventsMan.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit notification status")
 		return nil, err
@@ -207,7 +215,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
-	logger := nb.service.Log(ctx).WithField("request", statusReq)
+	logger := util.Log(ctx).WithField("request", statusReq)
 	logger.Info("handling status check request")
 
 	n, err := nb.notificationRepo.GetByID(ctx, statusReq.GetId())
@@ -225,7 +233,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error) {
-	logger := nb.service.Log(ctx).WithField("request", statusReq)
+	logger := util.Log(ctx).WithField("request", statusReq)
 	logger.Debug("handling status update request")
 
 	n, err := nb.notificationRepo.GetByID(ctx, statusReq.GetId())
@@ -245,7 +253,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	err = nb.service.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
+	err = nb.eventsMan.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not save status")
 		return nil, err
@@ -256,7 +264,7 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationv1.ReleaseRequest, stream grpc.ServerStreamingServer[notificationv1.ReleaseResponse]) error {
 
-	logger := nb.service.Log(ctx).WithField("request", releaseReq)
+	logger := util.Log(ctx).WithField("request", releaseReq)
 	logger.Debug("handling release request")
 
 	notificationList, err := nb.notificationRepo.GetByIDList(ctx, releaseReq.GetId()...)
@@ -284,7 +292,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	var statusesToRelease []*commonv1.StatusResponse
 	for _, n := range notificationsToUpdate {
 
-		err = nb.service.Emit(ctx, events.NotificationSaveEvent, n)
+		err = nb.eventsMan.Emit(ctx, events.NotificationSaveEvent, n)
 		if err != nil {
 			logger.WithError(err).Warn("could not emit notification save")
 			return err
@@ -299,7 +307,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		nStatus.GenID(ctx)
 
 		// Release notification status save for further processing
-		err = nb.service.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
+		err = nb.eventsMan.Emit(ctx, events.NotificationStatusSaveEvent, nStatus)
 		if err != nil {
 			logger.WithError(err).Warn("could not emit notification status")
 			return err
@@ -339,177 +347,276 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 	return nil
 }
 
-func (nb *notificationBusiness) Search(search *commonv1.SearchRequest,
-	stream notificationv1.NotificationService_SearchServer) error {
+func (nb *notificationBusiness) convertNotificationsToAPI(
+	ctx context.Context,
+	notificationList []*models.Notification,
+) ([]*notificationv1.Notification, error) {
+	var responsesList []*notificationv1.Notification
 
-	ctx := stream.Context()
+	var statusIDList []string
+	var languageIDMap map[string]struct{}
 
-	logger := nb.service.Log(ctx).WithField("request", search)
+	for _, p := range notificationList {
+		statusIDList = append(statusIDList, p.StatusID)
+
+		languageIDMap[p.LanguageID] = struct{}{}
+	}
+
+	languageIDList := make([]string, 0, len(languageIDMap))
+	for key := range languageIDMap {
+		languageIDList = append(languageIDList, key)
+	}
+
+	languageList, err := nb.languageRepo.GetByIDList(ctx, languageIDList...)
+	if err != nil {
+		return nil, err
+	}
+
+	languageMap := make(map[string]*models.Language)
+	for _, language := range languageList {
+		languageMap[language.ID] = language
+	}
+
+	statusList, err := nb.notificationStatusRepo.GetByIDList(ctx, statusIDList...)
+	if err != nil {
+		return nil, err
+	}
+
+	statusMap := make(map[string]*models.NotificationStatus)
+	for _, status := range statusList {
+		statusMap[status.ID] = status
+	}
+
+	for _, not := range notificationList {
+		status := statusMap[not.ID]
+		language := languageMap[not.LanguageID]
+
+		// Convert the payment model to the API response format
+		result := not.ToAPI(status, language, nil)
+		responsesList = append(responsesList, result)
+	}
+
+	return responsesList, nil
+}
+
+func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv1.SearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Notification], error) {
+
+	logger := util.Log(ctx).WithField("request", searchQuery)
 
 	logger.Debug("handling search request")
 
 	profileID := ""
-	claims := frame.ClaimsFromContext(ctx)
+	claims := security.ClaimsFromContext(ctx)
 	if claims != nil {
 		profileID, _ = claims.GetSubject()
 	}
 
-	limits := search.GetLimits()
-	if limits == nil {
-		limits = &commonv1.Pagination{
-			Count:     20,
-			Page:      0,
-			StartDate: time.Now().Add(-6 * time.Hour).String(),
-			EndDate:   time.Now().String(),
+	limits := searchQuery.GetLimits()
+
+	searchOpts := []data.SearchOption{
+		data.WithSearchLimit(int(limits.GetCount())),
+		data.WithSearchOffset(int(limits.GetPage())),
+	}
+
+	if searchQuery.GetIdQuery() != "" {
+		searchOpts = append(
+			searchOpts,
+			data.WithSearchFiltersAndByValue(map[string]any{
+				"profile_id": profileID,
+				"id":         searchQuery.GetIdQuery()}),
+		)
+	}
+
+	if searchQuery.GetQuery() != "" {
+		searchOpts = append(
+			searchOpts,
+			data.WithSearchFiltersOrByValue(
+				map[string]any{"searchable @@ websearch_to_tsquery( 'english', ?) ": searchQuery.GetQuery()},
+			),
+		)
+
+		for _, filter := range searchQuery.GetProperties() {
+			searchOpts = append(
+				searchOpts,
+				data.WithSearchFiltersOrByValue(map[string]any{fmt.Sprintf(" %s = ?", filter): searchQuery.GetQuery()}),
+			)
 		}
 	}
 
-	searchProperties := search.GetExtras().AsMap()
-
-	maps.Insert(searchProperties, maps.All(map[string]any{
-		"profile_id": profileID,
-		"start_date": limits.GetStartDate(),
-		"end_date":   limits.GetEndDate(),
-	}))
-
-	for _, p := range search.GetProperties() {
-		searchProperties[p] = search.GetQuery()
-	}
-
-	query := framedata.NewSearchQuery(
-		search.GetQuery(), searchProperties,
-		int(limits.Page),
-		int(limits.Count),
-	)
-
-	notificationStream, err := nb.notificationRepo.Search(ctx, query)
+	query := data.NewSearchQuery(searchOpts...)
+	results, err := nb.notificationRepo.Search(ctx, query)
 	if err != nil {
 		logger.WithError(err).Error("failed to search notifications")
-		return err
+		return nil, err
 	}
 
-	var resultStatus *models.NotificationStatus
-	var language *models.Language
-	for {
+	processRes := workerpool.NewJob[[]*notificationv1.Notification](
+		func(ctx context.Context, pipe workerpool.JobResultPipe[[]*notificationv1.Notification]) error {
+			cancelCtx, cancel := context.WithCancel(ctx)
+			defer cancel()
 
-		res, ok := notificationStream.ReadResult(ctx)
-		if !ok {
-			break
-		}
+			for {
+				res, ok := results.ReadResult(cancelCtx)
+				if !ok {
+					return nil
+				}
 
-		if res.IsError() {
-			return res.Error()
-		}
+				if res.IsError() {
+					return res.Error()
+				}
 
-		var responsesList []*notificationv1.Notification
+				finalRes, convErr := nb.convertNotificationsToAPI(cancelCtx, res.Item())
+				if convErr != nil {
+					return convErr
+				}
 
-		for _, n := range res.Item() {
-
-			nStatus := &models.NotificationStatus{}
-			if n.StatusID != "" {
-				resultStatus, err = nb.notificationStatusRepo.GetByID(ctx, n.StatusID)
-				if err != nil {
-					logger.WithError(err).WithField("status_id", n.StatusID).Error(" could not get status id for")
-					return err
-				} else {
-					nStatus = resultStatus
+				writeErr := pipe.WriteResult(cancelCtx, finalRes)
+				if writeErr != nil {
+					return writeErr
 				}
 			}
+		},
+	)
 
-			language, err = nb.languageRepo.GetByID(ctx, n.LanguageID)
-			if err != nil {
-				logger.WithError(err).WithField("language_id", n.LanguageID).Error(" could not get language id")
-				return err
-			}
-
-			result := n.ToApi(nStatus, language, nil)
-			responsesList = append(responsesList, result)
-		}
-
-		err = stream.Send(&notificationv1.SearchResponse{Data: responsesList})
-		if err != nil {
-			logger.WithError(err).Warn(" unable to send a result")
-		}
-	}
-
-	return nil
+	return processRes, nil
 }
 
-func (nb *notificationBusiness) TemplateSearch(search *notificationv1.TemplateSearchRequest,
-	stream notificationv1.NotificationService_TemplateSearchServer) error {
+func (nb *notificationBusiness) convertTemplatesToAPI(ctx context.Context, language *models.Language, templateList []*models.Template, ) ([]*notificationv1.Template, error) {
+	var responsesList []*notificationv1.Template
 
-	ctx := stream.Context()
-	logger := nb.service.Log(ctx).WithField("request", search)
+	var templateIDList []string
 
-	queryString := search.GetQuery()
-
-	authClaims := frame.ClaimsFromContext(ctx)
-	logger.WithField("claims", authClaims).Debug("handling template search request")
-
-	templateList, err := nb.templateRepo.SearchByName(ctx, queryString, int(search.GetPage()), int(search.GetCount()))
-	if err != nil {
-		return err
+	for _, p := range templateList {
+		templateIDList = append(templateIDList, p.GetID())
 	}
 
-	var language *models.Language
-	if search.GetLanguageCode() != "" {
-		language, err = nb.languageRepo.GetOrCreateByCode(ctx, search.GetLanguageCode())
-
-		if err != nil {
-			return err
-		}
-	}
-
-	var responseList []*notificationv1.Template
+	var err error
 	var templateDataList []*models.TemplateData
-	languageMap := map[string]*models.Language{}
 
-	for _, t := range templateList {
+	if language != nil {
 
-		var apiTemplateDataList []*notificationv1.TemplateData
-
-		templateDataList, err = nb.templateDataRepo.GetByTemplateID(ctx, t.GetID())
+		templateDataList, err = nb.templateDataRepo.GetByTemplateIDAndLanguage(ctx, language.GetID(), templateIDList...)
 		if err != nil {
-			logger.WithError(err).Warn(" unable to get template data")
-			return err
+			return nil, err
 		}
-
-		for _, data := range templateDataList {
-
-			if language != nil && language.GetID() != data.LanguageID {
-				continue
-			}
-
-			lang, ok := languageMap[data.LanguageID]
-			if !ok {
-
-				lang, err = nb.languageRepo.GetByID(ctx, data.LanguageID)
-				if err != nil {
-					return err
-				}
-				languageMap[data.LanguageID] = lang
-			}
-
-			apiTemplateDataList = append(apiTemplateDataList, data.ToApi(lang.ToApi()))
+	} else {
+		templateDataList, err = nb.templateDataRepo.GetByTemplateID(ctx, templateIDList...)
+		if err != nil {
+			return nil, err
 		}
-
-		result := t.ToApi(apiTemplateDataList)
-		responseList = append(responseList, result)
 	}
 
-	err = stream.Send(&notificationv1.TemplateSearchResponse{Data: responseList})
+	var languageIDMap map[string]struct{}
+
+	for _, tData := range templateDataList {
+		languageIDMap[tData.LanguageID] = struct{}{}
+	}
+
+	languageIDList := make([]string, 0, len(languageIDMap))
+	for key := range languageIDMap {
+		languageIDList = append(languageIDList, key)
+	}
+
+	languageList, err := nb.languageRepo.GetByIDList(ctx, languageIDList...)
 	if err != nil {
-		logger.WithError(err).Warn(" unable to send a result")
-		return err
+		return nil, err
 	}
 
-	return nil
+	languageMap := make(map[string]*models.Language)
+	for _, l := range languageList {
+		languageMap[l.ID] = l
+	}
+
+	apiTDataMap := map[string][]*notificationv1.TemplateData{}
+
+	for _, tmplData := range templateDataList {
+
+		lang := languageMap[tmplData.LanguageID]
+		apiTDataMap[tmplData.TemplateID] = append(apiTDataMap[tmplData.TemplateID], tmplData.ToApi(lang.ToApi()))
+	}
+
+	for _, tmpl := range templateList {
+		tDataList := apiTDataMap[tmpl.ID]
+		result := tmpl.ToApi(tDataList)
+		responsesList = append(responsesList, result)
+	}
+
+	return responsesList, nil
+}
+
+func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery *notificationv1.TemplateSearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Template], error) {
+
+	logger := util.Log(ctx).WithField("request", searchQuery)
+
+	authClaims := security.ClaimsFromContext(ctx)
+	logger.WithField("claims", authClaims).Debug("handling template searchQuery request")
+
+	searchOpts := []data.SearchOption{
+		data.WithSearchLimit(int(searchQuery.GetCount())),
+		data.WithSearchOffset(int(searchQuery.GetPage())),
+	}
+
+	if searchQuery.GetQuery() != "" {
+		searchOpts = append(
+			searchOpts,
+			data.WithSearchFiltersOrByValue(
+				map[string]any{"searchable @@ websearch_to_tsquery( 'english', ?) ": searchQuery.GetQuery()},
+			),
+		)
+	}
+
+	var err error
+	var language *models.Language
+	if searchQuery.GetLanguageCode() != "" {
+		language, err = nb.languageRepo.GetOrCreateByCode(ctx, searchQuery.GetLanguageCode())
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	query := data.NewSearchQuery(searchOpts...)
+
+	templateList, err := nb.templateRepo.Search(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	processRes := workerpool.NewJob[[]*notificationv1.Template](
+		func(ctx context.Context, pipe workerpool.JobResultPipe[[]*notificationv1.Template]) error {
+			cancelCtx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			for {
+				res, ok := templateList.ReadResult(cancelCtx)
+				if !ok {
+					return nil
+				}
+
+				if res.IsError() {
+					return res.Error()
+				}
+
+				finalRes, convErr := nb.convertTemplatesToAPI(cancelCtx, language, res.Item())
+				if convErr != nil {
+					return convErr
+				}
+
+				writeErr := pipe.WriteResult(cancelCtx, finalRes)
+				if writeErr != nil {
+					return writeErr
+				}
+			}
+		},
+	)
+
+	return processRes, nil
 }
 
 func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.Template, error) {
-	logger := nb.service.Log(ctx).WithField("request", req)
+	logger := util.Log(ctx).WithField("request", req)
 
-	authClaims := frame.ClaimsFromContext(ctx)
+	authClaims := security.ClaimsFromContext(ctx)
 	logger.WithField("claims", authClaims).Info("handling template request update")
 
 	language, err := nb.languageRepo.GetOrCreateByCode(ctx, req.GetLanguageCode())
@@ -524,7 +631,7 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 		Extra: req.GetExtra().AsMap(),
 	}
 
-	err = nb.templateRepo.Save(ctx, template)
+	err = nb.templateRepo.Create(ctx, template)
 	if err != nil {
 		return nil, err
 	}
@@ -537,7 +644,7 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 			Detail:     val.(string),
 		}
 
-		err = nb.templateDataRepo.Save(ctx, templateData)
+		err = nb.templateDataRepo.Create(ctx, templateData)
 		if err != nil {
 			return nil, err
 		}

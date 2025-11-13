@@ -4,8 +4,8 @@ import (
 	"context"
 
 	apis "github.com/antinvestor/apis/go/common"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/config"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/matrix/service/events"

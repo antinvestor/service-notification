@@ -7,11 +7,12 @@ import (
 	"strings"
 	"text/template"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame"
+	"github.com/pitabwire/frame/events"
+	"github.com/pitabwire/frame/queue"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/proto"
 )
@@ -20,23 +21,29 @@ import (
 const NotificationOutQueueEvent = "notification.out.queue"
 
 type NotificationOutQueue struct {
-	Service                *frame.Service
-	ProfileCli             *profilev1.ProfileClient
+	qMan     queue.Manager
+	eventMan events.Manager
+
+	ProfileCli             profilev1connect.ProfileServiceClient
 	NotificationRepo       repository.NotificationRepository
 	NotificationStatusRepo repository.NotificationStatusRepository
 	LanguageRepo           repository.LanguageRepository
 	TemplateDataRepo       repository.TemplateDataRepository
+	routeRepo              repository.RouteRepository
 }
 
 // NewNotificationOutQueue creates a new NotificationOutQueue event handler
-func NewNotificationOutQueue(ctx context.Context, service *frame.Service, profileCli *profilev1.ProfileClient) *NotificationOutQueue {
+func NewNotificationOutQueue(ctx context.Context, qMan queue.Manager, eventMan events.Manager, profileCli profilev1connect.ProfileServiceClient, notificationRepo repository.NotificationRepository, notificationStatusRepo repository.NotificationStatusRepository, languageRepo repository.LanguageRepository, templateDataRepo repository.TemplateDataRepository, routeRepo repository.RouteRepository) *NotificationOutQueue {
+
 	return &NotificationOutQueue{
-		Service:                service,
+		qMan:                   qMan,
+		eventMan:               eventMan,
 		ProfileCli:             profileCli,
-		NotificationRepo:       repository.NewNotificationRepository(ctx, service),
-		NotificationStatusRepo: repository.NewNotificationStatusRepository(ctx, service),
-		LanguageRepo:           repository.NewLanguageRepository(ctx, service),
-		TemplateDataRepo:       repository.NewTemplateDataRepository(ctx, service),
+		NotificationRepo:       notificationRepo,
+		NotificationStatusRepo: notificationStatusRepo,
+		LanguageRepo:           languageRepo,
+		TemplateDataRepo:       templateDataRepo,
+		routeRepo:              routeRepo,
 	}
 }
 
@@ -60,7 +67,7 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload any) er
 func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
 
-	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
+	logger := util.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
 	logger.Debug("handling event")
 
 	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
@@ -86,7 +93,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 		return err
 	}
 
-	apiNotification := n.ToApi(nStatus, language, templateMap)
+	apiNotification := n.ToAPI(nStatus, language, templateMap)
 
 	binaryProto, err := proto.Marshal(apiNotification)
 	if err != nil {
@@ -94,13 +101,13 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	}
 
 	// Queue a message for further processing by peripheral services
-	err = event.Service.Publish(ctx, n.RouteID, binaryProto)
+	err = event.qMan.Publish(ctx, n.RouteID, binaryProto)
 	if err != nil {
 
 		if !strings.Contains(err.Error(), "reference does not exist") {
 
 			if n.RouteID != "" {
-				_, err = loadRoute(ctx, event.Service, n.RouteID)
+				_, err = loadRoute(ctx, event.qMan, event.routeRepo, n.RouteID)
 				if err != nil {
 					return err
 				}
@@ -117,11 +124,6 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 		WithField("message", templateMap).
 		Debug(" We have successfully queued out message")
 
-	err = event.NotificationRepo.Save(ctx, n)
-	if err != nil {
-		return err
-	}
-
 	nStatus = &models.NotificationStatus{
 		NotificationID: n.GetID(),
 		State:          int32(commonv1.STATE_ACTIVE),
@@ -131,7 +133,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+	err = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		return err
 	}

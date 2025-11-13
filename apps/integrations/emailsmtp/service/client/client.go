@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/config"
 	"github.com/pitabwire/util"
 	"github.com/wneessen/go-mail"
@@ -15,11 +15,11 @@ import (
 type Client struct {
 	cfg        *config.EmailSMTPConfig
 	logger     *util.LogEntry
-	profileCli *profilev1.ProfileClient
+	profileCli profilev1connect.ProfileServiceClient
 	mailCli    *mail.Client
 }
 
-func NewClient(logger *util.LogEntry, cfg *config.EmailSMTPConfig, profileCli *profilev1.ProfileClient) (*Client, error) {
+func NewClient(logger *util.LogEntry, cfg *config.EmailSMTPConfig, profileCli profilev1connect.ProfileServiceClient) (*Client, error) {
 
 	cli, err := mail.NewClient(cfg.SMTPServerHOST,
 		mail.WithPort(cfg.SMTPServerPORT), mail.WithSMTPAuth(mail.SMTPAuthPlain),

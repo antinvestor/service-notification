@@ -6,22 +6,23 @@ import (
 
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame"
+	"github.com/pitabwire/util"
 )
 
 // NotificationStatusSaveEvent is the event name for saving notification status records
 const NotificationStatusSaveEvent = "notificationStatus.save"
 
 type NotificationStatusSave struct {
-	Service          *frame.Service
-	NotificationRepo repository.NotificationRepository
+	NotificationRepo       repository.NotificationRepository
+	notificationStatusRepo repository.NotificationStatusRepository
 }
 
 // NewNotificationStatusSave creates a new NotificationStatusSave event handler
-func NewNotificationStatusSave(ctx context.Context, service *frame.Service) *NotificationStatusSave {
+func NewNotificationStatusSave(ctx context.Context, notificationRepo repository.NotificationRepository, notificationStatusRepo repository.NotificationStatusRepository) *NotificationStatusSave {
+
 	return &NotificationStatusSave{
-		Service:          service,
-		NotificationRepo: repository.NewNotificationRepository(ctx, service),
+		NotificationRepo:       notificationRepo,
+		notificationStatusRepo: notificationStatusRepo,
 	}
 }
 
@@ -49,17 +50,14 @@ func (e *NotificationStatusSave) Validate(_ context.Context, payload any) error 
 func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error {
 	nStatus := payload.(*models.NotificationStatus)
 
-	logger := e.Service.Log(ctx).WithField("payload", nStatus).WithField("type", e.Name())
+	logger := util.Log(ctx).WithField("payload", nStatus).WithField("type", e.Name())
 	logger.Debug("handling event")
 
-	result := e.Service.DB(ctx, false).Create(nStatus)
-
-	err := result.Error
+	err := e.notificationStatusRepo.Create(ctx, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not save notification status to db")
 		return err
 	}
-	logger.WithField("rows affected", result.RowsAffected).Debug("successfully saved record to db")
 
 	n, err := e.NotificationRepo.GetByID(ctx, nStatus.NotificationID)
 	if err != nil {
@@ -72,7 +70,7 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error
 		n.TransientID = nStatus.TransientID
 	}
 
-	err = e.NotificationRepo.Save(ctx, n)
+	_, err = e.NotificationRepo.Update(ctx, n, "status_id", "state", "transient_id")
 	if err != nil {
 		logger.WithError(err).Warn("could not save notification update to db")
 

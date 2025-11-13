@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
 	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame"
@@ -17,7 +17,7 @@ import (
 
 type SMTPServer struct {
 	Service         *frame.Service
-	ProfileCli      *profilev1.ProfileClient
+	ProfileCli      profilev1connect.ProfileServiceClient
 	NotificationCli *notificationv1.NotificationClient
 	EmailSMTPCli    *client.Client
 }

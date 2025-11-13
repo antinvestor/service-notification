@@ -3,10 +3,13 @@ package handlers
 import (
 	"context"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
+	partitionV1 "buf.build/gen/go/antinvestor/partition/protocolbuffers/go/partition/v1"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	"github.com/pitabwire/frame"
 	"google.golang.org/grpc"
@@ -14,10 +17,8 @@ import (
 
 type NotificationServer struct {
 	Service      *frame.Service
-	ProfileCli   *profilev1.ProfileClient
-	PartitionCli *partitionv1.PartitionClient
-
-	notificationv1.UnimplementedNotificationServiceServer
+	ProfileCli   profilev1connect.ProfileServiceClient
+	PartitionCli partitionv1connect.PartitionServiceClient
 }
 
 func (ns *NotificationServer) newNotificationBusiness(ctx context.Context) (business.NotificationBusiness, error) {

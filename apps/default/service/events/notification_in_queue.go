@@ -5,41 +5,48 @@ import (
 	"errors"
 	"strings"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame"
+	"github.com/pitabwire/frame/events"
+	"github.com/pitabwire/frame/queue"
+	"github.com/pitabwire/util"
 )
 
 // NotificationInQueueEvent is the event name for queuing incoming notifications
 const NotificationInQueueEvent = "notification.in.queue"
 
 type NotificationInQueue struct {
-	Service          *frame.Service
-	ProfileCli       *profilev1.ProfileClient
-	NotificationRepo repository.NotificationRepository
+	qMan             queue.Manager
+	eventMan         events.Manager
+	profileCli       profilev1connect.ProfileServiceClient
+	notificationRepo repository.NotificationRepository
+	routeRepo        repository.RouteRepository
 }
 
 // NewNotificationInQueue creates a new NotificationInQueue event handler
-func NewNotificationInQueue(ctx context.Context, service *frame.Service, profileCli *profilev1.ProfileClient) *NotificationInQueue {
+func NewNotificationInQueue(_ context.Context, qMan queue.Manager, eventMan events.Manager, notificationRepo repository.NotificationRepository, routeRepo repository.RouteRepository, profileCli profilev1connect.ProfileServiceClient) *NotificationInQueue {
+
 	return &NotificationInQueue{
-		Service:          service,
-		ProfileCli:       profileCli,
-		NotificationRepo: repository.NewNotificationRepository(ctx, service),
+		qMan:             qMan,
+		eventMan:         eventMan,
+		profileCli:       profileCli,
+		notificationRepo: notificationRepo,
+		routeRepo:        routeRepo,
 	}
 }
 
-func (event *NotificationInQueue) Name() string {
+func (e *NotificationInQueue) Name() string {
 	return NotificationInQueueEvent
 }
 
-func (event *NotificationInQueue) PayloadType() any {
+func (e *NotificationInQueue) PayloadType() any {
 	pType := ""
 	return &pType
 }
 
-func (event *NotificationInQueue) Validate(ctx context.Context, payload any) error {
+func (e *NotificationInQueue) Validate(ctx context.Context, payload any) error {
 	if _, ok := payload.(*string); !ok {
 		return errors.New(" payload is not of type string")
 	}
@@ -47,24 +54,24 @@ func (event *NotificationInQueue) Validate(ctx context.Context, payload any) err
 	return nil
 }
 
-func (event *NotificationInQueue) Execute(ctx context.Context, payload any) error {
+func (e *NotificationInQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
-	logger := event.Service.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
-	logger.Debug("handling event")
+	logger := util.Log(ctx).WithField("payload", notificationID).WithField("type", e.Name())
+	logger.Debug("handling e")
 
-	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
+	n, err := e.notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		return err
 	}
 
 	// Queue a message for further processing by peripheral services
-	err = event.Service.Publish(ctx, n.RouteID, n)
+	err = e.qMan.Publish(ctx, n.RouteID, n)
 	if err != nil {
 
 		if !strings.Contains(err.Error(), "reference does not exist") {
 
 			if n.RouteID != "" {
-				route, err0 := loadRoute(ctx, event.Service, n.RouteID)
+				route, err0 := loadRoute(ctx, e.qMan, e.routeRepo, n.RouteID)
 				if err0 != nil {
 					return err0
 				}
@@ -89,7 +96,7 @@ func (event *NotificationInQueue) Execute(ctx context.Context, payload any) erro
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+	err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		return err
 	}

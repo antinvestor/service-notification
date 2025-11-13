@@ -6,10 +6,14 @@ import (
 
 	"buf.build/go/protovalidate"
 	apis "github.com/antinvestor/apis/go/common"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
-	"github.com/antinvestor/service-notification/apps/default/config"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	partitionV1 "buf.build/gen/go/antinvestor/partition/protocolbuffers/go/partition/v1"
+	"github.com/pitabwire/frame/config"
+	"github.com/pitabwire/frame/datastore"
+
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
+
+	aconfig "github.com/antinvestor/service-notification/apps/default/config"
 	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/handlers"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
@@ -23,31 +27,37 @@ import (
 
 func main() {
 
-	serviceName := "service_notifications"
-
 	ctx := context.Background()
 
-	cfg, err := frame.ConfigLoadWithOIDC[config.NotificationConfig](ctx)
+	cfg, err := config.LoadWithOIDC[aconfig.NotificationConfig](ctx)
 	if err != nil {
 		util.Log(ctx).With("err", err).Error("could not process configs")
 		return
 	}
 
-	ctx, svc := frame.NewServiceWithContext(ctx, serviceName, frame.WithConfig(&cfg))
+	if cfg.Name() == "" {
+		cfg.ServiceName = "service_notifications"
+	}
+
+	ctx, svc := frame.NewServiceWithContext(ctx, frame.WithConfig(&cfg), frame.WithRegisterServerOauth2Client(), frame.WithDatastore())
 
 	log := svc.Log(ctx)
-
-	serviceOptions := []frame.Option{frame.WithDatastore()}
 
 	// Handle database migration if requested
 	if handleDatabaseMigration(ctx, svc, cfg, log) {
 		return
 	}
 
-	err = svc.RegisterForJwt(ctx)
-	if err != nil {
-		log.WithError(err).Fatal("main -- could not register fo jwt")
-	}
+	// Initialize repositories
+	dbPool := svc.DatastoreManager().GetPool(ctx, datastore.DefaultPoolName)
+	workMan := svc.WorkManager()
+
+	notificationRepo := repository.NewNotificationRepository(ctx, dbPool, workMan)
+	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, dbPool, workMan)
+	languageRepo := repository.NewLanguageRepository(ctx, dbPool, workMan)
+	templateRepo := repository.NewTemplateRepository(ctx, dbPool, workMan)
+	templateDataRepo := repository.NewTemplateDataRepository(ctx, dbPool, workMan)
+	routeRepo := repository.NewRouteRepository(ctx, dbPool, workMan)
 
 	profileCli, err := profilev1.NewProfileClient(ctx,
 		apis.WithEndpoint(cfg.ProfileServiceURI),
@@ -123,12 +133,12 @@ func main() {
 
 	serviceOptions = append(serviceOptions,
 		frame.WithRegisterEvents(
-			events2.NewNotificationSave(ctx, svc),
-			events2.NewNotificationStatusSave(ctx, svc),
-			events2.NewNotificationInRoute(ctx, svc),
-			events2.NewNotificationInQueue(ctx, svc, profileCli),
-			events2.NewNotificationOutRoute(ctx, svc, profileCli),
-			events2.NewNotificationOutQueue(ctx, svc, profileCli)))
+			events2.NewNotificationSave(ctx, svc.EventsManager(), notificationRepo),
+			events2.NewNotificationStatusSave(ctx, notificationRepo, notificationStatusRepo),
+			events2.NewNotificationInRoute(ctx, svc.QueueManager(), svc.EventsManager(), notificationRepo, routeRepo),
+			events2.NewNotificationInQueue(ctx, svc.QueueManager(), svc.EventsManager(), notificationRepo, routeRepo, profileCli),
+			events2.NewNotificationOutRoute(ctx, svc.EventsManager(), profileCli, notificationRepo, routeRepo),
+			events2.NewNotificationOutQueue(ctx, svc.QueueManager(), svc.EventsManager(), profileCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)))
 
 	svc.Init(ctx, serviceOptions...)
 
@@ -147,7 +157,7 @@ func main() {
 func handleDatabaseMigration(
 	ctx context.Context,
 	svc *frame.Service,
-	cfg config.NotificationConfig,
+	cfg aconfig.NotificationConfig,
 	log *util.LogEntry,
 ) bool {
 	serviceOptions := []frame.Option{frame.WithDatastore()}
@@ -155,7 +165,7 @@ func handleDatabaseMigration(
 	if cfg.DoDatabaseMigrate() {
 		svc.Init(ctx, serviceOptions...)
 
-		err := repository.Migrate(ctx, svc, cfg.GetDatabaseMigrationPath())
+		err := repository.Migrate(ctx, svc.DatastoreManager(), cfg.GetDatabaseMigrationPath())
 		if err != nil {
 			log.WithError(err).Fatal("main -- Could not migrate successfully")
 		}

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	commonmocks "github.com/antinvestor/apis/go/common/mocks"
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	partitionV1 "github.com/antinvestor/apis/go/partition/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	partitionV1 "buf.build/gen/go/antinvestor/partition/protocolbuffers/go/partition/v1"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
@@ -46,8 +46,8 @@ func (nts *NotificationTestSuite) TestNewNotificationBusiness() {
 
 		type args struct {
 			ctxService   *ctxSrv
-			profileCli   *profilev1.ProfileClient
-			partitionCli *partitionV1.PartitionClient
+			profileCli   profilev1connect.ProfileServiceClient
+			partitionCli partitionv1connect.PartitionServiceClient
 		}
 		testcases := []struct {
 			name      string
@@ -616,8 +616,8 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //	type fields struct {
 //		ctxService *ctxSrv
 //
-//		profileCli  *profilev1.ProfileClient
-//		partitionCl *partitionV1.PartitionClient
+//		profileCli  profilev1connect.ProfileServiceClient
+//		partitionCl partitionv1connect.PartitionServiceClient
 //		resultCount int
 //	}
 //	type args struct {

@@ -4,41 +4,52 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/antinvestor/service-notification/apps/default/config"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
-	"github.com/pitabwire/frame"
+	"github.com/pitabwire/frame/data"
+	"github.com/pitabwire/frame/datastore"
+	"github.com/pitabwire/frame/datastore/pool"
+	"github.com/pitabwire/frame/workerpool"
 )
 
 type LanguageRepository interface {
-	GetByID(ctx context.Context, id string) (*models.Language, error)
+	datastore.BaseRepository[*models.Language]
+	GetByIDList(ctx context.Context, id ...string) ([]*models.Language, error)
 	GetByName(ctx context.Context, name string) (*models.Language, error)
 	GetByCode(ctx context.Context, code string) (*models.Language, error)
 	GetOrCreateByCode(ctx context.Context, code string) (*models.Language, error)
-	Save(ctx context.Context, language *models.Language) error
 }
 
 type languageRepository struct {
-	abstractRepository
+	datastore.BaseRepository[*models.Language]
 }
 
-func NewLanguageRepository(_ context.Context, service *frame.Service) LanguageRepository {
-	return &languageRepository{abstractRepository{service: service}}
+func NewLanguageRepository(ctx context.Context, dbPool pool.Pool, workMan workerpool.Manager) LanguageRepository {
+	return &languageRepository{
+		BaseRepository: datastore.NewBaseRepository[*models.Language](
+			ctx, dbPool, workMan, func() *models.Language { return &models.Language{} },
+		),
+	}
+}
+
+func (repo *languageRepository) GetByIDList(ctx context.Context, id ...string) ([]*models.Language, error) {
+	var languages []*models.Language
+	err := repo.Pool().DB(ctx, true).Find(&languages, "id IN ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return languages, nil
 }
 
 func (repo *languageRepository) GetOrCreateByCode(ctx context.Context, languageCode string) (*models.Language, error) {
 
 	if languageCode == "" {
-		notificationConfig, ok := repo.service.Config().(*config.NotificationConfig)
-		if !ok {
-			return nil, fmt.Errorf("language code is totaly empty")
-		}
-
-		languageCode = notificationConfig.DefaultLanguageCode
+		// Default fallback since we no longer have direct service access
+		languageCode = "en"
 	}
 
 	lang, err := repo.GetByCode(ctx, languageCode)
 	if err != nil {
-		if !frame.ErrorIsNoRows(err) {
+		if data.ErrorIsNoRows(err) {
 			return nil, err
 		}
 
@@ -49,10 +60,9 @@ func (repo *languageRepository) GetOrCreateByCode(ctx context.Context, languageC
 		}
 		lang.GenID(ctx)
 
-		err = repo.Save(ctx, lang)
+		err = repo.Create(ctx, lang)
 		if err != nil {
 			return nil, err
-
 		}
 	}
 
@@ -61,7 +71,7 @@ func (repo *languageRepository) GetOrCreateByCode(ctx context.Context, languageC
 
 func (repo *languageRepository) GetByCode(ctx context.Context, code string) (*models.Language, error) {
 	var language models.Language
-	err := repo.readDb(ctx).First(&language, "code = ?", code).Error
+	err := repo.Pool().DB(ctx, true).First(&language, "code = ?", code).Error
 	if err != nil {
 		return nil, err
 	}
@@ -70,22 +80,9 @@ func (repo *languageRepository) GetByCode(ctx context.Context, code string) (*mo
 
 func (repo *languageRepository) GetByName(ctx context.Context, name string) (*models.Language, error) {
 	var language models.Language
-	err := repo.readDb(ctx).Find(&language, "name = ?", name).Error
+	err := repo.Pool().DB(ctx, true).Find(&language, "name = ?", name).Error
 	if err != nil {
 		return nil, err
 	}
 	return &language, nil
-}
-
-func (repo *languageRepository) GetByID(ctx context.Context, id string) (*models.Language, error) {
-	language := models.Language{}
-	err := repo.readDb(ctx).First(&language, "id = ?", id).Error
-	if err != nil {
-		return nil, err
-	}
-	return &language, nil
-}
-
-func (repo *languageRepository) Save(ctx context.Context, language *models.Language) error {
-	return repo.writeDb(ctx).Save(language).Error
 }

@@ -5,28 +5,36 @@ import (
 	"errors"
 	"strings"
 
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
+	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame"
+	"github.com/pitabwire/frame/data"
+	"github.com/pitabwire/frame/events"
+	"github.com/pitabwire/util"
 )
 
 // NotificationOutRouteEvent is the event name for routing outgoing notifications
 const NotificationOutRouteEvent = "notification.out.route"
 
 type NotificationOutRoute struct {
-	Service          *frame.Service
-	ProfileCli       *profilev1.ProfileClient
-	NotificationRepo repository.NotificationRepository
+	eventMan events.Manager
+
+	profileCli       profilev1connect.ProfileServiceClient
+	notificationRepo repository.NotificationRepository
+	routeRepo        repository.RouteRepository
 }
 
 // NewNotificationOutRoute creates a new NotificationOutRoute event handler
-func NewNotificationOutRoute(ctx context.Context, service *frame.Service, profileCli *profilev1.ProfileClient) *NotificationOutRoute {
+func NewNotificationOutRoute(ctx context.Context, eventMan events.Manager, profileCli profilev1connect.ProfileServiceClient, notificationRepo repository.NotificationRepository, routeRepo repository.RouteRepository) *NotificationOutRoute {
+
 	return &NotificationOutRoute{
-		Service:          service,
-		ProfileCli:       profileCli,
-		NotificationRepo: repository.NewNotificationRepository(ctx, service),
+		eventMan:         eventMan,
+		profileCli:       profileCli,
+		notificationRepo: notificationRepo,
+		routeRepo:        routeRepo,
 	}
 }
 
@@ -51,22 +59,22 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 	notificationId := *payload.(*string)
 
-	logger := event.Service.Log(ctx).WithField("payload", notificationId).WithField("type", event.Name())
+	logger := util.Log(ctx).WithField("payload", notificationId).WithField("type", event.Name())
 	logger.Debug("handling event")
 
-	n, err := event.NotificationRepo.GetByID(ctx, notificationId)
+	n, err := event.notificationRepo.GetByID(ctx, notificationId)
 	if err != nil {
 		logger.WithError(err).Warn("could not get notification from db")
 		return err
 	}
 
-	p, err := event.ProfileCli.GetProfileByID(ctx, n.RecipientProfileID)
+	p, err := event.profileCli.GetById(ctx, connect.NewRequest(&profilev1.GetByIdRequest{Id: n.RecipientProfileID}))
 	if err != nil {
 		logger.WithError(err).WithField("profile_id", n.RecipientProfileID).Warn("could not get profile by id")
 		return err
 	}
 
-	contact := filterContactFromProfileByID(p, n.RecipientContactID)
+	contact := filterContactFromProfileByID(p.Msg.GetData(), n.RecipientContactID)
 
 	var contactType profilev1.ContactType
 
@@ -83,7 +91,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 		n.NotificationType = models.RouteTypeAny
 	}
 
-	route, err := routeNotification(ctx, event.Service, models.RouteModeTransmit, n)
+	route, err := routeNotification(ctx, event.routeRepo, models.RouteModeTransmit, n)
 	if err != nil {
 		logger.WithError(err).Error("could not route notification")
 
@@ -92,14 +100,14 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 				NotificationID: n.GetID(),
 				State:          int32(commonv1.STATE_INACTIVE),
 				Status:         int32(commonv1.STATUS_FAILED),
-				Extra: frame.JSONMap{
+				Extra: data.JSONMap{
 					"error": err.Error(),
 				},
 			}
 
 			nStatus.GenID(ctx)
 
-			err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+			err = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 			if err != nil {
 				logger.WithError(err).Warn("could not emit status for save")
 				return err
@@ -113,13 +121,13 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 	}
 
 	n.RouteID = route.ID
-	err = event.NotificationRepo.Save(ctx, n)
+	_, err = event.notificationRepo.Update(ctx, n, "route_id")
 	if err != nil {
 		logger.WithError(err).Warn("could not save routed notification to db")
 		return err
 	}
 
-	err = event.Service.Emit(ctx, NotificationOutQueueEvent, n.GetID())
+	err = event.eventMan.Emit(ctx, NotificationOutQueueEvent, n.GetID())
 	if err != nil {
 		logger.WithError(err).Warn("could not queue out notification")
 		return err
@@ -134,7 +142,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	err = event.Service.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+	err = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit status for save")
 		return err

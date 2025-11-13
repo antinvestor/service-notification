@@ -6,12 +6,12 @@ import (
 
 	"github.com/antinvestor/apis/go/common"
 	"github.com/antinvestor/apis/go/common/mocks"
-	commonv1 "github.com/antinvestor/apis/go/common/v1"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	notificationv1_mocks "github.com/antinvestor/apis/go/notification/v1_mocks"
-	partitionv1 "github.com/antinvestor/apis/go/partition/v1"
+	partitionV1 "buf.build/gen/go/antinvestor/partition/protocolbuffers/go/partition/v1"
 	partitionv1_mocks "github.com/antinvestor/apis/go/partition/v1_mocks"
-	profilev1 "github.com/antinvestor/apis/go/profile/v1"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	profilev1_mocks "github.com/antinvestor/apis/go/profile/v1_mocks"
 	"github.com/pitabwire/frame/frametests"
 	"github.com/pitabwire/frame/frametests/definition"
@@ -74,7 +74,7 @@ func (bs *BaseTestSuite) GetNotificationCli(_ context.Context) *notificationv1.N
 	return notificationCli
 }
 
-func (bs *BaseTestSuite) GetProfileCli(_ context.Context) *profilev1.ProfileClient {
+func (bs *BaseTestSuite) GetProfileCli(_ context.Context) profilev1connect.ProfileServiceClient {
 
 	t := bs.T()
 
@@ -100,7 +100,7 @@ func (bs *BaseTestSuite) GetProfileCli(_ context.Context) *profilev1.ProfileClie
 	return profileCli
 }
 
-func (bs *BaseTestSuite) GetPartitionCli(_ context.Context) *partitionv1.PartitionClient {
+func (bs *BaseTestSuite) GetPartitionCli(_ context.Context) partitionv1connect.PartitionServiceClient {
 
 	t := bs.T()
 
