@@ -6,7 +6,9 @@ import (
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
+	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/config"
 	"github.com/pitabwire/util"
 	"github.com/wneessen/go-mail"
@@ -44,12 +46,12 @@ func (ms *Client) contactLinkToEmail(ctx context.Context, contact *commonv1.Cont
 		return contact.GetDetail(), nil
 	}
 
-	result, err := ms.profileCli.Svc().GetByContact(ctx, &profilev1.GetByContactRequest{Contact: contact.GetContactId()})
+	result, err := ms.profileCli.GetByContact(ctx, connect.NewRequest(&profilev1.GetByContactRequest{Contact: contact.GetContactId()}))
 	if err != nil {
 		return "", err
 	}
 
-	profile := result.GetData()
+	profile := result.Msg.GetData()
 
 	for _, c := range profile.GetContacts() {
 		if c.GetType() == profilev1.ContactType_EMAIL {

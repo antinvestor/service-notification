@@ -7,26 +7,37 @@ import (
 	"net/http"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/internal/apperrors"
-	"github.com/pitabwire/frame"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type ATServer struct {
-	Service           *frame.Service
 	ProfileCli        profilev1connect.ProfileServiceClient
-	NotificationCli   *notificationv1.NotificationClient
+	NotificationCli   notificationv1connect.NotificationServiceClient
 	AfricasTalkingCli *client.Client
+}
+
+func NewATServer(
+	profileCli profilev1connect.ProfileServiceClient,
+	notificationCli notificationv1connect.NotificationServiceClient,
+	africasTalkingCli *client.Client,
+) *ATServer {
+	return &ATServer{
+		ProfileCli:        profileCli,
+		NotificationCli:   notificationCli,
+		AfricasTalkingCli: africasTalkingCli,
+	}
 }
 
 func (ps *ATServer) writeError(ctx context.Context, w http.ResponseWriter, err error, code int) {
 	w.Header().Set("Content-Type", "application/json")
 
-	log := ps.Service.Log(ctx).
+	log := util.Log(ctx).
 		WithField("code", code)
 
 	log.WithError(err).Error("internal service error")
@@ -149,13 +160,13 @@ func (ps *ATServer) handleDeliveryReport(ctx context.Context, routeID, ip string
 	}
 
 	extra, _ := structpb.NewStruct(extraData)
-	_, err := ps.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+	_, err := ps.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
 		Id:         "",
 		State:      commonv1.STATE_INACTIVE,
 		Status:     internalStatus,
 		ExternalId: externalID,
 		Extras:     extra,
-	})
+	}))
 	if err != nil {
 		return apperrors.ErrSystemFailure.Extend(err.Error())
 	}

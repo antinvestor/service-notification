@@ -1,9 +1,11 @@
 package config
 
-import "github.com/pitabwire/frame"
+import (
+	"github.com/pitabwire/frame/config"
+)
 
 type EmailSMTPConfig struct {
-	frame.ConfigurationDefault
+	config.ConfigurationDefault
 
 	SettingsIntegrationName string `default:"Africastalking" envconfig:"SETTINGS_INTEGRATION_NAME"`
 	SettingsIntegrationID   string `default:"Default" envconfig:"SETTINGS_INTEGRATION_ID"`

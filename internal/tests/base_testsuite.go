@@ -42,7 +42,7 @@ func (bs *BaseTestSuite) SetupSuite() {
 	bs.FrameBaseTestSuite.SetupSuite()
 }
 
-func (bs *BaseTestSuite) GetNotificationCli(_ context.Context) *notificationv1.NotificationClient {
+func (bs *BaseTestSuite) GetNotificationCli(_ context.Context) notificationv1connect.NotificationServiceClient {
 	mockNotificationService := notificationv1_mocks.NewMockNotificationServiceClient(bs.Ctrl)
 	mockNotificationService.EXPECT().Send(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, _ *notificationv1.SendRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[notificationv1.SendResponse], error) {

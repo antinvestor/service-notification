@@ -7,25 +7,38 @@ import (
 	"strconv"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/internal/apperrors"
-	"github.com/pitabwire/frame"
+	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type MessageToSend struct {
-	Service           *frame.Service
 	ProfileCli        profilev1connect.ProfileServiceClient
-	NotificationCli   *notificationv1.NotificationClient
+	NotificationCli   notificationv1connect.NotificationServiceClient
 	AfricasTalkingCli *client.Client
+}
+
+func NewMessageToSend(
+	profileCli profilev1connect.ProfileServiceClient,
+	notificationCli notificationv1connect.NotificationServiceClient,
+	africasTalkingCli *client.Client,
+) *MessageToSend {
+	return &MessageToSend{
+		ProfileCli:        profileCli,
+		NotificationCli:   notificationCli,
+		AfricasTalkingCli: africasTalkingCli,
+	}
 }
 
 func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, payload []byte) error {
 
-	log := ms.Service.Log(ctx)
+	log := util.Log(ctx)
 
 	notification := &notificationv1.Notification{}
 
@@ -47,26 +60,26 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 		ok := errors.As(err, &appErr)
 		if !ok || appErr.IsRetriable() {
 
-			_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+			_, _ = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
 				Id:         notification.GetId(),
 				State:      commonv1.STATE_ACTIVE,
 				Status:     commonv1.STATUS_UNKNOWN,
 				ExternalId: "",
 				Extras:     extra,
-			})
+			}))
 
 			return err
 		}
 
 		extrasMap["errcode"] = fmt.Sprintf("%v", appErr.ErrorCode())
 		extra, _ = structpb.NewStruct(extrasMap)
-		_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+		_, _ = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
 			Id:         notification.GetId(),
 			State:      commonv1.STATE_INACTIVE,
 			Status:     commonv1.STATUS_FAILED,
 			ExternalId: "",
 			Extras:     extra,
-		})
+		}))
 		return nil
 	}
 
@@ -76,13 +89,13 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 	extra, _ := structpb.NewStruct(extrasMap)
 	if rs.StatusCode >= 500 && rs.StatusCode < 502 {
 
-		_, _ = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+		_, _ = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
 			Id:         notification.GetId(),
 			State:      commonv1.STATE_ACTIVE,
 			Status:     commonv1.STATUS_UNKNOWN,
 			ExternalId: rs.MessageId,
 			Extras:     extra,
-		})
+		}))
 		return fmt.Errorf("server responded in error %v : -> %v", client.StatusCodeMap[rs.StatusCode], rs)
 	}
 
@@ -91,13 +104,13 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 		notificationStatus = commonv1.STATUS_FAILED
 	}
 
-	_, err = ms.NotificationCli.Svc().StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
+	_, err = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
 		Id:         notification.GetId(),
 		State:      commonv1.STATE_ACTIVE,
 		Status:     notificationStatus,
 		ExternalId: rs.MessageId,
 		Extras:     extra,
-	})
+	}))
 	if err != nil {
 		log.WithError(err).Warn("could not update status on notification service")
 	}

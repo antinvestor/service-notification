@@ -10,8 +10,12 @@ import (
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
-	settingsv1 "github.com/antinvestor/apis/go/settings/v1"
+	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
+	"connectrpc.com/connect"
+	settingsv1 "buf.build/gen/go/antinvestor/settingz/protocolbuffers/go/settings/v1"
+
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
 	"github.com/antinvestor/service-notification/internal/constants"
 	"github.com/pitabwire/util"
@@ -23,10 +27,10 @@ type Client struct {
 	logger     *util.LogEntry
 
 	profileCli  profilev1connect.ProfileServiceClient
-	settingsCli *settingsv1.SettingsClient
+	settingsCli settingsv1connect.SettingsServiceClient
 }
 
-func NewClient(logger *util.LogEntry, cfg *config.AfricasTalkingConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli *settingsv1.SettingsClient) (*Client, error) {
+func NewClient(logger *util.LogEntry, cfg *config.AfricasTalkingConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli settingsv1connect.SettingsServiceClient) (*Client, error) {
 
 	return &Client{
 		cfg:         cfg,
@@ -43,12 +47,12 @@ func (ms *Client) contactLinkToPhoneNumber(ctx context.Context, contact *commonv
 		return contact.GetDetail(), nil
 	}
 
-	result, err := ms.profileCli.Svc().GetByContact(ctx, &profilev1.GetByContactRequest{Contact: contact.GetContactId()})
+	result, err := ms.profileCli.GetByContact(ctx, connect.NewRequest(&profilev1.GetByContactRequest{Contact: contact.GetContactId()}))
 	if err != nil {
 		return "", err
 	}
 
-	profile := result.GetData()
+	profile := result.Msg.GetData()
 
 	for _, c := range profile.GetContacts() {
 		if c.GetId() == contact.GetContactId() {
@@ -97,12 +101,12 @@ func (ms *Client) extractCredentials(ctx context.Context, headers map[string]str
 		},
 	}
 
-	settingResp, err := ms.settingsCli.Svc().Get(ctx, settingReq)
+	settingResp, err := ms.settingsCli.Get(ctx, connect.NewRequest(settingReq))
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal([]byte(settingResp.GetData().GetValue()), &credentials)
+	err = json.Unmarshal([]byte(settingResp.Msg.GetData().GetValue()), &credentials)
 	if err != nil {
 		return nil, err
 	}
