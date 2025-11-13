@@ -3,43 +3,39 @@ module github.com/antinvestor/service-notification
 go 1.25.0
 
 require (
-	buf.build/go/protovalidate v1.0.0
+	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.10-20251104183629-02dfa9355307.1
+	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20251104183814-0a16cadd9e5d.2
+	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.10-20251104183814-0a16cadd9e5d.1
+	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20251104183841-abd5e3c3145b.2
+	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.10-20251104183841-abd5e3c3145b.1
+	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20251104183907-bd2327635adb.2
+	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.10-20251104183907-bd2327635adb.1
+	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20251104183931-1e21a92668e6.2
+	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.10-20251104183931-1e21a92668e6.1
+	connectrpc.com/connect v1.19.1
+	connectrpc.com/otelconnect v0.8.0
 	github.com/antinvestor/apis/go/common v1.47.12
 	github.com/antinvestor/apis/go/notification v1.47.13
 	github.com/antinvestor/apis/go/partition v1.47.13
 	github.com/antinvestor/apis/go/profile v1.47.13
 	github.com/antinvestor/apis/go/settings v1.47.13
-	github.com/antinvestor/gomatrix v0.1.6
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/pitabwire/frame v1.65.3
 	github.com/pitabwire/util v0.3.5
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
-	go.uber.org/mock v0.6.0
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
-	gorm.io/gorm v1.31.1
 )
 
 require (
-	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.10-20251104183629-02dfa9355307.1 // indirect
-	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20251104183814-0a16cadd9e5d.2 // indirect
-	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.10-20251104183814-0a16cadd9e5d.1 // indirect
-	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20251104183841-abd5e3c3145b.2 // indirect
-	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.10-20251104183841-abd5e3c3145b.1 // indirect
-	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20251104183907-bd2327635adb.2 // indirect
-	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.10-20251104183907-bd2327635adb.1 // indirect
-	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20251104183931-1e21a92668e6.2 // indirect
-	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.10-20251104183931-1e21a92668e6.1 // indirect
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
 	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.10-20230414000709-087bc8072ce4.1 // indirect
+	buf.build/go/protovalidate v1.0.0 // indirect
 	cel.dev/expr v0.25.1 // indirect
-	connectrpc.com/connect v1.19.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/XSAM/otelsql v0.40.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/caarlos0/env/v11 v11.3.1 // indirect
@@ -62,15 +58,10 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/cel-go v0.26.1 // indirect
-	github.com/google/gnostic v0.7.1 // indirect
-	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
-	github.com/gorilla/handlers v1.5.2 // indirect
-	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -146,9 +137,9 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
+	go.uber.org/mock v0.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	gocloud.dev v0.43.0 // indirect
 	golang.org/x/crypto v0.44.0 // indirect
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
@@ -163,4 +154,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
+	gorm.io/gorm v1.31.1 // indirect
 )

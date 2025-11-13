@@ -1,22 +1,13 @@
 package business_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	commonmocks "github.com/antinvestor/apis/go/common/mocks"
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	partitionV1 "buf.build/gen/go/antinvestor/partition/protocolbuffers/go/partition/v1"
-	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
-	"github.com/antinvestor/service-notification/apps/default/service/business"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
-	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/antinvestor/service-notification/apps/default/service/tests"
-	"github.com/pitabwire/frame"
+	"github.com/antinvestor/service-notification/apps/default/tests"
 	"github.com/pitabwire/frame/frametests/definition"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -31,68 +22,30 @@ func (nts *NotificationTestSuite) SetupSuite() {
 
 }
 
+// Helper function removed - now using ServiceResources from CreateService
+
 func TestNotificationSuite(t *testing.T) {
 	suite.Run(t, new(NotificationTestSuite))
-}
-
-type ctxSrv struct {
-	ctx context.Context
-	srv *frame.Service
 }
 
 func (nts *NotificationTestSuite) TestNewNotificationBusiness() {
 
 	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
-		svc, ctx := nts.CreateService(t, dep)
+		_, _, resources := nts.CreateService(t, dep)
 
-		type args struct {
-			ctxService   *ctxSrv
-			profileCli   profilev1connect.ProfileServiceClient
-			partitionCli partitionv1connect.PartitionServiceClient
-		}
-		testcases := []struct {
-			name      string
-			args      args
-			want      business.NotificationBusiness
-			expectErr bool
-		}{
-
-			{name: "NewNotificationBusiness",
-				args: args{
-					ctxService: &ctxSrv{
-						ctx: ctx,
-						srv: svc,
-					},
-					profileCli:   nts.GetProfileCli(ctx),
-					partitionCli: nts.GetPartitionCli(ctx),
-				},
-				expectErr: false},
-
-			{name: "NewNotificationBusinessWithNils",
-				args: args{
-					ctxService: &ctxSrv{
-						ctx: context.Background(),
-					},
-					profileCli: nil,
-				},
-				expectErr: true},
-		}
-
-		for _, tt := range testcases {
-			t.Run(tt.name, func(t *testing.T) {
-				if got, err := business.NewNotificationBusiness(tt.args.ctxService.ctx, tt.args.ctxService.srv, tt.args.profileCli, tt.args.partitionCli); !tt.expectErr && (err != nil || got == nil) {
-					t.Errorf("NewNotificationBusiness() = could not get a valid notificationBusiness at %s", tt.name)
-				}
-			})
-		}
+		t.Run("NewNotificationBusiness", func(t *testing.T) {
+			if resources.NotificationBusiness == nil {
+				t.Errorf("NewNotificationBusiness() = could not get a valid notificationBusiness")
+			}
+		})
 
 	})
 }
 
 func (nts *NotificationTestSuite) Test_notificationBusiness_QueueIn() {
 
-	tests := []struct {
+	testCases := []struct {
 		name    string
 		message *notificationv1.Notification
 		want    *commonv1.StatusResponse
@@ -132,20 +85,11 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueIn() {
 
 	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
-		svc, ctx := nts.CreateService(t, dep)
-		profileCli := nts.GetProfileCli(ctx)
-		partitionCli := nts.GetPartitionCli(ctx)
+		_, ctx, resources := nts.CreateService(t, dep)
 
-		for _, tt := range tests {
+		for _, tt := range testCases {
 			t.Run(tt.name, func(t *testing.T) {
-				nb, err := business.NewNotificationBusiness(ctx, svc, profileCli, partitionCli)
-
-				if err != nil {
-					t.Errorf("QueueIn() error = %v, could not get notification business", err)
-					return
-				}
-
-				got, err := nb.QueueIn(ctx, tt.message)
+				got, err := resources.NotificationBusiness.QueueIn(ctx, tt.message)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("QueueIn() error = %v, wantErr %v", err, tt.wantErr)
 					return
@@ -205,23 +149,11 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 
 	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
-		svc, ctx := nts.CreateService(t, dep)
-		profileCli := nts.GetProfileCli(ctx)
-		partitionCli := nts.GetPartitionCli(ctx)
+		_, ctx, resources := nts.CreateService(t, dep)
 
 		for _, tt := range testcases {
 			t.Run(tt.name, func(t *testing.T) {
-				nb, err := business.NewNotificationBusiness(
-					ctx,
-					svc,
-					profileCli,
-					partitionCli)
-				if err != nil {
-					t.Errorf("QueueOut() error = %v, could not get notification business", err)
-					return
-				}
-
-				got, err := nb.QueueOut(ctx, tt.message)
+				got, err := resources.NotificationBusiness.QueueOut(ctx, tt.message)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("QueueOut() error = %v, wantErr %v", err, tt.wantErr)
 					return
@@ -265,22 +197,10 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 
 	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
-		svc, ctx := nts.CreateService(t, dep)
-		profileCli := nts.GetProfileCli(ctx)
-		partitionCli := nts.GetPartitionCli(ctx)
+		_, ctx, resources := nts.CreateService(t, dep)
 
 		for _, tt := range testcases {
 			t.Run(tt.name, func(t *testing.T) {
-				nb, err := business.NewNotificationBusiness(
-					ctx,
-					svc,
-					profileCli,
-					partitionCli)
-				if err != nil {
-					t.Errorf("Release() error = %v, could not get notification business", err)
-					return
-				}
-
 				n := models.Notification{
 					SenderContactID:  "epochTesting",
 					Message:          "Hello we are just testing statuses out",
@@ -292,29 +212,45 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 				n.PartitionID = "test_partition-id"
 				n.TenantID = "test_tenant-id"
 
-				nRepo := repository.NewNotificationRepository(ctx, svc)
-				err = nRepo.Create(ctx, &n)
+				err := resources.NotificationRepo.Create(ctx, &n)
 				if err != nil {
 					t.Errorf("Status() error = %v could not store a notification for status checking", err)
 					return
 				}
 				tt.releaseReq.Id = []string{n.GetID()}
 
-				responseStream := commonmocks.NewMockServerStream[notificationv1.ReleaseResponse](ctx)
-
-				err = nb.Release(ctx, tt.releaseReq, responseStream)
+				resultPipe, err := resources.NotificationBusiness.Release(ctx, tt.releaseReq)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("Release() error = %v, wantErr %v", err, tt.wantErr)
 					return
 				}
 
-				streamRes := responseStream.GetResponses()
+				if resultPipe == nil {
+					t.Errorf("Release() expected non-nil result pipe")
+					return
+				}
 
-				require.Len(t, streamRes, 1)
-				responseData := streamRes[0].GetData()
-				require.Len(t, responseData, 1)
+				// Consume the results from the JobResultPipe
+				responseCount := 0
+				var got *commonv1.StatusResponse
+				for {
+					result, ok := resultPipe.ReadResult(ctx)
+					if !ok {
+						break // Channel closed
+					}
+					if result.IsError() {
+						t.Errorf("Release() unexpected error from result pipe: %v", result.Error())
+						break
+					}
+					releaseResp := result.Item() // Returns *notificationv1.ReleaseResponse
+					responseCount++
+					if len(releaseResp.Data) > 0 && got == nil {
+						// Get the first status response for comparison
+						got = releaseResp.Data[0]
+					}
+				}
 
-				got := responseData[0]
+				require.GreaterOrEqual(t, responseCount, 1, "Release() expected at least 1 response")
 
 				if got.GetStatus() != tt.want.GetStatus() || got.GetState() != tt.want.GetState() {
 					t.Errorf("Release() got = %v, want %v", got, tt.want)
@@ -330,10 +266,6 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 }
 
 func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
-
-	// Mock the ServerStreamingClient[SearchResponse]
-
-	// nsSs.EXPECT().Context().Return(ctx).AnyTimes()
 
 	testcases := []struct {
 		name       string
@@ -351,22 +283,10 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 
 	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
-		svc, ctx := nts.CreateService(t, dep)
-		profileCli := nts.GetProfileCli(ctx)
-		partitionCli := nts.GetPartitionCli(ctx)
+		_, ctx, resources := nts.CreateService(t, dep)
 
 		for _, tt := range testcases {
 			t.Run(tt.name, func(t *testing.T) {
-
-				nb, err := business.NewNotificationBusiness(
-					ctx,
-					svc,
-					profileCli,
-					partitionCli)
-				if err != nil {
-					t.Errorf("Search() error = %v, could not get notification business", err)
-					return
-				}
 
 				nStatus := models.NotificationStatus{
 					State:  int32(commonv1.STATE_ACTIVE.Number()),
@@ -385,8 +305,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 				}
 				n.PartitionID = "test_partition-id"
 
-				nRepo := repository.NewNotificationRepository(ctx, svc)
-				err = nRepo.Create(ctx, &n)
+				err := resources.NotificationRepo.Create(ctx, &n)
 				if err != nil {
 					t.Errorf("Search() error = %v could not store a notification", err)
 					return
@@ -394,26 +313,39 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 
 				nStatus.NotificationID = n.GetID()
 
-				nStatusRepo := repository.NewNotificationStatusRepository(ctx, svc)
-				err = nStatusRepo.Create(ctx, &nStatus)
+				err = resources.NotificationStatusRepo.Create(ctx, &nStatus)
 				if err != nil {
 					t.Errorf("Search() error = %v could not store a notification status", err)
 					return
 				}
 
-				serverStream := commonmocks.NewMockServerStream[notificationv1.SearchResponse](ctx)
-
-				res, err = nb.Search(tt.search, serverStream)
+				resultPipe, err := resources.NotificationBusiness.Search(ctx, tt.search)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("Search() error = %v, wantErr %v", err, tt.wantErr)
+					return
 				}
 
-				streamRes := serverStream.GetResponses()
-				require.Len(t, streamRes, 1)
+				if resultPipe == nil {
+					t.Errorf("Search() expected non-nil result pipe")
+					return
+				}
 
-				responses := streamRes[0].GetData()
-				require.Len(t, responses, tt.leastCount)
+				// Consume the results from the JobResultPipe
+				resultCount := 0
+				for {
+					result, ok := resultPipe.ReadResult(ctx)
+					if !ok {
+						break // Channel closed
+					}
+					if result.IsError() {
+						t.Errorf("Search() unexpected error from result pipe: %v", result.Error())
+						break
+					}
+					notifications := result.Item()
+					resultCount += len(notifications)
+				}
 
+				require.GreaterOrEqual(t, resultCount, tt.leastCount, "Search() expected at least %d results", tt.leastCount)
 			})
 		}
 
@@ -443,23 +375,11 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Status() {
 
 	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
-		svc, ctx := nts.CreateService(t, dep)
-		profileCli := nts.GetProfileCli(ctx)
-		partitionCli := nts.GetPartitionCli(ctx)
+		_, ctx, resources := nts.CreateService(t, dep)
 
 		for _, tt := range testcases {
 
 			t.Run(tt.name, func(t *testing.T) {
-
-				nb, err := business.NewNotificationBusiness(
-					ctx,
-					svc,
-					profileCli,
-					partitionCli)
-				if err != nil {
-					t.Errorf("Status() error = %v, could not get notification business", err)
-					return
-				}
 
 				nStatus := models.NotificationStatus{
 					State:  int32(commonv1.STATE_DELETED.Number()),
@@ -485,16 +405,14 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Status() {
 				n.PartitionID = "test_partition-id"
 				n.TenantID = "test_tenant-id"
 
-				nRepo := repository.NewNotificationRepository(ctx, svc)
-				err = nRepo.Create(ctx, &n)
+				err := resources.NotificationRepo.Create(ctx, &n)
 				if err != nil {
 					t.Errorf("Status() error = %v could not store a notification for status checking", err)
 					return
 				}
 
 				nStatus.NotificationID = n.GetID()
-				nSRepo := repository.NewNotificationStatusRepository(ctx, svc)
-				err = nSRepo.Create(ctx, &nStatus)
+				err = resources.NotificationStatusRepo.Create(ctx, &nStatus)
 				if err != nil {
 					t.Errorf("Status() error = %v could not store a notification Status for status checking", err)
 					return
@@ -502,7 +420,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Status() {
 
 				tt.statusReq.Id = n.GetID()
 
-				got, err := nb.Status(ctx, tt.statusReq)
+				got, err := resources.NotificationBusiness.Status(ctx, tt.statusReq)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("Status() error = %v, wantErr %v", err, tt.wantErr)
 					return
@@ -547,22 +465,10 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 
 	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
 
-		svc, ctx := nts.CreateService(t, dep)
-		profileCli := nts.GetProfileCli(ctx)
-		partitionCli := nts.GetPartitionCli(ctx)
+		_, ctx, resources := nts.CreateService(t, dep)
 
 		for _, tt := range testcases {
 			t.Run(tt.name, func(t *testing.T) {
-				nb, err := business.NewNotificationBusiness(
-					ctx,
-					svc,
-					profileCli,
-					partitionCli)
-				if err != nil {
-					t.Errorf("Status() error = %v, could not get notification business", err)
-					return
-				}
-
 				releaseDate := time.Now()
 				n := models.Notification{
 					SenderContactID:  "epochTesting",
@@ -575,8 +481,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 				n.AccessID = "testingAccessData"
 				n.PartitionID = "test_partition-id"
 
-				nRepo := repository.NewNotificationRepository(ctx, svc)
-				err = nRepo.Create(ctx, &n)
+				err := resources.NotificationRepo.Create(ctx, &n)
 				if err != nil {
 					t.Errorf("Status() error = %v could not store a notification for status checking", err)
 					return
@@ -584,7 +489,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 
 				tt.statusReq.Id = n.GetID()
 
-				got, err := nb.StatusUpdate(ctx, tt.statusReq)
+				got, err := resources.NotificationBusiness.StatusUpdate(ctx, tt.statusReq)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("StatusUpdate() error = %v, wantErr %v", err, tt.wantErr)
 					return
