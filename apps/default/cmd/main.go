@@ -46,16 +46,21 @@ func main() {
 		ctx,
 		frame.WithConfig(&cfg),
 		frame.WithRegisterServerOauth2Client(),
+		frame.WithDatastore(),
 	)
 	defer svc.Stop(ctx)
 	log := svc.Log(ctx)
 
-	// Handle database migration if requested
-	if handleDatabaseMigration(ctx, svc, cfg, log) {
-		return
-	}
-
 	sm := svc.SecurityManager()
+
+	dbManager := svc.DatastoreManager()
+
+	workMan := svc.WorkManager()
+
+	evtsMan := svc.EventsManager()
+	qMan := svc.QueueManager()
+
+	dbPool := dbManager.GetPool(ctx, datastore.DefaultPoolName)
 
 	// Setup clients
 	profileCli, err := setupProfileClient(ctx, sm, cfg)
@@ -68,11 +73,10 @@ func main() {
 		log.WithError(err).Fatal("main -- Could not setup partition client")
 	}
 
-	workMan := svc.WorkManager()
-	dbPool := svc.DatastoreManager().GetPool(ctx, datastore.DefaultPoolName)
-
-	evtsMan := svc.EventsManager()
-	qMan := svc.QueueManager()
+	// Handle database migration if requested
+	if handleDatabaseMigration(ctx, dbManager, cfg, log) {
+		return
+	}
 
 	// Initialise repositories
 	notificationRepo := repository.NewNotificationRepository(ctx, dbPool, workMan)
@@ -119,16 +123,14 @@ func main() {
 // handleDatabaseMigration performs database migration if configured to do so.
 func handleDatabaseMigration(
 	ctx context.Context,
-	svc *frame.Service,
+	dbManager datastore.Manager,
 	cfg aconfig.NotificationConfig,
 	log *util.LogEntry,
 ) bool {
-	serviceOptions := []frame.Option{frame.WithDatastore()}
 
 	if cfg.DoDatabaseMigrate() {
-		svc.Init(ctx, serviceOptions...)
 
-		err := repository.Migrate(ctx, svc.DatastoreManager(), cfg.GetDatabaseMigrationPath())
+		err := repository.Migrate(ctx, dbManager, cfg.GetDatabaseMigrationPath())
 		if err != nil {
 			log.WithError(err).Fatal("main -- Could not migrate successfully")
 		}
