@@ -53,8 +53,8 @@ github.com/antinvestor/apis/go/common v1.48.7 h1:r7GFN6gVWD7/62Mav4I9F2JCu4uPVVx
 github.com/antinvestor/apis/go/common v1.48.7/go.mod h1:kukfrOEPITgNxB12x4MCa2evzhPSRXvtQ04sDjuHYj4=
 github.com/antinvestor/apis/go/notification v1.48.8 h1:6thP7YPVgtMxxh/HpW/fV4Ttul2fEm72p+RvrGdyn9g=
 github.com/antinvestor/apis/go/notification v1.48.8/go.mod h1:lyNRIuepDDI4Pv45qKxB/2IY3UXc+P7OhCQxpYzvjxA=
-github.com/antinvestor/apis/go/partition v1.48.7 h1:74v2RfhjCubz1pgkM37s2QF9chYU4JIkRvFuU+O1fc8=
-github.com/antinvestor/apis/go/partition v1.48.7/go.mod h1:EpeDolSJ/HcDMC59RBTVaP42W9TTwKS6qoC0ITwzpFg=
+github.com/antinvestor/apis/go/partition v1.48.8 h1:u3W0jSYDCEefLZC7/yui8mmeIWPRF2oZwz7IgCrKogI=
+github.com/antinvestor/apis/go/partition v1.48.8/go.mod h1:vQ860LHndKTg7dbkHYUEukiDXOhsklqpsjwlDlj0/VY=
 github.com/antinvestor/apis/go/profile v1.48.8 h1:EGRdvepVL1l1TXQFU4ty5pWFSXlzhZjeWSfzQJ/7ymw=
 github.com/antinvestor/apis/go/profile v1.48.8/go.mod h1:JRC/DHZl05JYUXy+nbGAcOtNZfu5qC9lJFTNwZYqjnY=
 github.com/antinvestor/apis/go/settings v1.48.8 h1:pYXhgRedlHVWIZDbAVXXwCTmmxR2Q066PmTq2adI1Dc=
@@ -202,8 +202,8 @@ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJw
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/panjf2000/ants/v2 v2.11.3 h1:AfI0ngBoXJmYOpDh9m516vjqoUu2sLrIVgppI9TZVpg=
 github.com/panjf2000/ants/v2 v2.11.3/go.mod h1:8u92CYMUc6gyvTIw8Ru7Mt7+/ESnJahz5EVtqfrilek=
-github.com/pitabwire/frame v1.65.7 h1:FGoMS80yU/rKMPGYuIooQSypTS7WGLn3In8VkMCQ4rM=
-github.com/pitabwire/frame v1.65.7/go.mod h1:KvoO1pGTQnBYwj7t8q7xnu675aka02u2B2F9+pfjFpo=
+github.com/pitabwire/frame v1.66.0 h1:4sUiecogxnBVeWlnBLIEgTmg+3DBaPX+FMYWjmIBxH8=
+github.com/pitabwire/frame v1.66.0/go.mod h1:KvoO1pGTQnBYwj7t8q7xnu675aka02u2B2F9+pfjFpo=
 github.com/pitabwire/natspubsub v0.7.4 h1:gKNsutB8zoOMTq4h2o3SsLYhkZ1rPeKVowuDRMParFU=
 github.com/pitabwire/natspubsub v0.7.4/go.mod h1:sfQ2dg/zwXbSIelKabWOhEcxTkDB4HFc+JozUFSZrEU=
 github.com/pitabwire/util v0.3.5 h1:+0edmrGEyLaC/Q4+9i1auPxpygd1N1Q/r0Gj5rlLkaU=

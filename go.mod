@@ -15,10 +15,10 @@ require (
 	connectrpc.com/otelconnect v0.8.0
 	github.com/antinvestor/apis/go/common v1.48.7
 	github.com/antinvestor/apis/go/notification v1.48.8
-	github.com/antinvestor/apis/go/partition v1.48.7
+	github.com/antinvestor/apis/go/partition v1.48.8
 	github.com/antinvestor/apis/go/profile v1.48.8
 	github.com/antinvestor/apis/go/settings v1.48.8
-	github.com/pitabwire/frame v1.65.7
+	github.com/pitabwire/frame v1.66.0
 	github.com/pitabwire/util v0.3.5
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
