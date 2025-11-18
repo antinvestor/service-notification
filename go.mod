@@ -13,12 +13,12 @@ require (
 	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.10-20251115181335-ce7d40b11d1d.1
 	connectrpc.com/connect v1.19.1
 	connectrpc.com/otelconnect v0.8.0
-	github.com/antinvestor/apis/go/common v1.48.11
-	github.com/antinvestor/apis/go/notification v1.48.11
-	github.com/antinvestor/apis/go/partition v1.48.11
-	github.com/antinvestor/apis/go/profile v1.48.11
-	github.com/antinvestor/apis/go/settings v1.48.11
-	github.com/pitabwire/frame v1.66.2
+	github.com/antinvestor/apis/go/common v1.48.13
+	github.com/antinvestor/apis/go/notification v1.48.14
+	github.com/antinvestor/apis/go/partition v1.48.14
+	github.com/antinvestor/apis/go/profile v1.48.14
+	github.com/antinvestor/apis/go/settings v1.48.14
+	github.com/pitabwire/frame v1.66.6
 	github.com/pitabwire/util v0.3.5
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
@@ -98,7 +98,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.2 // indirect
+	github.com/prometheus/common v0.67.3 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/rs/xid v1.6.0 // indirect
