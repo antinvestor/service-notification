@@ -3,22 +3,22 @@ module github.com/antinvestor/service-notification
 go 1.25.2
 
 require (
-	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.10-20251115174401-cf993dd61681.1
-	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20251115181141-8a8c898fd720.2
-	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.10-20251115181141-8a8c898fd720.1
-	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20251115181220-b54955485f7e.2
-	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20251115181258-23365fece788.2
-	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.10-20251115181258-23365fece788.1
-	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20251115181335-ce7d40b11d1d.2
-	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.10-20251115181335-ce7d40b11d1d.1
+	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.10-20251119161617-faec0015998a.1
+	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20251119161822-0f712795b762.2
+	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.10-20251119161822-0f712795b762.1
+	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20251119161904-6bc16b04bbca.2
+	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20251119161948-fcd977fb5334.2
+	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.10-20251119161948-fcd977fb5334.1
+	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20251119162035-17528daea270.2
+	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.10-20251119162035-17528daea270.1
 	connectrpc.com/connect v1.19.1
 	connectrpc.com/otelconnect v0.8.0
-	github.com/antinvestor/apis/go/common v1.48.13
-	github.com/antinvestor/apis/go/notification v1.48.14
-	github.com/antinvestor/apis/go/partition v1.48.14
-	github.com/antinvestor/apis/go/profile v1.48.14
-	github.com/antinvestor/apis/go/settings v1.48.14
-	github.com/pitabwire/frame v1.67.0
+	github.com/antinvestor/apis/go/common v1.48.17
+	github.com/antinvestor/apis/go/notification v1.48.16
+	github.com/antinvestor/apis/go/partition v1.48.16
+	github.com/antinvestor/apis/go/profile v1.48.16
+	github.com/antinvestor/apis/go/settings v1.48.16
+	github.com/pitabwire/frame v1.67.1
 	github.com/pitabwire/util v0.3.5
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
@@ -27,10 +27,10 @@ require (
 )
 
 require (
-	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.10-20251115181220-b54955485f7e.1 // indirect
+	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.10-20251119161904-6bc16b04bbca.1 // indirect
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
 	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.10-20230414000709-087bc8072ce4.1 // indirect
-	buf.build/go/protovalidate v1.0.0 // indirect
+	buf.build/go/protovalidate v1.0.1 // indirect
 	cel.dev/expr v0.25.1 // indirect
 	cloud.google.com/go/pubsub v1.50.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
