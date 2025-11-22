@@ -12,6 +12,7 @@ import (
 	"github.com/pitabwire/frame/frametests/definition"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type NotificationTestSuite struct {
@@ -287,6 +288,8 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Release() {
 
 func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 
+	templateExtra, _ := structpb.NewStruct(map[string]any{"template_id": "9bsv0s23l8og00vemail"})
+
 	testcases := []struct {
 		name       string
 		search     *commonv1.SearchRequest
@@ -297,6 +300,12 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 			name:       "Normal Search",
 			leastCount: 1,
 			search:     &commonv1.SearchRequest{Query: ""},
+			wantErr:    false,
+		},
+		{
+			name:       "Search by template",
+			leastCount: 1,
+			search:     &commonv1.SearchRequest{Query: "", Extras: templateExtra},
 			wantErr:    false,
 		},
 	}
@@ -321,6 +330,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 					NotificationType: "email",
 					State:            int32(commonv1.STATE_ACTIVE.Number()),
 					LanguageID:       "9bsv0s23l8og00vgjqa0",
+					TemplateID:       "9bsv0s23l8og00vemail",
 					StatusID:         nStatus.GetID(),
 				}
 				n.PartitionID = "test_partition-id"

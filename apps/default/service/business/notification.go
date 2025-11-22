@@ -430,13 +430,21 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 		data.WithSearchOffset(int(limits.GetPage())),
 	}
 
+	andQueryVal := map[string]any{}
+
+	for k, v := range searchQuery.GetExtras().AsMap() {
+		andQueryVal[fmt.Sprintf("%s = ?", k)] = v
+	}
+
 	if searchQuery.GetIdQuery() != "" {
+		andQueryVal["id = ?"] = searchQuery.GetIdQuery()
+		andQueryVal["profile_id = ?"] = profileID
+	}
+
+	if len(andQueryVal) > 0 {
 		searchOpts = append(
 			searchOpts,
-			data.WithSearchFiltersAndByValue(map[string]any{
-				"profile_id": profileID,
-				"id":         searchQuery.GetIdQuery()}),
-		)
+			data.WithSearchFiltersAndByValue(andQueryVal))
 	}
 
 	if searchQuery.GetQuery() != "" {
