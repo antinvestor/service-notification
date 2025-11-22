@@ -349,39 +349,21 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_Search() {
 					return
 				}
 
-				resultPipe, err := resources.NotificationBusiness.Search(ctx, tt.search)
+				var notifications []*notificationv1.Notification
+				err = resources.NotificationBusiness.Search(ctx, tt.search,
+					func(_ context.Context, batch []*notificationv1.Notification) error {
+						notifications = append(notifications, batch...)
+						return nil
+					})
+
 				if (err != nil) != tt.wantErr {
 					t.Errorf("Search() error = %v, wantErr %v", err, tt.wantErr)
 					return
 				}
 
-				if resultPipe == nil {
-					t.Errorf("Search() expected non-nil result pipe")
-					return
-				}
-
 				// Consume the results from the JobResultPipe with timeout
-				resultCount := 0
-
-				// Create a context with timeout - give more time for async event processing
-				timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-				defer cancel()
-
-				t.Logf("Starting to read search results from pipe...")
-				for {
-					result, ok := resultPipe.ReadResult(timeoutCtx)
-					if !ok {
-						t.Logf("Search result pipe closed, received %d total notifications", resultCount)
-						break // Channel closed
-					}
-					if result.IsError() {
-						t.Errorf("Search() unexpected error from result pipe: %v", result.Error())
-						break
-					}
-					notifications := result.Item()
-					resultCount += len(notifications)
-					t.Logf("Received batch of %d notifications, total so far: %d", len(notifications), resultCount)
-				}
+				resultCount := len(notifications)
+				t.Logf("Received batch of %d notifications, total so far: %d", len(notifications), resultCount)
 
 				require.GreaterOrEqual(t, resultCount, tt.leastCount, "Search() expected at least %d results", tt.leastCount)
 			})

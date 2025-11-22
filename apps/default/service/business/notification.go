@@ -25,9 +25,9 @@ type NotificationBusiness interface {
 	Status(ctx context.Context, status *commonv1.StatusRequest) (*commonv1.StatusResponse, error)
 	StatusUpdate(ctx context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error)
 	Release(ctx context.Context, req *notificationv1.ReleaseRequest) (workerpool.JobResultPipe[*notificationv1.ReleaseResponse], error)
-	Search(ctx context.Context, search *commonv1.SearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Notification], error)
+	Search(ctx context.Context, search *commonv1.SearchRequest, consumer func(ctx context.Context, batch []*notificationv1.Notification) error) error
 	TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.Template, error)
-	TemplateSearch(ctx context.Context, search *notificationv1.TemplateSearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Template], error)
+	TemplateSearch(ctx context.Context, search *notificationv1.TemplateSearchRequest, consumer func(ctx context.Context, batch []*notificationv1.Template) error) error
 }
 
 func NewNotificationBusiness(_ context.Context,
@@ -411,7 +411,7 @@ func (nb *notificationBusiness) convertNotificationsToAPI(
 	return responsesList, nil
 }
 
-func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv1.SearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Notification], error) {
+func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv1.SearchRequest, consumer func(ctx context.Context, batch []*notificationv1.Notification) error) error {
 
 	logger := util.Log(ctx).WithField("request", searchQuery)
 
@@ -467,42 +467,29 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 	results, err := nb.notificationRepo.Search(ctx, query)
 	if err != nil {
 		logger.WithError(err).Error("failed to search notifications")
-		return nil, err
+		return err
 	}
 
-	transformationJob := workerpool.NewJob[[]*notificationv1.Notification](
-		func(ctx context.Context, pipe workerpool.JobResultPipe[[]*notificationv1.Notification]) error {
-			cancelCtx, cancel := context.WithCancel(ctx)
-			defer cancel()
+	for {
+		res, ok := results.ReadResult(ctx)
+		if !ok {
+			return nil
+		}
 
-			for {
-				res, ok := results.ReadResult(cancelCtx)
-				if !ok {
-					return nil
-				}
+		if res.IsError() {
+			return res.Error()
+		}
 
-				if res.IsError() {
-					return res.Error()
-				}
+		finalRes, convErr := nb.convertNotificationsToAPI(ctx, res.Item())
+		if convErr != nil {
+			return convErr
+		}
 
-				finalRes, convErr := nb.convertNotificationsToAPI(cancelCtx, res.Item())
-				if convErr != nil {
-					return convErr
-				}
-
-				writeErr := pipe.WriteResult(cancelCtx, finalRes)
-				if writeErr != nil {
-					return writeErr
-				}
-			}
-		},
-	)
-
-	err = workerpool.SubmitJob(ctx, nb.workMan, transformationJob)
-	if err != nil {
-		return nil, err
+		consumeErr := consumer(ctx, finalRes)
+		if consumeErr != nil {
+			return consumeErr
+		}
 	}
-	return transformationJob, nil
 }
 
 func (nb *notificationBusiness) convertTemplatesToAPI(ctx context.Context, language *models.Language, templateList []*models.Template) ([]*notificationv1.Template, error) {
@@ -568,7 +555,7 @@ func (nb *notificationBusiness) convertTemplatesToAPI(ctx context.Context, langu
 	return responsesList, nil
 }
 
-func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery *notificationv1.TemplateSearchRequest) (workerpool.JobResultPipe[[]*notificationv1.Template], error) {
+func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery *notificationv1.TemplateSearchRequest, consumer func(ctx context.Context, batch []*notificationv1.Template) error) error {
 
 	logger := util.Log(ctx).WithField("request", searchQuery)
 
@@ -595,7 +582,7 @@ func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery 
 		language, err = nb.languageRepo.GetOrCreateByCode(ctx, searchQuery.GetLanguageCode())
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -603,43 +590,29 @@ func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery 
 
 	templateList, err := nb.templateRepo.Search(ctx, query)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	transformationJob := workerpool.NewJob[[]*notificationv1.Template](
-		func(ctx context.Context, pipe workerpool.JobResultPipe[[]*notificationv1.Template]) error {
-			cancelCtx, cancel := context.WithCancel(ctx)
-			defer cancel()
+	for {
+		res, ok := templateList.ReadResult(ctx)
+		if !ok {
+			return nil
+		}
 
-			for {
-				res, ok := templateList.ReadResult(cancelCtx)
-				if !ok {
-					return nil
-				}
+		if res.IsError() {
+			return res.Error()
+		}
 
-				if res.IsError() {
-					return res.Error()
-				}
+		finalRes, convErr := nb.convertTemplatesToAPI(ctx, language, res.Item())
+		if convErr != nil {
+			return convErr
+		}
 
-				finalRes, convErr := nb.convertTemplatesToAPI(cancelCtx, language, res.Item())
-				if convErr != nil {
-					return convErr
-				}
-
-				writeErr := pipe.WriteResult(cancelCtx, finalRes)
-				if writeErr != nil {
-					return writeErr
-				}
-			}
-		},
-	)
-
-	err = workerpool.SubmitJob(ctx, nb.workMan, transformationJob)
-	if err != nil {
-		return nil, err
+		writeErr := consumer(ctx, finalRes)
+		if writeErr != nil {
+			return writeErr
+		}
 	}
-
-	return transformationJob, nil
 }
 
 func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.Template, error) {

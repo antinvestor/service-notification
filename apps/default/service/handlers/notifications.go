@@ -160,50 +160,27 @@ func (ns *NotificationServer) Receive(ctx context.Context, req *connect.Request[
 
 // Search method is for client request for particular notification details from system
 func (ns *NotificationServer) Search(ctx context.Context, req *connect.Request[commonv1.SearchRequest], stream *connect.ServerStream[notificationv1.SearchResponse]) error {
-	result, err := ns.notificationBusiness.Search(ctx, req.Msg)
+	err := ns.notificationBusiness.Search(ctx, req.Msg,
+		func(_ context.Context, batch []*notificationv1.Notification) error {
+			return stream.Send(&notificationv1.SearchResponse{Data: batch})
+		})
 	if err != nil {
 		return apperrors.CleanErr(err)
 	}
-
-	for {
-		res, ok := result.ReadResult(ctx)
-		if !ok {
-			return nil
-		}
-
-		if res.IsError() {
-			return apperrors.CleanErr(res.Error())
-		}
-
-		err = stream.Send(&notificationv1.SearchResponse{Data: res.Item()})
-		if err != nil {
-			return apperrors.CleanErr(err)
-		}
-	}
+	return nil
 }
 
 // TemplateSearch method is for client request for templates matching criteria from system
 func (ns *NotificationServer) TemplateSearch(ctx context.Context, req *connect.Request[notificationv1.TemplateSearchRequest], stream *connect.ServerStream[notificationv1.TemplateSearchResponse]) error {
-	result, err := ns.notificationBusiness.TemplateSearch(ctx, req.Msg)
+	err := ns.notificationBusiness.TemplateSearch(ctx, req.Msg,
+		func(_ context.Context, batch []*notificationv1.Template) error {
+			return stream.Send(&notificationv1.TemplateSearchResponse{Data: batch})
+		})
 	if err != nil {
 		return apperrors.CleanErr(err)
 	}
 
-	for {
-		res, ok := result.ReadResult(ctx)
-		if !ok {
-			return nil
-		}
-
-		if res.IsError() {
-			return apperrors.CleanErr(res.Error())
-		}
-
-		err = stream.Send(&notificationv1.TemplateSearchResponse{Data: res.Item()})
-		if err != nil {
-			return apperrors.CleanErr(err)
-		}
-	}
+	return nil
 }
 
 func (ns *NotificationServer) TemplateSave(ctx context.Context, req *connect.Request[notificationv1.TemplateSaveRequest]) (*connect.Response[notificationv1.TemplateSaveResponse], error) {
