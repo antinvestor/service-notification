@@ -8,6 +8,7 @@ import (
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
+	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame/workerpool"
 )
 
@@ -48,7 +49,7 @@ func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[not
 
 		err := workerpool.SubmitJob(ctx, ns.workMan, job)
 		if err != nil {
-			return err
+			return apperrors.CleanErr(err)
 		}
 	}
 
@@ -74,7 +75,7 @@ func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[not
 func (ns *NotificationServer) Status(ctx context.Context, req *connect.Request[commonv1.StatusRequest]) (*connect.Response[commonv1.StatusResponse], error) {
 	resp, err := ns.notificationBusiness.Status(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.CleanErr(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -83,7 +84,7 @@ func (ns *NotificationServer) Status(ctx context.Context, req *connect.Request[c
 func (ns *NotificationServer) StatusUpdate(ctx context.Context, req *connect.Request[commonv1.StatusUpdateRequest]) (*connect.Response[commonv1.StatusUpdateResponse], error) {
 	response, err := ns.notificationBusiness.StatusUpdate(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.CleanErr(err)
 	}
 
 	return connect.NewResponse(&commonv1.StatusUpdateResponse{Data: response}), nil
@@ -93,7 +94,7 @@ func (ns *NotificationServer) StatusUpdate(ctx context.Context, req *connect.Req
 func (ns *NotificationServer) Release(ctx context.Context, req *connect.Request[notificationv1.ReleaseRequest], stream *connect.ServerStream[notificationv1.ReleaseResponse]) error {
 	result, err := ns.notificationBusiness.Release(ctx, req.Msg)
 	if err != nil {
-		return err
+		return apperrors.CleanErr(err)
 	}
 
 	for {
@@ -104,12 +105,12 @@ func (ns *NotificationServer) Release(ctx context.Context, req *connect.Request[
 		}
 
 		if res.IsError() {
-			return res.Error()
+			return apperrors.CleanErr(res.Error())
 		}
 
 		err = stream.Send(res.Item())
 		if err != nil {
-			return err
+			return apperrors.CleanErr(err)
 		}
 	}
 
@@ -135,7 +136,7 @@ func (ns *NotificationServer) Receive(ctx context.Context, req *connect.Request[
 
 		err := workerpool.SubmitJob(ctx, ns.workMan, job)
 		if err != nil {
-			return err
+			return apperrors.CleanErr(err)
 		}
 	}
 
@@ -161,7 +162,7 @@ func (ns *NotificationServer) Receive(ctx context.Context, req *connect.Request[
 func (ns *NotificationServer) Search(ctx context.Context, req *connect.Request[commonv1.SearchRequest], stream *connect.ServerStream[notificationv1.SearchResponse]) error {
 	result, err := ns.notificationBusiness.Search(ctx, req.Msg)
 	if err != nil {
-		return err
+		return apperrors.CleanErr(err)
 	}
 
 	for {
@@ -171,12 +172,12 @@ func (ns *NotificationServer) Search(ctx context.Context, req *connect.Request[c
 		}
 
 		if res.IsError() {
-			return res.Error()
+			return apperrors.CleanErr(res.Error())
 		}
 
 		err = stream.Send(&notificationv1.SearchResponse{Data: res.Item()})
 		if err != nil {
-			return err
+			return apperrors.CleanErr(err)
 		}
 	}
 }
@@ -185,7 +186,7 @@ func (ns *NotificationServer) Search(ctx context.Context, req *connect.Request[c
 func (ns *NotificationServer) TemplateSearch(ctx context.Context, req *connect.Request[notificationv1.TemplateSearchRequest], stream *connect.ServerStream[notificationv1.TemplateSearchResponse]) error {
 	result, err := ns.notificationBusiness.TemplateSearch(ctx, req.Msg)
 	if err != nil {
-		return err
+		return apperrors.CleanErr(err)
 	}
 
 	for {
@@ -195,12 +196,12 @@ func (ns *NotificationServer) TemplateSearch(ctx context.Context, req *connect.R
 		}
 
 		if res.IsError() {
-			return res.Error()
+			return apperrors.CleanErr(res.Error())
 		}
 
 		err = stream.Send(&notificationv1.TemplateSearchResponse{Data: res.Item()})
 		if err != nil {
-			return err
+			return apperrors.CleanErr(err)
 		}
 	}
 }
@@ -209,7 +210,7 @@ func (ns *NotificationServer) TemplateSave(ctx context.Context, req *connect.Req
 	response, err := ns.notificationBusiness.TemplateSave(ctx, req.Msg)
 
 	if err != nil {
-		return nil, err
+		return nil, apperrors.CleanErr(err)
 	}
 
 	return connect.NewResponse(&notificationv1.TemplateSaveResponse{Data: response}), nil
