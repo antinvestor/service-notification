@@ -32,40 +32,16 @@ func NewNotificationServer(
 
 // Send method for queueing massages as requested
 func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[notificationv1.SendRequest], stream *connect.ServerStream[notificationv1.SendResponse]) error {
-	jobResultChannelList := make(chan any, len(req.Msg.GetData()))
+
+	var responses []*commonv1.StatusResponse
 
 	for _, data := range req.Msg.GetData() {
-
-		job := workerpool.NewJob(func(ctx context.Context, result workerpool.JobResultPipe[*commonv1.StatusResponse]) error {
-			resp, jobErr := ns.notificationBusiness.QueueOut(ctx, data)
-			if jobErr != nil {
-				jobResultChannelList <- jobErr
-				return nil
-			}
-
-			jobResultChannelList <- resp
-			return nil
-		})
-
-		err := workerpool.SubmitJob(ctx, ns.workMan, job)
+		resp, err := ns.notificationBusiness.QueueOut(ctx, data)
 		if err != nil {
 			return apperrors.CleanErr(err)
 		}
-	}
 
-	var responses []*commonv1.StatusResponse
-	for range len(req.Msg.GetData()) {
-		resp := <-jobResultChannelList
-		switch v := resp.(type) {
-		case error:
-			err := v
-			if err != nil {
-				return err
-			}
-		case *commonv1.StatusResponse:
-			responses = append(responses, v)
-
-		}
+		responses = append(responses, resp)
 	}
 
 	return stream.Send(&notificationv1.SendResponse{Data: responses})
