@@ -68,7 +68,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	notificationID := *payload.(*string)
 
 	logger := util.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
-	logger.Debug("handling event")
+	logger.Debug("handling notification out queue event")
 
 	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
@@ -77,13 +77,13 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 
 	nStatus, err := event.NotificationStatusRepo.GetByID(ctx, n.StatusID)
 	if err != nil {
-		logger.WithError(err).WithField("status_id", n.StatusID).Warn(" could not get status")
+		logger.WithError(err).WithField("status_id", n.StatusID).Warn("could not get status")
 		return err
 	}
 
 	language, err := event.LanguageRepo.GetByID(ctx, n.LanguageID)
 	if err != nil {
-		logger.WithError(err).WithField("language_id", n.LanguageID).Warn(" could not get language")
+		logger.WithError(err).WithField("language_id", n.LanguageID).Warn("could not get language")
 		return err
 	}
 
@@ -122,7 +122,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	logger.WithField("notification_id", n.GetID()).
 		WithField("route", n.RouteID).
 		WithField("message", templateMap).
-		Debug(" We have successfully queued out message")
+		Debug("We have successfully queued out message")
 
 	nStatus = &models.NotificationStatus{
 		NotificationID: n.GetID(),
@@ -158,7 +158,7 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 	if err0 != nil {
 		logger.WithError(err0).
 			WithField("template id", n.TemplateID).
-			WithField("language id", n.LanguageID).Error(" could not get template data")
+			WithField("language id", n.LanguageID).Error("could not get template data")
 		tmplDataList = []*models.TemplateData{}
 	}
 

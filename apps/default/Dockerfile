@@ -1,5 +1,8 @@
 FROM golang:1.25 AS builder
 
+# Add Maintainer Info
+LABEL maintainer="Bwire Peter <bwire517@gmail.com>"
+
 WORKDIR /app
 
 # Copy go.mod and go.sum files from the project root

@@ -20,7 +20,7 @@ type NotificationSave struct {
 }
 
 // NewNotificationSave creates a new NotificationSave event handler
-func NewNotificationSave(ctx context.Context, eventMan events.Manager, notificationRepo repository.NotificationRepository) *NotificationSave {
+func NewNotificationSave(_ context.Context, eventMan events.Manager, notificationRepo repository.NotificationRepository) *NotificationSave {
 	return &NotificationSave{
 		eventMan:         eventMan,
 		notificationRepo: notificationRepo,

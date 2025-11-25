@@ -75,7 +75,7 @@ func main() {
 
 	svc.Init(ctx, serviceOptions...)
 
-	logger.Info("Initiating Matrix integration server operations")
+	logger.Info("Initiating AfricasTalking integration server operations")
 	err = svc.Run(ctx, "")
 	if err != nil {
 		logger.WithError(err).Error("could not run Server")

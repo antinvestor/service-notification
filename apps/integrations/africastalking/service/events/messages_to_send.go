@@ -49,7 +49,7 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 
 	resp, err := ms.AfricasTalkingCli.Send(ctx, headers, notification)
 	if err != nil {
-		log.WithError(err).Error("server responded in error")
+		log.WithError(err).Error("AfricasTalking API responded with error")
 
 		extrasMap := map[string]any{
 			"error": err.Error(),
@@ -85,7 +85,7 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 
 	rs := resp.SMSMessageData.Recipients[0]
 
-	extrasMap := map[string]any{"status": rs.Status, "": rs.Cost, "status code": strconv.Itoa(rs.StatusCode)}
+	extrasMap := map[string]any{"status": rs.Status, "cost": rs.Cost, "status code": strconv.Itoa(rs.StatusCode)}
 	extra, _ := structpb.NewStruct(extrasMap)
 	if rs.StatusCode >= 500 && rs.StatusCode < 502 {
 
@@ -96,7 +96,7 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 			ExternalId: rs.MessageId,
 			Extras:     extra,
 		}))
-		return fmt.Errorf("server responded in error %v : -> %v", client.StatusCodeMap[rs.StatusCode], rs)
+		return fmt.Errorf("AfricasTalking server responded with error %v : %v", client.StatusCodeMap[rs.StatusCode], rs)
 	}
 
 	notificationStatus := commonv1.STATUS_QUEUED
