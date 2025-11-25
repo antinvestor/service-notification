@@ -9,6 +9,7 @@ import (
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/tests"
+	"github.com/pitabwire/frame/frametests"
 	"github.com/pitabwire/frame/frametests/definition"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -167,6 +168,35 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 				if tt.name == "NormalQueueOutWithXID" && got.GetId() != tt.want.GetId() {
 					t.Errorf("QueueOut() expecting id %s to be reused, got : %s", tt.want.GetId(), got.GetId())
 				}
+
+				notif, err := frametests.WaitForConditionWithResult[notificationv1.Notification](ctx, func() (*notificationv1.Notification, error) {
+
+					var nSlice []*notificationv1.Notification
+
+					err0 := resources.NotificationBusiness.Search(ctx, &commonv1.SearchRequest{
+						Limits: &commonv1.Pagination{
+							Count: 10,
+							Page:  0,
+						},
+						IdQuery: got.GetId(),
+					}, func(ctx context.Context, batch []*notificationv1.Notification) error {
+						nSlice = append(nSlice, batch...)
+						return nil
+					})
+					require.NoError(t, err0)
+
+					if len(nSlice) == 0 {
+						return nil, nil
+					}
+
+					return nSlice[0], nil
+				}, 5*time.Second, 300*time.Millisecond)
+
+				require.NoError(t, err)
+
+				require.NotNil(t, notif)
+				require.Equal(t, notif.GetId(), got.GetId())
+
 			})
 		}
 

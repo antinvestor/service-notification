@@ -417,12 +417,6 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 
 	logger.Debug("handling search request")
 
-	profileID := ""
-	claims := security.ClaimsFromContext(ctx)
-	if claims != nil {
-		profileID, _ = claims.GetSubject()
-	}
-
 	limits := searchQuery.GetLimits()
 
 	searchOpts := []data.SearchOption{
@@ -438,7 +432,6 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 
 	if searchQuery.GetIdQuery() != "" {
 		andQueryVal["id = ?"] = searchQuery.GetIdQuery()
-		andQueryVal["profile_id = ?"] = profileID
 	}
 
 	if len(andQueryVal) > 0 {

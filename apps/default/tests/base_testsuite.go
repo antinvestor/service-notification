@@ -46,6 +46,7 @@ func (bs *BaseTestSuite) CreateService(
 
 	cfg.LogLevel = "debug"
 	cfg.DatabaseMigrate = true
+	cfg.DatabaseTraceQueries = true
 	cfg.RunServiceSecurely = false
 	cfg.ServerPort = ""
 
