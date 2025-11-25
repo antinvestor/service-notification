@@ -48,7 +48,6 @@ func main() {
 		frame.WithRegisterServerOauth2Client(),
 		frame.WithDatastore(),
 	)
-	defer svc.Stop(ctx)
 	log := svc.Log(ctx)
 
 	sm := svc.SecurityManager()
