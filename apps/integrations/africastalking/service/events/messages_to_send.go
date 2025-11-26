@@ -47,6 +47,12 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 		return err
 	}
 
+	log.WithField("notification_id", notification.GetId()).
+		WithField("recipient", notification.GetRecipient().GetProfileId()).
+		WithField("sender", notification.GetSource().GetProfileId()).
+		WithField("message_length", len(notification.GetData())).
+		Debug("Sending AfricasTalking SMS message")
+
 	resp, err := ms.AfricasTalkingCli.Send(ctx, headers, notification)
 	if err != nil {
 		log.WithError(err).Error("AfricasTalking API responded with error")
@@ -112,9 +118,14 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 		Extras:     extra,
 	}))
 	if err != nil {
-		log.WithError(err).Warn("could not update status on notification service")
+		log.WithError(err).WithField("notification_id", notification.GetId()).Warn("could not update status on notification service")
 	}
 
-	log.Debug("successfully sent out message")
+	log.WithField("notification_id", notification.GetId()).
+		WithField("message_id", rs.MessageId).
+		WithField("status", rs.Status).
+		WithField("cost", rs.Cost).
+		WithField("status_code", rs.StatusCode).
+		Debug("AfricasTalking SMS message sent successfully")
 	return nil
 }

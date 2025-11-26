@@ -10,6 +10,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	"github.com/antinvestor/service-notification/internal/apperrors"
 	"github.com/pitabwire/frame/workerpool"
+	"github.com/pitabwire/util"
 )
 
 type NotificationServer struct {
@@ -32,19 +33,50 @@ func NewNotificationServer(
 
 // Send method for queueing massages as requested
 func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[notificationv1.SendRequest], stream *connect.ServerStream[notificationv1.SendResponse]) error {
+	logger := util.Log(ctx).WithField("method", "Send")
+
+	logger.Info("starting notification send request processing")
 
 	var responses []*commonv1.StatusResponse
+	data := req.Msg.GetData()
 
-	for _, data := range req.Msg.GetData() {
-		resp, err := ns.notificationBusiness.QueueOut(ctx, data)
+	logger.WithField("item_count", len(data)).Info("processing notification send request")
+
+	for i, notification := range data {
+		logger.WithFields(map[string]interface{}{
+			"item_index":      i,
+			"notification_id": notification.GetId(),
+		}).Debug("processing notification item")
+
+		resp, err := ns.notificationBusiness.QueueOut(ctx, notification)
 		if err != nil {
+			logger.WithFields(map[string]interface{}{
+				"item_index":      i,
+				"notification_id": notification.GetId(),
+				"error":           err,
+			}).Error("failed to queue notification")
 			return apperrors.CleanErr(err)
 		}
+
+		logger.WithFields(map[string]interface{}{
+			"item_index":      i,
+			"notification_id": notification.GetId(),
+			"response_id":     resp.GetId(),
+		}).Debug("successfully queued notification")
 
 		responses = append(responses, resp)
 	}
 
-	return stream.Send(&notificationv1.SendResponse{Data: responses})
+	logger.WithField("response_count", len(responses)).Info("sending notification send response")
+
+	err := stream.Send(&notificationv1.SendResponse{Data: responses})
+	if err != nil {
+		logger.WithError(err).Error("failed to send notification response")
+		return apperrors.CleanErr(err)
+	}
+
+	logger.Info("completed notification send request processing")
+	return nil
 }
 
 // Status request to determine if notification is prepared or released

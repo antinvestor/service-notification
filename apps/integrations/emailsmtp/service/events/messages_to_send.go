@@ -46,9 +46,15 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 		return err
 	}
 
+	log.WithField("notification_id", notification.GetId()).
+		WithField("recipient", notification.GetRecipient().GetProfileId()).
+		WithField("sender", notification.GetSource().GetProfileId()).
+		WithField("subject", notification.GetData()).
+		Debug("Sending Email SMTP message")
+
 	err = ms.EmailSMTPCli.Send(ctx, headers, notification)
 	if err != nil {
-		log.WithError(err).Error("server responded in error")
+		log.WithError(err).Error("Email SMTP server responded with error")
 
 		extraData := map[string]any{
 			"error": err.Error(),
@@ -90,9 +96,9 @@ func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, 
 		ExternalId: "",
 	}))
 	if err != nil {
-		log.WithError(err).Warn("could not update status on notification service")
+		log.WithError(err).WithField("notification_id", notification.GetId()).Warn("could not update status on notification service")
 	}
 
-	log.Debug("successfully sent out message")
+	log.WithField("notification_id", notification.GetId()).Debug("Email SMTP message sent successfully")
 	return nil
 }
