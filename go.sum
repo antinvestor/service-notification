@@ -149,8 +149,8 @@ github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v1.1.5 h1:/o9tlHleP7gOFmsnYNz3RGnqzefHA47wQpKrrdTIwXQ=
 github.com/jinzhu/now v1.1.5/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
-github.com/klauspost/compress v1.18.1 h1:bcSGx7UbpBqMChDtsF28Lw6v/G94LPrrbMbdC3JH2co=
-github.com/klauspost/compress v1.18.1/go.mod h1:ZQFFVG+MdnR0P+l6wpXgIL4NTtwiKIdBnrBd8Nrxr+0=
+github.com/klauspost/compress v1.18.2 h1:iiPHWW0YrcFgpBYhsA6D1+fqHssJscY/Tm/y2Uqnapk=
+github.com/klauspost/compress v1.18.2/go.mod h1:R0h/fSBs8DE4ENlcrlib3PsXS61voFxhIs2DeRhCvJ4=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
@@ -207,8 +207,8 @@ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJw
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/panjf2000/ants/v2 v2.11.3 h1:AfI0ngBoXJmYOpDh9m516vjqoUu2sLrIVgppI9TZVpg=
 github.com/panjf2000/ants/v2 v2.11.3/go.mod h1:8u92CYMUc6gyvTIw8Ru7Mt7+/ESnJahz5EVtqfrilek=
-github.com/pitabwire/frame v1.67.15 h1:lobfX/kLu7urAGTKIq919Gaxm5FKCdp7f/Qp/nyXcWM=
-github.com/pitabwire/frame v1.67.15/go.mod h1:2H5Bb8rXJtFG8ySEtWZT3QHUu2ok6zGnMUtBdXInrAM=
+github.com/pitabwire/frame v1.68.0 h1:kLkEnIVbNgqouLlO4LAM4j6gxnLFS+X4NEAfPhfU9jQ=
+github.com/pitabwire/frame v1.68.0/go.mod h1:2H5Bb8rXJtFG8ySEtWZT3QHUu2ok6zGnMUtBdXInrAM=
 github.com/pitabwire/natspubsub v0.7.5 h1:EPh8ue2zhpKno4pgtRRYAshdT+rlRU9Z3QTApcTMJkk=
 github.com/pitabwire/natspubsub v0.7.5/go.mod h1:ZgbVhYOEVz2Wnx4P6r8ROjpvHYI5F4Dkct5omKqXObI=
 github.com/pitabwire/util v0.3.6 h1:53RDm3o1d2MXuDIpBLP7bjfWTedZwUNFRDoy2Iny+VE=

@@ -18,7 +18,7 @@ require (
 	github.com/antinvestor/apis/go/partition v1.48.16
 	github.com/antinvestor/apis/go/profile v1.48.16
 	github.com/antinvestor/apis/go/settings v1.48.16
-	github.com/pitabwire/frame v1.67.15
+	github.com/pitabwire/frame v1.68.0
 	github.com/pitabwire/util v0.3.6
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
@@ -72,7 +72,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/klauspost/compress v1.18.1 // indirect
+	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/lmittmann/tint v1.1.2 // indirect
 	github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect

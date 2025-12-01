@@ -49,7 +49,7 @@ func main() {
 		frame.WithDatastore(),
 	)
 	defer svc.Stop(ctx)
-	log := svc.Log(ctx)
+	log := util.Log(ctx)
 
 	sm := svc.SecurityManager()
 	dbManager := svc.DatastoreManager()
