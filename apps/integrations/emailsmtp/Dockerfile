@@ -6,6 +6,7 @@ FROM golang:1.25 AS builder
 
 WORKDIR /app
 
+ARG REPOSITORY
 ARG VERSION=dev
 ARG REVISION=none
 ARG BUILDTIME
@@ -22,9 +23,9 @@ COPY ./internal ./internal
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath \
      -ldflags="-s -w \
-         -X github.com/pitabwire/frame.Version=${VERSION} \
-         -X github.com/pitabwire/frame.Commit=${REVISION} \
-         -X github.com/pitabwire/frame.Date=${BUILDTIME}" \
+         -X github.com/pitabwire/frame/version.Version=${VERSION} \
+         -X github.com/pitabwire/frame/version.Commit=${REVISION} \
+         -X github.com/pitabwire/frame/version.Date=${BUILDTIME}" \
      -o /app/binary ./apps/integrations/emailsmtp/cmd/
 
 # ---------- Final ----------
@@ -37,6 +38,7 @@ USER 65532:65532
 EXPOSE 80
 
 # Add OCI metadata labels
+ARG REPOSITORY
 ARG VERSION
 ARG REVISION
 ARG BUILDTIME
@@ -44,7 +46,7 @@ LABEL org.opencontainers.image.title="Notification Email SMTP Service"
 LABEL org.opencontainers.image.version=$VERSION
 LABEL org.opencontainers.image.revision=$REVISION
 LABEL org.opencontainers.image.created=$BUILDTIME
-LABEL org.opencontainers.image.source="https://github.com/antinvestor/service-notification"
+LABEL org.opencontainers.image.source=$REPOSITORY
 
 WORKDIR /
 

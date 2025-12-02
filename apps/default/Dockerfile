@@ -9,6 +9,7 @@ LABEL maintainer="Bwire Peter <bwire517@gmail.com>"
 
 WORKDIR /app
 
+ARG REPOSITORY
 ARG VERSION=dev
 ARG REVISION=none
 ARG BUILDTIME
@@ -40,6 +41,7 @@ USER 65532:65532
 EXPOSE 80
 
 # Add OCI metadata labels
+ARG REPOSITORY
 ARG VERSION
 ARG REVISION
 ARG BUILDTIME
@@ -47,7 +49,7 @@ LABEL org.opencontainers.image.title="Notification Service"
 LABEL org.opencontainers.image.version=$VERSION
 LABEL org.opencontainers.image.revision=$REVISION
 LABEL org.opencontainers.image.created=$BUILDTIME
-LABEL org.opencontainers.image.source="https://github.com/antinvestor/service-notification"
+LABEL org.opencontainers.image.source=$REPOSITORY
 
 WORKDIR /
 
