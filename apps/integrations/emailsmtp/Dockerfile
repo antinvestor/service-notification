@@ -23,6 +23,7 @@ COPY ./internal ./internal
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath \
      -ldflags="-s -w \
+         -X github.com/pitabwire/frame/version.Repository=${REPOSITORY} \
          -X github.com/pitabwire/frame/version.Version=${VERSION} \
          -X github.com/pitabwire/frame/version.Commit=${REVISION} \
          -X github.com/pitabwire/frame/version.Date=${BUILDTIME}" \

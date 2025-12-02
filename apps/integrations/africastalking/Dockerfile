@@ -23,9 +23,10 @@ COPY ./internal ./internal
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath \
      -ldflags="-s -w \
-         -X github.com/pitabwire/frame.Version=${VERSION} \
-         -X github.com/pitabwire/frame.Commit=${REVISION} \
-         -X github.com/pitabwire/frame.Date=${BUILDTIME}" \
+         -X github.com/pitabwire/frame/version.Repository=${REPOSITORY} \
+         -X github.com/pitabwire/frame/version.Version=${VERSION} \
+         -X github.com/pitabwire/frame/version.Commit=${REVISION} \
+         -X github.com/pitabwire/frame/version.Date=${BUILDTIME}" \
      -o /app/binary ./apps/integrations/africastalking/cmd/
 
 # ---------- Final ----------
