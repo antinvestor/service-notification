@@ -53,13 +53,9 @@ func main() {
 
 	sm := svc.SecurityManager()
 	dbManager := svc.DatastoreManager()
-
 	workMan := svc.WorkManager()
-
 	evtsMan := svc.EventsManager()
 	qMan := svc.QueueManager()
-
-	dbPool := dbManager.GetPool(ctx, datastore.DefaultPoolName)
 
 	// Handle database migration if requested
 	if handleDatabaseMigration(ctx, dbManager, cfg) {
@@ -77,6 +73,12 @@ func main() {
 		log.WithError(err).Fatal("main -- Could not setup partition client")
 	}
 
+	// Get database pool 
+	dbPool := dbManager.GetPool(ctx, datastore.DefaultPoolName)
+	if dbPool == nil {
+		log.Fatal("Database pool is nil - check DATABASE_PRIMARY_URL environment variable")
+	}
+
 	// Initialise repositories
 	notificationRepo := repository.NewNotificationRepository(ctx, dbPool, workMan)
 	notificationStatusRepo := repository.NewNotificationStatusRepository(ctx, dbPool, workMan)
@@ -88,24 +90,21 @@ func main() {
 	// Create business logic with all dependencies
 	notificationBusiness := business.NewNotificationBusiness(ctx, workMan, evtsMan, profileCli, partitionCli, notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
 
-	// Register event handlers
+	// Setup Connect server
+	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
 
+	// Initialise the service with all options
 	serviceOptions := []frame.Option{
+		frame.WithHTTPHandler(connectHandler),
 		frame.WithRegisterEvents(
 			events2.NewNotificationSave(ctx, evtsMan, notificationRepo),
 			events2.NewNotificationStatusSave(ctx, notificationRepo, notificationStatusRepo),
 			events2.NewNotificationInRoute(ctx, qMan, evtsMan, notificationRepo, routeRepo),
 			events2.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, routeRepo, profileCli),
 			events2.NewNotificationOutRoute(ctx, evtsMan, profileCli, notificationRepo, routeRepo),
-			events2.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo))}
+			events2.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)),
+		}
 
-	// Setup Connect server
-	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
-
-	// Setup HTTP handlers and event system
-	serviceOptions = append(serviceOptions, frame.WithHTTPHandler(connectHandler))
-
-	// Initialise the service with all options
 	svc.Init(ctx, serviceOptions...)
 
 	// Start the service
