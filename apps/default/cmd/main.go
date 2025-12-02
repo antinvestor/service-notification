@@ -73,7 +73,7 @@ func main() {
 		log.WithError(err).Fatal("main -- Could not setup partition client")
 	}
 
-	// Get database pool 
+	// Get database pool
 	dbPool := dbManager.GetPool(ctx, datastore.DefaultPoolName)
 	if dbPool == nil {
 		log.Fatal("Database pool is nil - check DATABASE_PRIMARY_URL environment variable")
@@ -103,7 +103,7 @@ func main() {
 			events2.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, routeRepo, profileCli),
 			events2.NewNotificationOutRoute(ctx, evtsMan, profileCli, notificationRepo, routeRepo),
 			events2.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)),
-		}
+	}
 
 	svc.Init(ctx, serviceOptions...)
 
