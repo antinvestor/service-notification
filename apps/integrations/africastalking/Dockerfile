@@ -29,6 +29,8 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
 
 # ---------- Final ----------
 FROM cgr.dev/chainguard/static:latest
+# Add Maintainer Info
+LABEL maintainer="Bwire Peter <bwire517@gmail.com>"
 
 USER 65532:65532
 
