@@ -12,13 +12,12 @@ require (
 	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20251119162035-17528daea270.2
 	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.10-20251119162035-17528daea270.1
 	connectrpc.com/connect v1.19.1
-	connectrpc.com/otelconnect v0.8.0
 	github.com/antinvestor/apis/go/common v1.48.17
 	github.com/antinvestor/apis/go/notification v1.48.16
 	github.com/antinvestor/apis/go/partition v1.48.16
 	github.com/antinvestor/apis/go/profile v1.48.16
 	github.com/antinvestor/apis/go/settings v1.48.16
-	github.com/pitabwire/frame v1.68.4
+	github.com/pitabwire/frame v1.68.9
 	github.com/pitabwire/util v0.3.6
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
@@ -32,6 +31,7 @@ require (
 	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.10-20230414000709-087bc8072ce4.1 // indirect
 	buf.build/go/protovalidate v1.0.1 // indirect
 	cel.dev/expr v0.25.1 // indirect
+	connectrpc.com/otelconnect v0.8.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
@@ -150,9 +150,9 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/api v0.256.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20251124214823-79d6a2a48846 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251124214823-79d6a2a48846 // indirect
+	google.golang.org/api v0.257.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
 	gorm.io/gorm v1.31.1 // indirect

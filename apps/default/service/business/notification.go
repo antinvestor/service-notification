@@ -463,17 +463,8 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 		return err
 	}
 
-	for {
-		res, ok := results.ReadResult(ctx)
-		if !ok {
-			return nil
-		}
-
-		if res.IsError() {
-			return res.Error()
-		}
-
-		finalRes, convErr := nb.convertNotificationsToAPI(ctx, res.Item())
+	return workerpool.ConsumeResultStream(ctx, results, func(res []*models.Notification) error {
+		finalRes, convErr := nb.convertNotificationsToAPI(ctx, res)
 		if convErr != nil {
 			return convErr
 		}
@@ -482,7 +473,9 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 		if consumeErr != nil {
 			return consumeErr
 		}
-	}
+		return nil
+	})
+
 }
 
 func (nb *notificationBusiness) convertTemplatesToAPI(ctx context.Context, language *models.Language, templateList []*models.Template) ([]*notificationv1.Template, error) {

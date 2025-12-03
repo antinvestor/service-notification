@@ -105,22 +105,19 @@ func (ns *NotificationServer) Release(ctx context.Context, req *connect.Request[
 		return apperrors.CleanErr(err)
 	}
 
-	for {
-
-		res, ok := result.ReadResult(ctx)
-		if !ok {
-			return nil
-		}
-
-		if res.IsError() {
-			return apperrors.CleanErr(res.Error())
-		}
-
-		err = stream.Send(res.Item())
+	err = workerpool.ConsumeResultStream(ctx, result, func(res *notificationv1.ReleaseResponse) error {
+		err = stream.Send(res)
 		if err != nil {
-			return apperrors.CleanErr(err)
+			return err
 		}
+		return nil
+	})
+
+	if err != nil {
+		return apperrors.CleanErr(err)
 	}
+
+	return nil
 
 }
 

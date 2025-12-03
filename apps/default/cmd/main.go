@@ -8,7 +8,6 @@ import (
 	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"connectrpc.com/connect"
-	"connectrpc.com/otelconnect"
 	apis "github.com/antinvestor/apis/go/common"
 	"github.com/antinvestor/apis/go/partition"
 	"github.com/antinvestor/apis/go/profile"
@@ -21,19 +20,19 @@ import (
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/datastore"
 	"github.com/pitabwire/frame/security"
-	securityconnect "github.com/pitabwire/frame/security/interceptors/connect"
+	connectInterceptors "github.com/pitabwire/frame/security/interceptors/connect"
 	"github.com/pitabwire/frame/security/openid"
 	"github.com/pitabwire/frame/workerpool"
 	"github.com/pitabwire/util"
 )
 
 func main() {
-	ctx := context.Background()
+	tmpCtx := context.Background()
 
 	// Initialise configuration
-	cfg, err := config.LoadWithOIDC[aconfig.NotificationConfig](ctx)
+	cfg, err := config.LoadWithOIDC[aconfig.NotificationConfig](tmpCtx)
 	if err != nil {
-		util.Log(ctx).With("err", err).Error("could not process configs")
+		util.Log(tmpCtx).With("err", err).Error("could not process configs")
 		return
 	}
 
@@ -43,7 +42,7 @@ func main() {
 
 	// Create service
 	ctx, svc := frame.NewServiceWithContext(
-		ctx,
+		tmpCtx,
 		frame.WithConfig(&cfg),
 		frame.WithRegisterServerOauth2Client(),
 		frame.WithDatastore(),
@@ -88,7 +87,8 @@ func main() {
 	routeRepo := repository.NewRouteRepository(ctx, dbPool, workMan)
 
 	// Create business logic with all dependencies
-	notificationBusiness := business.NewNotificationBusiness(ctx, workMan, evtsMan, profileCli, partitionCli, notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
+	notificationBusiness := business.NewNotificationBusiness(ctx, workMan, evtsMan, profileCli, partitionCli,
+		notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
 
 	// Setup Connect server
 	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
@@ -163,24 +163,16 @@ func setupPartitionClient(
 // setupConnectServer initialises and configures the Connect RPC server.
 func setupConnectServer(ctx context.Context, sm security.Manager, workMan workerpool.Manager, notificationBusiness business.NotificationBusiness) http.Handler {
 
-	otelInterceptor, err := otelconnect.NewInterceptor()
-	if err != nil {
-		util.Log(ctx).WithError(err).Fatal("could not configure open telemetry")
-	}
-
-	validateInterceptor := securityconnect.NewValidationInterceptor()
-
-	authenticator := sm.GetAuthenticator(ctx)
-	authInterceptor := securityconnect.NewAuthInterceptor(authenticator)
-
 	// Create handler with injected dependencies
 	implementation := handlers.NewNotificationServer(workMan, notificationBusiness)
 
+	defaultInterceptorList, err := connectInterceptors.DefaultList(ctx, sm.GetAuthenticator(ctx))
+	if err != nil {
+		util.Log(ctx).WithError(err).Fatal("main -- Could not create default interceptors")
+	}
+
 	_, serverHandler := notificationv1connect.NewNotificationServiceHandler(
-		implementation, connect.WithInterceptors(authInterceptor, otelInterceptor, validateInterceptor))
+		implementation, connect.WithInterceptors(defaultInterceptorList...))
 
-	mux := http.NewServeMux()
-	mux.Handle("/", serverHandler)
-
-	return mux
+	return serverHandler
 }
