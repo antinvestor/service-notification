@@ -4,20 +4,20 @@ go 1.25.2
 
 require (
 	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.10-20251119161617-faec0015998a.1
-	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20251119161822-0f712795b762.2
-	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.10-20251119161822-0f712795b762.1
-	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20251119161904-6bc16b04bbca.2
-	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20251119161948-fcd977fb5334.2
-	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.10-20251119161948-fcd977fb5334.1
-	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20251119162035-17528daea270.2
-	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.10-20251119162035-17528daea270.1
+	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20251205175834-28725063ee3f.2
+	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.10-20251205175834-28725063ee3f.1
+	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20251205175911-72c3819c8e9b.2
+	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20251205175955-9870a37939f7.2
+	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.10-20251205175955-9870a37939f7.1
+	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20251205180030-b2fb7ba7f112.2
+	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.10-20251205180030-b2fb7ba7f112.1
 	connectrpc.com/connect v1.19.1
-	github.com/antinvestor/apis/go/common v1.48.17
-	github.com/antinvestor/apis/go/notification v1.48.16
-	github.com/antinvestor/apis/go/partition v1.48.16
-	github.com/antinvestor/apis/go/profile v1.48.16
-	github.com/antinvestor/apis/go/settings v1.48.16
-	github.com/pitabwire/frame v1.68.11
+	github.com/antinvestor/apis/go/common v1.49.0
+	github.com/antinvestor/apis/go/notification v1.49.0
+	github.com/antinvestor/apis/go/partition v1.49.0
+	github.com/antinvestor/apis/go/profile v1.49.0
+	github.com/antinvestor/apis/go/settings v1.49.0
+	github.com/pitabwire/frame v1.68.12
 	github.com/pitabwire/util v0.3.6
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
@@ -26,7 +26,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.10-20251119161904-6bc16b04bbca.1 // indirect
+	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.10-20251205175911-72c3819c8e9b.1 // indirect
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
 	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.10-20230414000709-087bc8072ce4.1 // indirect
 	buf.build/go/protovalidate v1.0.1 // indirect
