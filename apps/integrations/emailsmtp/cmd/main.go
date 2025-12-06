@@ -52,11 +52,12 @@ func main() {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
 
-	_, err = setupSettingsClient(ctx, sm, cfg)
+	settingsCli, err := setupSettingsClient(ctx, sm, cfg)
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
-	emailSMTPCli, err := client.NewClient(logger, &cfg, profileCli)
+
+	emailSMTPCli, err := client.NewClient(logger, &cfg, profileCli, settingsCli)
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup email smtp client")
 	}

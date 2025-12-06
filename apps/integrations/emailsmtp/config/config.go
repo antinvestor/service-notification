@@ -7,8 +7,8 @@ import (
 type EmailSMTPConfig struct {
 	config.ConfigurationDefault
 
-	SettingsIntegrationName string `default:"Africastalking" envconfig:"SETTINGS_INTEGRATION_NAME"`
-	SettingsIntegrationID   string `default:"Default" envconfig:"SETTINGS_INTEGRATION_ID"`
+	SettingsIntegrationName string `default:"Email SMTP" envconfig:"SETTINGS_INTEGRATION_NAME"`
+	SettingsIntegrationID   string `default:"notification.emailsmtp" envconfig:"SETTINGS_INTEGRATION_ID"`
 
 	ProfileServiceURI      string `default:"127.0.0.1:7005" envconfig:"PROFILE_SERVICE_URI"`
 	SettingsServiceURI     string `default:"127.0.0.1:7005" envconfig:"SETTINGS_SERVICE_URI"`

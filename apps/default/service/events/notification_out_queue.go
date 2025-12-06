@@ -11,6 +11,7 @@ import (
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
+	"github.com/antinvestor/service-notification/internal/constants"
 	"github.com/pitabwire/frame/events"
 	"github.com/pitabwire/frame/queue"
 	"github.com/pitabwire/util"
@@ -100,8 +101,14 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 		return err
 	}
 
+	metadata := map[string]string{
+		constants.TenantIDHeaderName:    n.TenantID,
+		constants.PartitionIDHeaderName: n.PartitionID,
+		constants.RouteIDHeaderName:     n.RouteID,
+	}
+
 	// Queue a message for further processing by peripheral services
-	err = event.qMan.Publish(ctx, n.RouteID, binaryProto)
+	err = event.qMan.Publish(ctx, n.RouteID, binaryProto, metadata)
 	if err != nil {
 
 		if !strings.Contains(err.Error(), "reference does not exist") {
