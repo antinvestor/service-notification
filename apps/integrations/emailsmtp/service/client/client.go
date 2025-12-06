@@ -61,8 +61,8 @@ func (ms *Client) getMailClient(_ context.Context, credentials map[string]string
 		mail.WithTLSPolicy(mail.TLSMandatory),
 
 		mail.WithSMTPAuth(mail.SMTPAuthPlain),
-		mail.WithUsername(cfg.SMTPServerUserName),
-		mail.WithPassword(cfg.SMTPServerPassword),
+		mail.WithUsername(cfg.SMTPServerAccessKey),
+		mail.WithPassword(cfg.SMTPServerSecretKey),
 
 		// Reliability
 		mail.WithTimeout(15*time.Second),

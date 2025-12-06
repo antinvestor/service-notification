@@ -672,7 +672,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //			templateData := models.TemplateData{
 //				TemplateID: template.GetID(),
 //				LanguageID: "9bsv0s23l8og00vgjqa0",
-//				Type:       models.RouteTypeShortForm,
+//				Type:       models.RouteTypeSMSForm,
 //				Detail:     fmt.Sprintf("testing short message - %s", tt.name),
 //			}
 //

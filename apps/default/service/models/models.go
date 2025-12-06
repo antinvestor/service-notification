@@ -15,8 +15,8 @@ const (
 	RouteModeTransceive = "trx"
 
 	RouteTypeAny       = "any"
-	RouteTypeLongForm  = "l"
-	RouteTypeShortForm = "s"
+	RouteTypeEmailForm = "email"
+	RouteTypeSMSForm   = "sms"
 )
 
 // Language Our simple table holding all the supported languages
@@ -134,7 +134,7 @@ func (model *Notification) ToAPI(status *NotificationStatus, language *Language,
 				model.Message = formattedData
 			} else {
 
-				formattedData, ok = message[RouteTypeShortForm]
+				formattedData, ok = message[RouteTypeSMSForm]
 				if ok {
 					model.Message = formattedData
 				}

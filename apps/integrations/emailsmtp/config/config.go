@@ -19,8 +19,8 @@ type EmailSMTPConfig struct {
 	QueueATDequeueName string `default:"natifications.emailsmtp.dequeue" envconfig:"QUEUE_NOTIFICATION_EMAIL_DEQUEUE_NAME"`
 	QueueATDequeueURI  string `default:"mem://natifications.email.de.queue" envconfig:"QUEUE_NOTIFICATION_EMAIL_DEQUEUE_URI"`
 
-	SMTPServerHOST     string `default:"smtp.postmarkapp.com" envconfig:"SMTP_SERVER_HOST"`
-	SMTPServerPORT     int    `default:"587" envconfig:"SMTP_SERVER_PORT"`
-	SMTPServerUserName string `default:"" envconfig:"SMTP_SERVER_USER_NAME"`
-	SMTPServerPassword string `default:"" envconfig:"SMTP_SERVER_PASSWORD"`
+	SMTPServerHOST      string `default:"smtp.postmarkapp.com" envconfig:"SMTP_SERVER_HOST"`
+	SMTPServerPORT      int    `default:"587" envconfig:"SMTP_SERVER_PORT"`
+	SMTPServerAccessKey string `default:"" envconfig:"SMTP_SERVER_ACCESS_KEY"`
+	SMTPServerSecretKey string `default:"" envconfig:"SMTP_SERVER_SECRET_KEY"`
 }

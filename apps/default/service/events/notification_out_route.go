@@ -84,9 +84,9 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 	switch contactType {
 	case profilev1.ContactType_MSISDN:
-		n.NotificationType = models.RouteTypeShortForm
+		n.NotificationType = models.RouteTypeSMSForm
 	case profilev1.ContactType_EMAIL:
-		n.NotificationType = models.RouteTypeLongForm
+		n.NotificationType = models.RouteTypeEmailForm
 	default:
 		n.NotificationType = models.RouteTypeAny
 	}
