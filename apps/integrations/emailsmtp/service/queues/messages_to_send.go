@@ -44,7 +44,8 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 
 	err := proto.Unmarshal(payload, notification)
 	if err != nil {
-		return err
+		log.WithError(err).Error("Failed to unmarshal notification")
+		return nil
 	}
 
 	log.WithField("notification_id", notification.GetId()).
@@ -66,15 +67,19 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		ok := errors.As(err, &appErr)
 		if !ok || appErr.IsRetriable() {
 
-			_, _ = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
+			_, err = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
 				Id:         notification.GetId(),
 				State:      commonv1.STATE_ACTIVE,
 				Status:     commonv1.STATUS_UNKNOWN,
 				ExternalId: "",
 				Extras:     extra,
 			}))
+			if err != nil {
+				log.WithError(err).WithField("notification_id", notification.GetId()).Warn("could not update status on notification service")
+				return nil
+			}
 
-			return err
+			return nil
 		}
 
 		extraData["errcode"] = fmt.Sprintf("%v", appErr.ErrorCode())
@@ -98,6 +103,7 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 	}))
 	if err != nil {
 		log.WithError(err).WithField("notification_id", notification.GetId()).Warn("could not update status on notification service")
+		return nil
 	}
 
 	log.WithField("notification_id", notification.GetId()).Debug("Email SMTP message sent successfully")

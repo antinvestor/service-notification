@@ -1,4 +1,4 @@
-package events
+package queue
 
 import (
 	"context"
@@ -41,11 +41,12 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 
 	log := util.Log(ctx)
 
-	notification := &notificationv1.Notification{}
+	notification := notificationv1.Notification{}
 
-	err := proto.Unmarshal(payload, notification)
+	err := proto.Unmarshal(payload, &notification)
 	if err != nil {
-		return err
+		log.WithError(err).Error("Failed to unmarshal notification")
+		return nil
 	}
 
 	log.WithField("notification_id", notification.GetId()).
@@ -54,7 +55,7 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		WithField("message_length", len(notification.GetData())).
 		Debug("Sending AfricasTalking SMS message")
 
-	resp, err := ms.AfricasTalkingCli.Send(ctx, headers, notification)
+	resp, err := ms.AfricasTalkingCli.Send(ctx, headers, &notification)
 	if err != nil {
 		log.WithError(err).Error("AfricasTalking API responded with error")
 
@@ -67,15 +68,19 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		ok := errors.As(err, &appErr)
 		if !ok || appErr.IsRetriable() {
 
-			_, _ = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
+			_, err = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
 				Id:         notification.GetId(),
 				State:      commonv1.STATE_ACTIVE,
 				Status:     commonv1.STATUS_UNKNOWN,
 				ExternalId: "",
 				Extras:     extra,
 			}))
+			if err != nil {
+				log.WithError(err).WithField("notification_id", notification.GetId()).Warn("could not update status on notification service")
+				return nil
+			}
 
-			return err
+			return nil
 		}
 
 		extrasMap["errcode"] = fmt.Sprintf("%v", appErr.ErrorCode())

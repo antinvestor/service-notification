@@ -12,8 +12,8 @@ import (
 	"github.com/antinvestor/apis/go/settings"
 	aconfig "github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
-	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/events"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/handlers"
+	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/queue"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/security"
@@ -64,7 +64,7 @@ func main() {
 
 	// Create handlers with injected dependencies
 	implementation := handlers.NewATServer(profileCli, notificationCli, africastalkingCl)
-	messageHandler := events.NewMessageToSend(profileCli, notificationCli, africastalkingCl)
+	messageHandler := queue.NewMessageToSend(profileCli, notificationCli, africastalkingCl)
 
 	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(implementation.NewRouterV1()),
