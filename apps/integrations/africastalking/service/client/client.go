@@ -17,24 +17,21 @@ import (
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
 	"github.com/antinvestor/service-notification/internal/constants"
-	"github.com/pitabwire/util"
 )
 
 type Client struct {
 	cfg        *config.AfricasTalkingConfig
 	httpClient http.Client
-	logger     *util.LogEntry
 
 	profileCli  profilev1connect.ProfileServiceClient
 	settingsCli settingsv1connect.SettingsServiceClient
 }
 
-func NewClient(logger *util.LogEntry, cfg *config.AfricasTalkingConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli settingsv1connect.SettingsServiceClient) (*Client, error) {
+func NewClient(cfg *config.AfricasTalkingConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli settingsv1connect.SettingsServiceClient) (*Client, error) {
 
 	return &Client{
 		cfg:         cfg,
 		httpClient:  http.Client{},
-		logger:      logger,
 		profileCli:  profileCli,
 		settingsCli: settingsCli,
 	}, nil

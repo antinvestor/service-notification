@@ -57,7 +57,7 @@ func main() {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
 
-	africastalkingCl, err := client.NewClient(logger, &cfg, profileCli, settingsCli)
+	africastalkingCl, err := client.NewClient(&cfg, profileCli, settingsCli)
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup africastalking client")
 	}
@@ -66,12 +66,10 @@ func main() {
 	implementation := handlers.NewATServer(profileCli, notificationCli, africastalkingCl)
 	messageHandler := events.NewMessageToSend(profileCli, notificationCli, africastalkingCl)
 
-	var serviceOptions []frame.Option
-
-	serviceOptions = append(serviceOptions,
+	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(implementation.NewRouterV1()),
 		frame.WithRegisterSubscriber(cfg.QueueATDequeueName, cfg.QueueATDequeueURI, messageHandler),
-	)
+	}
 
 	svc.Init(ctx, serviceOptions...)
 

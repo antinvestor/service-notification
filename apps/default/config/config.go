@@ -6,9 +6,9 @@ import (
 
 type NotificationConfig struct {
 	config.ConfigurationDefault
-	ProfileServiceURI      string `default:"127.0.0.1:7005" envconfig:"PROFILE_SERVICE_URI"`
-	PartitionServiceURI    string `default:"127.0.0.1:7003" envconfig:"PARTITION_SERVICE_URI"`
-	NotificationServiceURI string `default:"127.0.0.1:7005" envconfig:"NOTIFICATION_SERVICE_URI"`
+	ProfileServiceURI      string `envDefault:"127.0.0.1:7005" env:"PROFILE_SERVICE_URI"`
+	PartitionServiceURI    string `envDefault:"127.0.0.1:7003" env:"PARTITION_SERVICE_URI"`
+	NotificationServiceURI string `envDefault:"127.0.0.1:7005" env:"NOTIFICATION_SERVICE_URI"`
 
-	DefaultLanguageCode string `default:"en" envconfig:"DEFAULT_LANGUAGE_CODE"`
+	DefaultLanguageCode string `envDefault:"en" env:"DEFAULT_LANGUAGE_CODE"`
 }

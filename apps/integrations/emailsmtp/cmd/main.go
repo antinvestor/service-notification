@@ -12,8 +12,8 @@ import (
 	"github.com/antinvestor/apis/go/settings"
 	aconfig "github.com/antinvestor/service-notification/apps/integrations/emailsmtp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
-	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/events"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/handlers"
+	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/queues"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/security"
@@ -64,14 +64,12 @@ func main() {
 
 	// Create handlers with injected dependencies
 	implementation := handlers.NewSMTPServer(profileCli, notificationCli, emailSMTPCli)
-	messageHandler := events.NewMessageToSend(profileCli, notificationCli, emailSMTPCli)
+	messageHandler := queues.NewMessageToSend(profileCli, notificationCli, emailSMTPCli)
 
-	var serviceOptions []frame.Option
-
-	serviceOptions = append(serviceOptions,
+	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(implementation.NewRouterV1()),
 		frame.WithRegisterSubscriber(cfg.QueueATDequeueName, cfg.QueueATDequeueURI, messageHandler),
-	)
+	}
 
 	svc.Init(ctx, serviceOptions...)
 

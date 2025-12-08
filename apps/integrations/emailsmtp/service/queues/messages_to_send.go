@@ -1,4 +1,4 @@
-package events
+package queues
 
 import (
 	"context"
@@ -12,12 +12,13 @@ import (
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
 	"github.com/antinvestor/service-notification/internal/apperrors"
+	"github.com/pitabwire/frame/queue"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-type MessageToSend struct {
+type messageToSend struct {
 	ProfileCli      profilev1connect.ProfileServiceClient
 	NotificationCli notificationv1connect.NotificationServiceClient
 	EmailSMTPCli    *client.Client
@@ -27,15 +28,15 @@ func NewMessageToSend(
 	profileCli profilev1connect.ProfileServiceClient,
 	notificationCli notificationv1connect.NotificationServiceClient,
 	emailSMTPCli *client.Client,
-) *MessageToSend {
-	return &MessageToSend{
+) queue.SubscribeWorker {
+	return &messageToSend{
 		ProfileCli:      profileCli,
 		NotificationCli: notificationCli,
 		EmailSMTPCli:    emailSMTPCli,
 	}
 }
 
-func (ms *MessageToSend) Handle(ctx context.Context, headers map[string]string, payload []byte) error {
+func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, payload []byte) error {
 
 	log := util.Log(ctx)
 
