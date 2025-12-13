@@ -3,14 +3,14 @@ module github.com/antinvestor/service-notification
 go 1.25.2
 
 require (
-	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.10-20251119161617-faec0015998a.1
+	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.11-20251119161617-faec0015998a.1
 	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20251205175834-28725063ee3f.2
-	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.10-20251205175834-28725063ee3f.1
+	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.11-20251205175834-28725063ee3f.1
 	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20251205175911-72c3819c8e9b.2
 	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20251205175955-9870a37939f7.2
-	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.10-20251205175955-9870a37939f7.1
+	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.11-20251205175955-9870a37939f7.1
 	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20251205180030-b2fb7ba7f112.2
-	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.10-20251205180030-b2fb7ba7f112.1
+	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.11-20251205180030-b2fb7ba7f112.1
 	connectrpc.com/connect v1.19.1
 	github.com/antinvestor/apis/go/common v1.49.0
 	github.com/antinvestor/apis/go/notification v1.49.0
@@ -26,9 +26,9 @@ require (
 )
 
 require (
-	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.10-20251205175911-72c3819c8e9b.1 // indirect
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20251209175733-2a1774d88802.1 // indirect
-	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.10-20230414000709-087bc8072ce4.1 // indirect
+	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.11-20251205175911-72c3819c8e9b.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20251209175733-2a1774d88802.1 // indirect
+	buf.build/gen/go/gnostic/gnostic/protocolbuffers/go v1.36.11-20230414000709-087bc8072ce4.1 // indirect
 	buf.build/go/protovalidate v1.1.0 // indirect
 	cel.dev/expr v0.25.1 // indirect
 	connectrpc.com/otelconnect v0.8.0 // indirect
@@ -113,7 +113,7 @@ require (
 	go.opentelemetry.io/contrib/bridges/otelslog v0.14.0 // indirect
 	go.opentelemetry.io/contrib/bridges/prometheus v0.64.0 // indirect
 	go.opentelemetry.io/contrib/exporters/autoexport v0.64.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.64.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.64.0 // indirect
 	go.opentelemetry.io/contrib/propagators/autoprop v0.64.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.39.0 // indirect
@@ -151,8 +151,8 @@ require (
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.257.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20251213004720-97cd9d5aeac2 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
 	gorm.io/gorm v1.31.1 // indirect
