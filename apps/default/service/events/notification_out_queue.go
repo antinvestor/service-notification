@@ -161,7 +161,7 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 		return nil, errors.New("no template id specified")
 	}
 
-	tmplDataList, err0 := event.TemplateDataRepo.GetByTemplateIDAndLanguage(ctx, n.TemplateID, n.LanguageID)
+	tmplDataList, err0 := event.TemplateDataRepo.GetByTemplateIDAndLanguage(ctx, n.LanguageID, n.TemplateID)
 	if err0 != nil {
 		logger.WithError(err0).
 			WithField("template id", n.TemplateID).

@@ -38,7 +38,7 @@ func (tr *templateDataRepository) GetByTemplateID(ctx context.Context, templateI
 
 func (tr *templateDataRepository) GetByTemplateIDAndLanguage(ctx context.Context, languageId string, templateId ...string) ([]*models.TemplateData, error) {
 	var templateDataList []*models.TemplateData
-	err := tr.Pool().DB(ctx, true).Where(" language_id = ? AND template_id IN ?", templateId, languageId).Find(&templateDataList).Error
+	err := tr.Pool().DB(ctx, true).Where("language_id = ? AND template_id IN ?", languageId, templateId).Find(&templateDataList).Error
 	if err != nil {
 		return nil, err
 	}
