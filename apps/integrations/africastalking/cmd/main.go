@@ -14,6 +14,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/handlers"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/queue"
+	"github.com/antinvestor/service-notification/internal/events"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/security"
@@ -41,6 +42,7 @@ func main() {
 	logger := svc.Log(ctx)
 
 	sm := svc.SecurityManager()
+	eventsMan := svc.EventsManager()
 
 	notificationCli, err := setupNotificationClient(ctx, sm, cfg)
 	if err != nil {
@@ -57,23 +59,24 @@ func main() {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
 
-	africastalkingCl, err := client.NewClient(&cfg, profileCli, settingsCli)
+	africasTalkingCli, err := client.NewClient(&cfg, profileCli, settingsCli)
 	if err != nil {
-		logger.WithError(err).Fatal("could not setup africastalking client")
+		logger.WithError(err).Fatal("could not setup africa's Talking client")
 	}
 
 	// Create handlers with injected dependencies
-	implementation := handlers.NewATServer(profileCli, notificationCli, africastalkingCl)
-	messageHandler := queue.NewMessageToSend(profileCli, notificationCli, africastalkingCl)
+	implementation := handlers.NewATServer(profileCli, notificationCli, africasTalkingCli)
+	messageHandler := queue.NewMessageToSend(eventsMan, profileCli, notificationCli, africasTalkingCli)
 
 	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(implementation.NewRouterV1()),
+		frame.WithRegisterEvents(events.NewNotificationStatusUpdate(ctx, notificationCli)),
 		frame.WithRegisterSubscriber(cfg.QueueATDequeueName, cfg.QueueATDequeueURI, messageHandler),
 	}
 
 	svc.Init(ctx, serviceOptions...)
 
-	logger.Info("Initiating AfricasTalking integration server operations")
+	logger.Info("Initiating Africa's Talking integration server operations")
 	err = svc.Run(ctx, "")
 	if err != nil {
 		logger.WithError(err).Error("could not run Server")

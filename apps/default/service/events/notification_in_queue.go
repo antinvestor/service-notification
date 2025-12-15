@@ -56,8 +56,8 @@ func (e *NotificationInQueue) Validate(ctx context.Context, payload any) error {
 
 func (e *NotificationInQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
-	logger := util.Log(ctx).WithField("payload", notificationID).WithField("type", e.Name())
-	logger.Debug("handling e")
+	logger := util.Log(ctx).WithField("type", e.Name())
+	logger.WithField("payload", notificationID).Debug("handling e")
 
 	n, err := e.notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {

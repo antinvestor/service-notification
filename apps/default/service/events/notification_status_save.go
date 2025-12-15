@@ -50,8 +50,8 @@ func (e *NotificationStatusSave) Validate(_ context.Context, payload any) error 
 func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error {
 	nStatus := payload.(*models.NotificationStatus)
 
-	logger := util.Log(ctx).WithField("payload", nStatus).WithField("type", e.Name())
-	logger.Debug("handling event")
+	logger := util.Log(ctx).WithField("type", e.Name())
+	logger.WithField("payload", nStatus).Debug("handling event")
 
 	err := e.notificationStatusRepo.Create(ctx, nStatus)
 	if err != nil {

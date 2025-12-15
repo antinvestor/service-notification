@@ -59,8 +59,8 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 	notificationId := *payload.(*string)
 
-	logger := util.Log(ctx).WithField("payload", notificationId).WithField("type", event.Name())
-	logger.Debug("handling event")
+	logger := util.Log(ctx).WithField("type", event.Name())
+	logger.WithField("payload", notificationId).Debug("handling event")
 
 	n, err := event.notificationRepo.GetByID(ctx, notificationId)
 	if err != nil {

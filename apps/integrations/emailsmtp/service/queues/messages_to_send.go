@@ -9,9 +9,10 @@ import (
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
 	"github.com/antinvestor/service-notification/internal/apperrors"
+	"github.com/antinvestor/service-notification/internal/events"
+	frameEvents "github.com/pitabwire/frame/events"
 	"github.com/pitabwire/frame/queue"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/proto"
@@ -19,20 +20,23 @@ import (
 )
 
 type messageToSend struct {
-	ProfileCli      profilev1connect.ProfileServiceClient
-	NotificationCli notificationv1connect.NotificationServiceClient
-	EmailSMTPCli    *client.Client
+	eventsMan       frameEvents.Manager
+	profileCli      profilev1connect.ProfileServiceClient
+	notificationCli notificationv1connect.NotificationServiceClient
+	emailSMTPCli    *client.Client
 }
 
 func NewMessageToSend(
+	eventsMan frameEvents.Manager,
 	profileCli profilev1connect.ProfileServiceClient,
 	notificationCli notificationv1connect.NotificationServiceClient,
 	emailSMTPCli *client.Client,
 ) queue.SubscribeWorker {
 	return &messageToSend{
-		ProfileCli:      profileCli,
-		NotificationCli: notificationCli,
-		EmailSMTPCli:    emailSMTPCli,
+		eventsMan:       eventsMan,
+		profileCli:      profileCli,
+		notificationCli: notificationCli,
+		emailSMTPCli:    emailSMTPCli,
 	}
 }
 
@@ -44,17 +48,18 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 
 	err := proto.Unmarshal(payload, notification)
 	if err != nil {
-		log.WithError(err).Error("Failed to unmarshal notification")
+		log.WithError(err).WithField("payload", payload).Error("Failed to unmarshal notification")
 		return nil
 	}
 
-	log.WithField("notification_id", notification.GetId()).
-		WithField("recipient", notification.GetRecipient().GetProfileId()).
-		WithField("sender", notification.GetSource().GetProfileId()).
-		WithField("subject", notification.GetData()).
+	log = log.WithField("notification_id", notification.GetId())
+	log.WithFields(map[string]any{
+		"recipient": notification.GetRecipient().GetProfileId(),
+		"sender":    notification.GetSource().GetProfileId(),
+		"subject":   notification.GetData()}).
 		Debug("Sending Email SMTP message")
 
-	err = ms.EmailSMTPCli.Send(ctx, headers, notification)
+	err = ms.emailSMTPCli.Send(ctx, headers, notification)
 	if err != nil {
 		log.WithError(err).Error("Email SMTP server responded with error")
 
@@ -67,15 +72,16 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		ok := errors.As(err, &appErr)
 		if !ok || appErr.IsRetriable() {
 
-			_, err = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
-				Id:         notification.GetId(),
-				State:      commonv1.STATE_ACTIVE,
-				Status:     commonv1.STATUS_UNKNOWN,
-				ExternalId: "",
-				Extras:     extra,
-			}))
+			err = ms.eventsMan.Emit(ctx, events.NotificationStatusUpdateEvent,
+				&commonv1.StatusUpdateRequest{
+					Id:         notification.GetId(),
+					State:      commonv1.STATE_ACTIVE,
+					Status:     commonv1.STATUS_UNKNOWN,
+					ExternalId: "",
+					Extras:     extra,
+				})
 			if err != nil {
-				log.WithError(err).WithField("notification_id", notification.GetId()).Warn("could not update status on notification service")
+				log.WithError(err).Warn("could not update status on notification service")
 				return nil
 			}
 
@@ -85,27 +91,32 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		extraData["errcode"] = fmt.Sprintf("%v", appErr.ErrorCode())
 		extra, _ = structpb.NewStruct(extraData)
 
-		_, _ = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
-			Id:         notification.GetId(),
-			State:      commonv1.STATE_INACTIVE,
-			Status:     commonv1.STATUS_FAILED,
-			ExternalId: "",
-			Extras:     extra,
-		}))
+		err = ms.eventsMan.Emit(ctx, events.NotificationStatusUpdateEvent,
+			&commonv1.StatusUpdateRequest{
+				Id:         notification.GetId(),
+				State:      commonv1.STATE_INACTIVE,
+				Status:     commonv1.STATUS_FAILED,
+				ExternalId: "",
+				Extras:     extra,
+			})
+		if err != nil {
+			log.WithError(err).Warn("could not update status on notification service")
+			return nil
+		}
 		return nil
 	}
 
-	_, err = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
+	err = ms.eventsMan.Emit(ctx, events.NotificationStatusUpdateEvent, &commonv1.StatusUpdateRequest{
 		Id:         notification.GetId(),
 		State:      commonv1.STATE_INACTIVE,
 		Status:     commonv1.STATUS_SUCCESSFUL,
 		ExternalId: "",
-	}))
+	})
 	if err != nil {
-		log.WithError(err).WithField("notification_id", notification.GetId()).Warn("could not update status on notification service")
+		log.WithError(err).Warn("could not update status on notification service")
 		return nil
 	}
 
-	log.WithField("notification_id", notification.GetId()).Debug("Email SMTP message sent successfully")
+	log.Debug("Email SMTP message sent successfully")
 	return nil
 }

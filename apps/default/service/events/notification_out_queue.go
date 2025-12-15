@@ -68,8 +68,8 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload any) er
 func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
 
-	logger := util.Log(ctx).WithField("payload", notificationID).WithField("type", event.Name())
-	logger.Debug("handling notification out queue event")
+	logger := util.Log(ctx).WithField("type", event.Name())
+	logger.WithField("payload", notificationID).Debug("handling notification out queue event")
 
 	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
 	if err != nil {

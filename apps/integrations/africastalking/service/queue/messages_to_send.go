@@ -10,9 +10,10 @@ import (
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/internal/apperrors"
+	"github.com/antinvestor/service-notification/internal/events"
+	frameEvents "github.com/pitabwire/frame/events"
 	"github.com/pitabwire/frame/queue"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/proto"
@@ -20,20 +21,23 @@ import (
 )
 
 type messageToSend struct {
-	ProfileCli        profilev1connect.ProfileServiceClient
-	NotificationCli   notificationv1connect.NotificationServiceClient
-	AfricasTalkingCli *client.Client
+	eventsMan         frameEvents.Manager
+	profileCli        profilev1connect.ProfileServiceClient
+	notificationCli   notificationv1connect.NotificationServiceClient
+	africasTalkingCli *client.Client
 }
 
 func NewMessageToSend(
+	eventsMan frameEvents.Manager,
 	profileCli profilev1connect.ProfileServiceClient,
 	notificationCli notificationv1connect.NotificationServiceClient,
 	africasTalkingCli *client.Client,
 ) queue.SubscribeWorker {
 	return &messageToSend{
-		ProfileCli:        profileCli,
-		NotificationCli:   notificationCli,
-		AfricasTalkingCli: africasTalkingCli,
+		eventsMan:         eventsMan,
+		profileCli:        profileCli,
+		notificationCli:   notificationCli,
+		africasTalkingCli: africasTalkingCli,
 	}
 }
 
@@ -49,15 +53,16 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		return nil
 	}
 
-	log.WithField("notification_id", notification.GetId()).
-		WithField("recipient", notification.GetRecipient().GetProfileId()).
-		WithField("sender", notification.GetSource().GetProfileId()).
-		WithField("message_length", len(notification.GetData())).
-		Debug("Sending AfricasTalking SMS message")
+	log = log.WithField("notification_id", notification.GetId())
+	log.WithFields(map[string]any{
+		"recipient":      notification.GetRecipient().GetProfileId(),
+		"sender":         notification.GetSource().GetProfileId(),
+		"message_length": len(notification.GetData()),
+	}).Debug("Sending Africa's Talking SMS message")
 
-	resp, err := ms.AfricasTalkingCli.Send(ctx, headers, &notification)
+	resp, err := ms.africasTalkingCli.Send(ctx, headers, &notification)
 	if err != nil {
-		log.WithError(err).Error("AfricasTalking API responded with error")
+		log.WithError(err).Error("Africa's Talking API responded with error")
 
 		extrasMap := map[string]any{
 			"error": err.Error(),
@@ -68,15 +73,17 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		ok := errors.As(err, &appErr)
 		if !ok || appErr.IsRetriable() {
 
-			_, err = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
-				Id:         notification.GetId(),
-				State:      commonv1.STATE_ACTIVE,
-				Status:     commonv1.STATUS_UNKNOWN,
-				ExternalId: "",
-				Extras:     extra,
-			}))
+			err = ms.eventsMan.Emit(ctx, events.NotificationStatusUpdateEvent,
+				&commonv1.StatusUpdateRequest{
+					Id:         notification.GetId(),
+					State:      commonv1.STATE_ACTIVE,
+					Status:     commonv1.STATUS_UNKNOWN,
+					ExternalId: "",
+					Extras:     extra,
+				})
 			if err != nil {
-				log.WithError(err).WithField("notification_id", notification.GetId()).Warn("could not update status on notification service")
+				log.WithError(err).
+					Warn("could not update status on notification service")
 				return nil
 			}
 
@@ -85,13 +92,19 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 
 		extrasMap["errcode"] = fmt.Sprintf("%v", appErr.ErrorCode())
 		extra, _ = structpb.NewStruct(extrasMap)
-		_, _ = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
-			Id:         notification.GetId(),
-			State:      commonv1.STATE_INACTIVE,
-			Status:     commonv1.STATUS_FAILED,
-			ExternalId: "",
-			Extras:     extra,
-		}))
+		err = ms.eventsMan.Emit(ctx, events.NotificationStatusUpdateEvent,
+			&commonv1.StatusUpdateRequest{
+				Id:         notification.GetId(),
+				State:      commonv1.STATE_INACTIVE,
+				Status:     commonv1.STATUS_FAILED,
+				ExternalId: "",
+				Extras:     extra,
+			})
+		if err != nil {
+			log.WithError(err).
+				Warn("could not update status on notification service")
+			return nil
+		}
 		return nil
 	}
 
@@ -101,14 +114,20 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 	extra, _ := structpb.NewStruct(extrasMap)
 	if rs.StatusCode >= 500 && rs.StatusCode < 502 {
 
-		_, _ = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
-			Id:         notification.GetId(),
-			State:      commonv1.STATE_ACTIVE,
-			Status:     commonv1.STATUS_UNKNOWN,
-			ExternalId: rs.MessageId,
-			Extras:     extra,
-		}))
-		return fmt.Errorf("AfricasTalking server responded with error %v : %v", client.StatusCodeMap[rs.StatusCode], rs)
+		err = ms.eventsMan.Emit(ctx, events.NotificationStatusUpdateEvent,
+			&commonv1.StatusUpdateRequest{
+				Id:         notification.GetId(),
+				State:      commonv1.STATE_ACTIVE,
+				Status:     commonv1.STATUS_UNKNOWN,
+				ExternalId: rs.MessageId,
+				Extras:     extra,
+			})
+		if err != nil {
+			log.WithError(err).
+				Warn("could not update status on notification service")
+			return nil
+		}
+		return fmt.Errorf("error response from Africa's Talking server %v : %v", client.StatusCodeMap[rs.StatusCode], rs)
 	}
 
 	notificationStatus := commonv1.STATUS_QUEUED
@@ -116,22 +135,23 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		notificationStatus = commonv1.STATUS_FAILED
 	}
 
-	_, err = ms.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
-		Id:         notification.GetId(),
-		State:      commonv1.STATE_ACTIVE,
-		Status:     notificationStatus,
-		ExternalId: rs.MessageId,
-		Extras:     extra,
-	}))
+	err = ms.eventsMan.Emit(ctx, events.NotificationStatusUpdateEvent,
+		&commonv1.StatusUpdateRequest{
+			Id:         notification.GetId(),
+			State:      commonv1.STATE_ACTIVE,
+			Status:     notificationStatus,
+			ExternalId: rs.MessageId,
+			Extras:     extra,
+		})
 	if err != nil {
-		log.WithError(err).WithField("notification_id", notification.GetId()).Warn("could not update status on notification service")
+		log.WithError(err).Warn("could not update status on notification service")
 	}
 
-	log.WithField("notification_id", notification.GetId()).
-		WithField("message_id", rs.MessageId).
-		WithField("status", rs.Status).
-		WithField("cost", rs.Cost).
-		WithField("status_code", rs.StatusCode).
-		Debug("AfricasTalking SMS message sent successfully")
+	log.WithFields(map[string]any{
+		"message_id":  rs.MessageId,
+		"status":      rs.Status,
+		"cost":        rs.Cost,
+		"status_code": rs.StatusCode}).
+		Debug("Africa's Talking SMS message sent successfully")
 	return nil
 }

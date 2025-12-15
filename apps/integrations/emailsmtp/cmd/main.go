@@ -14,6 +14,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/handlers"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/queues"
+	"github.com/antinvestor/service-notification/internal/events"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/security"
@@ -41,6 +42,7 @@ func main() {
 	logger := svc.Log(ctx)
 
 	sm := svc.SecurityManager()
+	eventsMan := svc.EventsManager()
 
 	notificationCli, err := setupNotificationClient(ctx, sm, cfg)
 	if err != nil {
@@ -64,10 +66,11 @@ func main() {
 
 	// Create handlers with injected dependencies
 	implementation := handlers.NewSMTPServer(profileCli, notificationCli, emailSMTPCli)
-	messageHandler := queues.NewMessageToSend(profileCli, notificationCli, emailSMTPCli)
+	messageHandler := queues.NewMessageToSend(eventsMan, profileCli, notificationCli, emailSMTPCli)
 
 	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(implementation.NewRouterV1()),
+		frame.WithRegisterEvents(events.NewNotificationStatusUpdate(ctx, notificationCli)),
 		frame.WithRegisterSubscriber(cfg.QueueATDequeueName, cfg.QueueATDequeueURI, messageHandler),
 	}
 
