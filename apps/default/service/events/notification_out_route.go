@@ -11,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
+	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/data"
 	"github.com/pitabwire/frame/events"
 	"github.com/pitabwire/util"
@@ -68,13 +69,40 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 		return err
 	}
 
-	p, err := event.profileCli.GetById(ctx, connect.NewRequest(&profilev1.GetByIdRequest{Id: n.RecipientProfileID}))
-	if err != nil {
-		logger.WithError(err).WithField("profile_id", n.RecipientProfileID).Warn("could not get profile by id")
-		return err
+	var profileObj *profilev1.ProfileObject
+
+	if n.RecipientProfileID == "" {
+
+		if n.RecipientContactID == "" {
+			logger.Error("recipient contact id is empty")
+			return nil
+		}
+
+		p, profileErr := event.profileCli.GetByContact(ctx, connect.NewRequest(&profilev1.GetByContactRequest{Contact: n.RecipientContactID}))
+		if profileErr != nil {
+			logger.WithError(profileErr).WithField("profile_id", n.RecipientProfileID).Warn("could not get profile by id")
+			if frame.ErrorIsNotFound(profileErr) {
+				return nil
+			}
+			return profileErr
+		}
+
+		profileObj = p.Msg.GetData()
+	} else {
+
+		p, profileErr := event.profileCli.GetById(ctx, connect.NewRequest(&profilev1.GetByIdRequest{Id: n.RecipientProfileID}))
+		if profileErr != nil {
+			logger.WithError(profileErr).WithField("profile_id", n.RecipientProfileID).Warn("could not get profile by id")
+			if frame.ErrorIsNotFound(profileErr) {
+				return nil
+			}
+			return profileErr
+		}
+
+		profileObj = p.Msg.GetData()
 	}
 
-	contact := filterContactFromProfileByID(p.Msg.GetData(), n.RecipientContactID)
+	contact := filterContactFromProfileByID(profileObj, n.RecipientContactID)
 
 	var contactType profilev1.ContactType
 
