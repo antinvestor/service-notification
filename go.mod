@@ -17,7 +17,7 @@ require (
 	github.com/antinvestor/apis/go/partition v1.49.10
 	github.com/antinvestor/apis/go/profile v1.49.10
 	github.com/antinvestor/apis/go/settings v1.49.8
-	github.com/pitabwire/frame v1.69.11
+	github.com/pitabwire/frame v1.69.12
 	github.com/pitabwire/util v0.3.8
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
