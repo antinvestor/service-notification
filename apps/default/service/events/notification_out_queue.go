@@ -12,6 +12,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/antinvestor/service-notification/internal/constants"
+	"github.com/pitabwire/frame/data"
 	"github.com/pitabwire/frame/events"
 	"github.com/pitabwire/frame/queue"
 	"github.com/pitabwire/util"
@@ -91,14 +92,39 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	var templateMap map[string]string
 	templateMap, err = event.formatOutboundNotification(ctx, logger, n)
 	if err != nil {
-		return err
+		logger.WithError(err).WithField("notification_id", n.GetID()).Error("could not format outbound notification")
+
+		nStatus = &models.NotificationStatus{
+			NotificationID: n.GetID(),
+			State:          int32(commonv1.STATE_INACTIVE),
+			Status:         int32(commonv1.STATUS_FAILED),
+			Extra: data.JSONMap{
+				"error": err.Error(),
+			},
+		}
+
+		nStatus.GenID(ctx)
+		return event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	}
 
 	apiNotification := n.ToAPI(nStatus, language, templateMap)
 
 	binaryProto, err := proto.Marshal(apiNotification)
 	if err != nil {
-		return err
+		logger.WithError(err).WithField("notification_id", n.GetID()).Error("could not marshal notification")
+
+		nStatus = &models.NotificationStatus{
+			NotificationID: n.GetID(),
+			State:          int32(commonv1.STATE_INACTIVE),
+			Status:         int32(commonv1.STATUS_FAILED),
+			Extra: data.JSONMap{
+				"error": err.Error(),
+			},
+		}
+
+		nStatus.GenID(ctx)
+
+		return event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	}
 
 	metadata := map[string]string{

@@ -173,7 +173,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 	err = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	if err != nil {
 		logger.WithError(err).Warn("could not emit status for save")
-		return err
+		return nil
 	}
 
 	return nil
