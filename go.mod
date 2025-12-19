@@ -12,13 +12,13 @@ require (
 	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20251216064007-3a6c2a4d8764.2
 	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.11-20251216064007-3a6c2a4d8764.1
 	connectrpc.com/connect v1.19.1
-	github.com/antinvestor/apis/go/common v1.49.5
-	github.com/antinvestor/apis/go/notification v1.49.4
-	github.com/antinvestor/apis/go/partition v1.49.4
-	github.com/antinvestor/apis/go/profile v1.49.4
-	github.com/antinvestor/apis/go/settings v1.49.5
-	github.com/pitabwire/frame v1.69.3
-	github.com/pitabwire/util v0.3.6
+	github.com/antinvestor/apis/go/common v1.49.7
+	github.com/antinvestor/apis/go/notification v1.49.8
+	github.com/antinvestor/apis/go/partition v1.49.8
+	github.com/antinvestor/apis/go/profile v1.49.8
+	github.com/antinvestor/apis/go/settings v1.49.8
+	github.com/pitabwire/frame v1.69.8
+	github.com/pitabwire/util v0.3.7
 	github.com/stretchr/testify v1.11.1
 	github.com/wneessen/go-mail v0.7.2
 	google.golang.org/grpc v1.77.0
@@ -34,9 +34,8 @@ require (
 	connectrpc.com/otelconnect v0.8.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
-	github.com/BurntSushi/toml v1.5.0 // indirect
+	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/antithesishq/antithesis-sdk-go v0.5.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/caarlos0/env/v11 v11.3.1 // indirect
@@ -63,7 +62,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/cel-go v0.26.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.16.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -84,14 +83,14 @@ require (
 	github.com/moby/term v0.5.2 // indirect
 	github.com/morikuni/aec v1.1.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/nats-io/nats.go v1.47.0 // indirect
+	github.com/nats-io/nats.go v1.48.0 // indirect
 	github.com/nats-io/nkeys v0.4.12 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.6.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/panjf2000/ants/v2 v2.11.3 // indirect
-	github.com/pitabwire/natspubsub v0.7.8 // indirect
+	github.com/pitabwire/natspubsub v0.7.11 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
@@ -150,7 +149,7 @@ require (
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/api v0.257.0 // indirect
+	google.golang.org/api v0.258.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
