@@ -15,9 +15,9 @@ type EmailSMTPConfig struct {
 	PartitionServiceURI    string `envDefault:"127.0.0.1:7003" env:"PARTITION_SERVICE_URI"`
 	NotificationServiceURI string `envDefault:"127.0.0.1:7005" env:"NOTIFICATION_SERVICE_URI"`
 
-	// Africans talking configuration
-	QueueATDequeueName string `envDefault:"natifications.emailsmtp.dequeue" env:"QUEUE_NOTIFICATION_EMAIL_DEQUEUE_NAME"`
-	QueueATDequeueURI  string `envDefault:"mem://natifications.email.de.queue" env:"QUEUE_NOTIFICATION_EMAIL_DEQUEUE_URI"`
+	// Email smtp queue configuration
+	QueueEmailSMTPDequeueName string `envDefault:"natifications.emailsmtp.dequeue" env:"QUEUE_NOTIFICATION_EMAIL_DEQUEUE_NAME"`
+	QueueEmailSMTPDequeueURI  string `envDefault:"mem://natifications.email.de.queue" env:"QUEUE_NOTIFICATION_EMAIL_DEQUEUE_URI"`
 
 	SMTPServerHOST      string `envDefault:"smtp.postmarkapp.com" env:"SMTP_SERVER_HOST"`
 	SMTPServerPORT      int    `envDefault:"587" env:"SMTP_SERVER_PORT"`

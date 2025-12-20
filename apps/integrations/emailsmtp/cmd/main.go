@@ -71,7 +71,7 @@ func main() {
 	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(implementation.NewRouterV1()),
 		frame.WithRegisterEvents(events.NewNotificationStatusUpdate(ctx, notificationCli)),
-		frame.WithRegisterSubscriber(cfg.QueueATDequeueName, cfg.QueueATDequeueURI, messageHandler),
+		frame.WithRegisterSubscriber(cfg.QueueEmailSMTPDequeueName, cfg.QueueEmailSMTPDequeueURI, messageHandler),
 	}
 
 	svc.Init(ctx, serviceOptions...)
