@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"strings"
 	"text/template"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
@@ -12,6 +11,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/antinvestor/service-notification/internal/constants"
+	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/data"
 	"github.com/pitabwire/frame/events"
 	"github.com/pitabwire/frame/queue"
@@ -161,44 +161,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 
 		logger.WithError(err).Error("could not publish to external queue")
 
-		if strings.Contains(err.Error(), "reference does not exist") && n.RouteID != "" {
-			// Route publisher reference doesn't exist, try to load and register it
-			route, loadErr := loadRoute(ctx, event.qMan, event.routeRepo, n.RouteID)
-			if loadErr != nil {
-				logger.WithError(loadErr).Error("could not load route")
-				nStatus = &models.NotificationStatus{
-					NotificationID: n.GetID(),
-					State:          int32(commonv1.STATE_INACTIVE),
-					Status:         int32(commonv1.STATUS_FAILED),
-					Extra: data.JSONMap{
-						"error": loadErr.Error(),
-						"step":  "load_route",
-					},
-				}
-				nStatus.GenID(ctx)
-				_ = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
-				return loadErr
-			}
-			logger.WithField("route_uri", route.Uri).Debug("successfully loaded a route to use")
-
-			// Retry publish after loading the route
-			err = event.qMan.Publish(ctx, n.RouteID, binaryProto, metadata)
-			if err != nil {
-				logger.WithError(err).Error("could not publish to external queue after route load")
-				nStatus = &models.NotificationStatus{
-					NotificationID: n.GetID(),
-					State:          int32(commonv1.STATE_INACTIVE),
-					Status:         int32(commonv1.STATUS_FAILED),
-					Extra: data.JSONMap{
-						"error": err.Error(),
-						"step":  "publish_to_queue_retry",
-					},
-				}
-				nStatus.GenID(ctx)
-				_ = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
-				return nil
-			}
-		} else {
+		if !frame.ErrorIsNotFound(err) {
 			// Other publish error, not recoverable
 			nStatus = &models.NotificationStatus{
 				NotificationID: n.GetID(),
@@ -207,6 +170,43 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 				Extra: data.JSONMap{
 					"error": err.Error(),
 					"step":  "publish_to_queue",
+				},
+			}
+			nStatus.GenID(ctx)
+			_ = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+			return nil
+		}
+
+		// Route publisher reference doesn't exist, try to load and register it
+		route, loadErr := loadRoute(ctx, event.qMan, event.routeRepo, n.RouteID)
+		if loadErr != nil {
+			logger.WithError(loadErr).Error("could not load route")
+			nStatus = &models.NotificationStatus{
+				NotificationID: n.GetID(),
+				State:          int32(commonv1.STATE_INACTIVE),
+				Status:         int32(commonv1.STATUS_FAILED),
+				Extra: data.JSONMap{
+					"error": loadErr.Error(),
+					"step":  "load_route",
+				},
+			}
+			nStatus.GenID(ctx)
+			_ = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+			return loadErr
+		}
+		logger.WithField("route_uri", route.Uri).Debug("successfully loaded a route to use")
+
+		// Retry publish after loading the route
+		err = event.qMan.Publish(ctx, n.RouteID, binaryProto, metadata)
+		if err != nil {
+			logger.WithError(err).Error("could not publish to external queue after route load")
+			nStatus = &models.NotificationStatus{
+				NotificationID: n.GetID(),
+				State:          int32(commonv1.STATE_INACTIVE),
+				Status:         int32(commonv1.STATUS_FAILED),
+				Extra: data.JSONMap{
+					"error": err.Error(),
+					"step":  "publish_to_queue_retry",
 				},
 			}
 			nStatus.GenID(ctx)
