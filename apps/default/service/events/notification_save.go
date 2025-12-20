@@ -7,6 +7,7 @@ import (
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
+	"github.com/pitabwire/frame/data"
 	"github.com/pitabwire/frame/events"
 	"github.com/pitabwire/util"
 )
@@ -51,28 +52,30 @@ func (e *NotificationSave) Validate(ctx context.Context, payload any) error {
 func (e *NotificationSave) Execute(ctx context.Context, payload any) error {
 	notification := payload.(*models.Notification)
 
-	logger := util.Log(ctx).WithField("type", e.Name())
-	logger.WithField("payload", notification).Debug("handling event")
+	logger := util.Log(ctx).WithField("type", e.Name()).WithField("notification_id", notification.GetID())
+	logger.Debug("event handler started")
 
 	err := e.notificationRepo.Create(ctx, notification)
 	if err != nil {
-		logger.WithError(err).Warn("could not save to db")
+		logger.WithError(err).Error("could not save to db")
 		return err
 	}
 
 	if !notification.OutBound {
 		err = e.eventMan.Emit(ctx, NotificationInRouteEvent, notification.GetID())
 		if err != nil {
+			logger.WithError(err).Error("could not emit for in route")
 			return err
 		}
 
+		logger.Debug("event handler completed successfully")
 		return nil
 	}
 
 	if notification.IsReleased() {
 		err = e.eventMan.Emit(ctx, NotificationOutRouteEvent, notification.GetID())
 		if err != nil {
-			logger.WithError(err).Warn("could not emit for queue out")
+			logger.WithError(err).Error("could not emit for queue out")
 			return err
 		}
 	} else {
@@ -80,16 +83,21 @@ func (e *NotificationSave) Execute(ctx context.Context, payload any) error {
 			NotificationID: notification.GetID(),
 			State:          int32(commonv1.STATE_CHECKED.Number()),
 			Status:         int32(commonv1.STATUS_QUEUED.Number()),
+			Extra: data.JSONMap{
+				"step": "pending_release",
+			},
 		}
 
 		nStatus.GenID(ctx)
 
 		// Queue out notification status for further processing
-		err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+		err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 		if err != nil {
-			logger.WithError(err).Warn("could not emit status")
+			logger.WithError(err).Error("could not emit status")
 			return err
 		}
 	}
+
+	logger.Debug("event handler completed successfully")
 	return nil
 }

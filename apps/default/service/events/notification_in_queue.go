@@ -9,6 +9,7 @@ import (
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
+	"github.com/pitabwire/frame/data"
 	"github.com/pitabwire/frame/events"
 	"github.com/pitabwire/frame/queue"
 	"github.com/pitabwire/util"
@@ -56,11 +57,12 @@ func (e *NotificationInQueue) Validate(ctx context.Context, payload any) error {
 
 func (e *NotificationInQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
-	logger := util.Log(ctx).WithField("type", e.Name())
-	logger.WithField("payload", notificationID).Debug("handling e")
+	logger := util.Log(ctx).WithField("type", e.Name()).WithField("notification_id", notificationID)
+	logger.Debug("event handler started")
 
 	n, err := e.notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
+		logger.WithError(err).Error("could not get notification from db")
 		return err
 	}
 
@@ -68,38 +70,79 @@ func (e *NotificationInQueue) Execute(ctx context.Context, payload any) error {
 	err = e.qMan.Publish(ctx, n.RouteID, n)
 	if err != nil {
 
+		logger.WithError(err).Error("could not publish to internal queue")
+
 		if !strings.Contains(err.Error(), "reference does not exist") {
 
 			if n.RouteID != "" {
 				route, err0 := loadRoute(ctx, e.qMan, e.routeRepo, n.RouteID)
 				if err0 != nil {
+					logger.WithError(err0).Error("could not load route")
+					nStatus := models.NotificationStatus{
+						NotificationID: n.GetID(),
+						State:          int32(commonv1.STATE_INACTIVE),
+						Status:         int32(commonv1.STATUS_FAILED),
+						Extra: data.JSONMap{
+							"error": err0.Error(),
+							"step":  "load_route",
+						},
+					}
+					nStatus.GenID(ctx)
+					_ = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 					return err0
 				}
-				logger.WithField("route", route).Debug("loading route")
+				logger.
+					WithFields(map[string]any{"route_id": route.ID, "route_uri": route.Uri}).
+					Debug("successfully loaded a route to use")
 			}
 
+			nStatus := models.NotificationStatus{
+				NotificationID: n.GetID(),
+				State:          int32(commonv1.STATE_INACTIVE),
+				Status:         int32(commonv1.STATUS_FAILED),
+				Extra: data.JSONMap{
+					"error": err.Error(),
+					"step":  "publish_to_queue",
+				},
+			}
+			nStatus.GenID(ctx)
+			_ = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 			return err
 		}
-	}
 
-	logger.
-		WithField("notification", n.ID).
-		WithField("route", n.RouteID).
-		Debug(" Successfully routed in message ")
+		nStatus := models.NotificationStatus{
+			NotificationID: n.GetID(),
+			State:          int32(commonv1.STATE_INACTIVE),
+			Status:         int32(commonv1.STATUS_FAILED),
+			Extra: data.JSONMap{
+				"error":  err.Error(),
+				"step":   "publish_to_queue",
+				"reason": "route_reference_missing",
+			},
+		}
+		nStatus.GenID(ctx)
+		_ = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
+		return err
+	}
 
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
 		State:          int32(commonv1.STATE_ACTIVE),
 		Status:         int32(commonv1.STATUS_IN_PROCESS),
+		Extra: data.JSONMap{
+			"step": "queued_for_processing",
+		},
 	}
 
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+	err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 	if err != nil {
+		logger.WithError(err).Error("could not emit status save event")
 		return err
 	}
 
+	logger.Debug("event handler completed successfully")
 	return nil
 }

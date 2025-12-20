@@ -50,17 +50,18 @@ func (e *NotificationStatusSave) Validate(_ context.Context, payload any) error 
 func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error {
 	nStatus := payload.(*models.NotificationStatus)
 
-	logger := util.Log(ctx).WithField("type", e.Name())
-	logger.WithField("payload", nStatus).Debug("handling event")
+	logger := util.Log(ctx).WithField("type", e.Name()).WithField("notification_id", nStatus.NotificationID)
+	logger.Debug("event handler started")
 
 	err := e.notificationStatusRepo.Create(ctx, nStatus)
 	if err != nil {
-		logger.WithError(err).Warn("could not save notification status to db")
+		logger.WithError(err).Error("could not save notification status to db")
 		return err
 	}
 
 	n, err := e.NotificationRepo.GetByID(ctx, nStatus.NotificationID)
 	if err != nil {
+		logger.WithError(err).Error("could not get notification from db")
 		return err
 	}
 
@@ -72,10 +73,10 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error
 
 	_, err = e.NotificationRepo.Update(ctx, n, "status_id", "state", "transient_id")
 	if err != nil {
-		logger.WithError(err).Warn("could not save notification update to db")
-
+		logger.WithError(err).Error("could not save notification update to db")
 		return err
 	}
 
+	logger.Debug("event handler completed successfully")
 	return nil
 }

@@ -60,12 +60,12 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 	notificationId := *payload.(*string)
 
-	logger := util.Log(ctx).WithField("type", event.Name())
-	logger.WithField("payload", notificationId).Debug("handling event")
+	logger := util.Log(ctx).WithField("type", event.Name()).WithField("notification_id", notificationId)
+	logger.Debug("event handler started")
 
 	n, err := event.notificationRepo.GetByID(ctx, notificationId)
 	if err != nil {
-		logger.WithError(err).Warn("could not get notification from db")
+		logger.WithError(err).Error("could not get notification from db")
 		return err
 	}
 
@@ -75,13 +75,37 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 		if n.RecipientContactID == "" {
 			logger.Error("recipient contact id is empty")
+
+			nStatus := models.NotificationStatus{
+				NotificationID: n.GetID(),
+				State:          int32(commonv1.STATE_INACTIVE),
+				Status:         int32(commonv1.STATUS_FAILED),
+				Extra: data.JSONMap{
+					"error": "recipient contact id is empty",
+					"step":  "validate_recipient",
+				},
+			}
+
+			nStatus.GenID(ctx)
+			_ = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 			return nil
 		}
 
 		p, profileErr := event.profileCli.GetByContact(ctx, connect.NewRequest(&profilev1.GetByContactRequest{Contact: n.RecipientContactID}))
 		if profileErr != nil {
-			logger.WithError(profileErr).WithField("profile_id", n.RecipientProfileID).Warn("could not get profile by id")
+			logger.WithError(profileErr).Error("could not get profile by contact")
 			if frame.ErrorIsNotFound(profileErr) {
+				nStatus := models.NotificationStatus{
+					NotificationID: n.GetID(),
+					State:          int32(commonv1.STATE_INACTIVE),
+					Status:         int32(commonv1.STATUS_FAILED),
+					Extra: data.JSONMap{
+						"error": "profile not found for contact",
+						"step":  "lookup_profile_by_contact",
+					},
+				}
+				nStatus.GenID(ctx)
+				_ = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 				return nil
 			}
 			return profileErr
@@ -92,8 +116,19 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 
 		p, profileErr := event.profileCli.GetById(ctx, connect.NewRequest(&profilev1.GetByIdRequest{Id: n.RecipientProfileID}))
 		if profileErr != nil {
-			logger.WithError(profileErr).WithField("profile_id", n.RecipientProfileID).Warn("could not get profile by id")
+			logger.WithError(profileErr).Error("could not get profile by id")
 			if frame.ErrorIsNotFound(profileErr) {
+				nStatus := models.NotificationStatus{
+					NotificationID: n.GetID(),
+					State:          int32(commonv1.STATE_INACTIVE),
+					Status:         int32(commonv1.STATUS_FAILED),
+					Extra: data.JSONMap{
+						"error": "profile not found",
+						"step":  "lookup_profile_by_id",
+					},
+				}
+				nStatus.GenID(ctx)
+				_ = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 				return nil
 			}
 			return profileErr
@@ -130,14 +165,15 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 				Status:         int32(commonv1.STATUS_FAILED),
 				Extra: data.JSONMap{
 					"error": err.Error(),
+					"step":  "route_notification",
 				},
 			}
 
 			nStatus.GenID(ctx)
 
-			err = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+			err = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 			if err != nil {
-				logger.WithError(err).Warn("could not emit status for save")
+				logger.WithError(err).Error("could not emit status for save")
 				return err
 			}
 
@@ -151,13 +187,13 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 	n.RouteID = route.ID
 	_, err = event.notificationRepo.Update(ctx, n, "route_id")
 	if err != nil {
-		logger.WithError(err).Warn("could not save routed notification to db")
+		logger.WithError(err).Error("could not save routed notification to db")
 		return err
 	}
 
 	err = event.eventMan.Emit(ctx, NotificationOutQueueEvent, n.GetID())
 	if err != nil {
-		logger.WithError(err).Warn("could not queue out notification")
+		logger.WithError(err).Error("could not queue out notification")
 		return err
 	}
 
@@ -165,16 +201,20 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 		NotificationID: n.GetID(),
 		State:          int32(commonv1.STATE_ACTIVE),
 		Status:         int32(commonv1.STATUS_QUEUED),
+		Extra: data.JSONMap{
+			"step": "routed_for_queue",
+		},
 	}
 
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	err = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+	err = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 	if err != nil {
-		logger.WithError(err).Warn("could not emit status for save")
-		return nil
+		logger.WithError(err).Error("could not emit status for save")
+		return err
 	}
 
+	logger.Debug("event handler completed successfully")
 	return nil
 }

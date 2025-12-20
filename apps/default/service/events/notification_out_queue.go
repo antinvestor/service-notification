@@ -69,11 +69,12 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload any) er
 func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
 
-	logger := util.Log(ctx).WithField("type", event.Name())
-	logger.WithField("payload", notificationID).Debug("handling notification out queue event")
+	logger := util.Log(ctx).WithField("type", event.Name()).WithField("notification_id", notificationID)
+	logger.Debug("event handler started")
 
 	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
+		logger.WithError(err).Warn("could not get notification from db")
 		return err
 	}
 
@@ -100,6 +101,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 			Status:         int32(commonv1.STATUS_FAILED),
 			Extra: data.JSONMap{
 				"error": err.Error(),
+				"step":  "format_outbound_notification",
 			},
 		}
 
@@ -119,6 +121,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 			Status:         int32(commonv1.STATUS_FAILED),
 			Extra: data.JSONMap{
 				"error": err.Error(),
+				"step":  "marshal_notification",
 			},
 		}
 
@@ -133,34 +136,63 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 		constants.RouteIDHeaderName:     n.RouteID,
 	}
 
+	if n.RouteID == "" {
+		logger.Error("message is not routed correctly")
+
+		nStatus = &models.NotificationStatus{
+			NotificationID: n.GetID(),
+			State:          int32(commonv1.STATE_INACTIVE),
+			Status:         int32(commonv1.STATUS_FAILED),
+			Extra: data.JSONMap{
+				"error": "message was not routed correctly",
+				"step":  "validate_route",
+			},
+		}
+
+		nStatus.GenID(ctx)
+
+		return event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+	}
+
 	// Queue a message for further processing by peripheral services
 	err = event.qMan.Publish(ctx, n.RouteID, binaryProto, metadata)
 	if err != nil {
 
+		logger.WithError(err).Error("could not publish to external queue")
+
 		if !strings.Contains(err.Error(), "reference does not exist") {
 
 			if n.RouteID != "" {
-				_, err = loadRoute(ctx, event.qMan, event.routeRepo, n.RouteID)
-				if err != nil {
-					return err
+				route, loadErr := loadRoute(ctx, event.qMan, event.routeRepo, n.RouteID)
+				if loadErr != nil {
+					return loadErr
 				}
+				logger.WithField("route_uri", route.Uri).Debug("successfully loaded a route to use")
 			}
-
-			return err
 		}
 
-		return err
+		nStatus = &models.NotificationStatus{
+			NotificationID: n.GetID(),
+			State:          int32(commonv1.STATE_INACTIVE),
+			Status:         int32(commonv1.STATUS_FAILED),
+			Extra: data.JSONMap{
+				"error":  err.Error(),
+				"step":   "publish_to_queue",
+				"reason": "route_reference_missing",
+			},
+		}
+		nStatus.GenID(ctx)
+		_ = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+		return nil
 	}
-
-	logger.WithField("notification_id", n.GetID()).
-		WithField("route", n.RouteID).
-		WithField("message", templateMap).
-		Debug("We have successfully queued out message")
 
 	nStatus = &models.NotificationStatus{
 		NotificationID: n.GetID(),
 		State:          int32(commonv1.STATE_ACTIVE),
 		Status:         int32(commonv1.STATUS_IN_PROCESS),
+		Extra: data.JSONMap{
+			"step": "queued_for_delivery",
+		},
 	}
 
 	nStatus.GenID(ctx)
@@ -168,9 +200,11 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	// Queue out notification status for further processing
 	err = event.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
 	if err != nil {
+		logger.WithError(err).Error("could not emit status save event")
 		return err
 	}
 
+	logger.Debug("event handler completed successfully")
 	return nil
 }
 

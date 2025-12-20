@@ -68,17 +68,18 @@ func (e *NotificationInRoute) Validate(ctx context.Context, payload any) error {
 
 func (e *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
-	logger := util.Log(ctx).WithField("type", e.Name())
-	logger.WithField("payload", notificationID).Debug("handling notification in route event")
+	logger := util.Log(ctx).WithField("type", e.Name()).WithField("notification_id", notificationID)
+	logger.Debug("event handler started")
 
 	n, err := e.notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
+		logger.WithError(err).Error("could not get notification from db")
 		return err
 	}
 
 	route, err := routeNotification(ctx, e.routeRepo, models.RouteModeReceive, n)
 	if err != nil {
-		logger.WithError(err).WithField("notification_id", n.GetID()).Warn("could not route notification")
+		logger.WithError(err).Error("could not route notification")
 
 		if strings.Contains(err.Error(), "no routes matched for notification") {
 			nStatus := models.NotificationStatus{
@@ -87,14 +88,15 @@ func (e *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 				Status:         int32(commonv1.STATUS_FAILED),
 				Extra: data.JSONMap{
 					"error": err.Error(),
+					"step":  "route_notification",
 				},
 			}
 
 			nStatus.GenID(ctx)
 
-			err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+			err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 			if err != nil {
-				logger.WithError(err).WithField("notification_id", n.GetID()).Warn("could not emit notification status save event")
+				logger.WithError(err).Error("could not emit notification status save event")
 				return err
 			}
 
@@ -108,13 +110,13 @@ func (e *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 
 	_, err = e.notificationRepo.Update(ctx, n, "route_id")
 	if err != nil {
-		logger.WithError(err).WithField("notification_id", n.GetID()).Warn("could not save routed notification to database")
+		logger.WithError(err).Error("could not save routed notification to database")
 		return err
 	}
 
 	err = e.eventMan.Emit(ctx, NotificationInQueueEvent, n.GetID())
 	if err != nil {
-		logger.WithError(err).WithField("notification_id", n.GetID()).Warn("could not queue out notification")
+		logger.WithError(err).Error("could not queue out notification")
 		return err
 	}
 
@@ -122,17 +124,21 @@ func (e *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 		NotificationID: n.GetID(),
 		State:          int32(commonv1.STATE_ACTIVE),
 		Status:         int32(commonv1.STATUS_QUEUED),
+		Extra: data.JSONMap{
+			"step": "routed_for_queue",
+		},
 	}
 
 	nStatus.GenID(ctx)
 
 	// Queue out notification status for further processing
-	err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, nStatus)
+	err = e.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
 	if err != nil {
-		logger.WithError(err).WithField("notification_id", n.GetID()).Warn("could not emit notification status save event")
+		logger.WithError(err).Error("could not emit notification status save event")
 		return err
 	}
 
+	logger.Debug("event handler completed successfully")
 	return nil
 }
 

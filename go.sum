@@ -59,8 +59,8 @@ github.com/antinvestor/apis/go/partition v1.49.10 h1:zQMfpGVuRNUvwul7XS2NfHaXg/w
 github.com/antinvestor/apis/go/partition v1.49.10/go.mod h1:ppq29vzST2fFhgjZEDZjFa30qzhAUTNqajT7d0JOs48=
 github.com/antinvestor/apis/go/profile v1.49.10 h1:ilfFW8P3dUNXuMH12ihKHfp55XASxareiGaVQWNc+gc=
 github.com/antinvestor/apis/go/profile v1.49.10/go.mod h1:SsNHkzyNhFW3LiBm1AcUsfU6g2ImBp6I0Jx7aNhotvc=
-github.com/antinvestor/apis/go/settings v1.49.8 h1:h/HCPiiAlKh9Nt7i5w2WXq8TOomQGyYmcVCsK7VAZs4=
-github.com/antinvestor/apis/go/settings v1.49.8/go.mod h1:aE+A/5mH64mgGYb3G6HtskyHyVh0/TazV8aE+V2CiUU=
+github.com/antinvestor/apis/go/settings v1.49.10 h1:rV8qFJYhknq89sES4TWmEXpk7m1xOJMzvKzcaVCPO7Y=
+github.com/antinvestor/apis/go/settings v1.49.10/go.mod h1:RE8/frtjvNNGRlU3wBwSC/xhwLilBs7kw+HGLB+XLCM=
 github.com/antithesishq/antithesis-sdk-go v0.5.0 h1:cudCFF83pDDANcXFzkQPUHHedfnnIbUO3JMr9fqwFJs=
 github.com/antithesishq/antithesis-sdk-go v0.5.0/go.mod h1:IUpT2DPAKh6i/YhSbt6Gl3v2yvUZjmKncl7U91fup7E=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
