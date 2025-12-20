@@ -50,17 +50,21 @@ func (e *NotificationStatusUpdate) Validate(_ context.Context, payload any) erro
 func (e *NotificationStatusUpdate) Execute(ctx context.Context, payload any) error {
 	statusUpdateRequest := payload.(*commonv1.StatusUpdateRequest)
 
-	logger := util.Log(ctx).WithField("type", e.Name())
+	logger := util.Log(ctx).WithField("type", e.Name()).WithField("notification_id", statusUpdateRequest.GetId())
 	defer logger.Release()
-	if logger.Enabled(ctx, slog.LevelDebug) {
 
-		logger.WithField("payload", statusUpdateRequest).Debug("handling event")
+	logger.Debug("event handler started")
+
+	if logger.Enabled(ctx, slog.LevelDebug) {
+		logger.WithField("payload", statusUpdateRequest).Debug("processing status update request")
 	}
+
 	_, err := e.NotificationCli.StatusUpdate(ctx, connect.NewRequest(statusUpdateRequest))
 	if err != nil {
-		logger.WithError(err).WithField("notification_id", statusUpdateRequest.GetId()).Warn("could not update status")
+		logger.WithError(err).Warn("could not update status")
 		return nil
 	}
 
+	logger.Debug("event handler completed successfully")
 	return nil
 }

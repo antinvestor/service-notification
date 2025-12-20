@@ -51,6 +51,7 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error
 	nStatus := payload.(*models.NotificationStatus)
 
 	logger := util.Log(ctx).WithField("type", e.Name()).WithField("notification_id", nStatus.NotificationID)
+	defer logger.Release()
 	logger.Debug("event handler started")
 
 	err := e.notificationStatusRepo.Create(ctx, nStatus)

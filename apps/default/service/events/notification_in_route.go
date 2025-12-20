@@ -69,6 +69,7 @@ func (e *NotificationInRoute) Validate(ctx context.Context, payload any) error {
 func (e *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
 	logger := util.Log(ctx).WithField("type", e.Name()).WithField("notification_id", notificationID)
+	defer logger.Release()
 	logger.Debug("event handler started")
 
 	n, err := e.notificationRepo.GetByID(ctx, notificationID)

@@ -43,13 +43,15 @@ func NewMessageToSend(
 
 func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, payload []byte) error {
 
-	log := util.Log(ctx)
+	log := util.Log(ctx).WithField("type", "africastalking.message.send")
+	defer log.Release()
+	log.Debug("queue handler started")
 
 	notification := notificationv1.Notification{}
 
 	err := proto.Unmarshal(payload, &notification)
 	if err != nil {
-		log.WithError(err).Error("Failed to unmarshal notification")
+		log.WithError(err).Error("failed to unmarshal notification")
 		return nil
 	}
 
@@ -58,7 +60,7 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		"recipient":      notification.GetRecipient().GetProfileId(),
 		"sender":         notification.GetSource().GetProfileId(),
 		"message_length": len(notification.GetData()),
-	}).Debug("Sending Africa's Talking SMS message")
+	}).Debug("processing Africa's Talking SMS message")
 
 	resp, err := ms.africasTalkingCli.Send(ctx, headers, &notification)
 	if err != nil {

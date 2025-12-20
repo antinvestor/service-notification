@@ -42,13 +42,15 @@ func NewMessageToSend(
 
 func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, payload []byte) error {
 
-	log := util.Log(ctx)
+	log := util.Log(ctx).WithField("type", "emailsmtp.message.send")
+	defer log.Release()
+	log.Debug("queue handler started")
 
 	notification := &notificationv1.Notification{}
 
 	err := proto.Unmarshal(payload, notification)
 	if err != nil {
-		log.WithError(err).WithField("payload", payload).Error("Failed to unmarshal notification")
+		log.WithError(err).WithField("payload", payload).Error("failed to unmarshal notification")
 		return nil
 	}
 
@@ -57,7 +59,7 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		"recipient": notification.GetRecipient().GetProfileId(),
 		"sender":    notification.GetSource().GetProfileId(),
 		"subject":   notification.GetData()}).
-		Debug("Sending Email SMTP message")
+		Debug("processing Email SMTP message")
 
 	err = ms.emailSMTPCli.Send(ctx, headers, notification)
 	if err != nil {

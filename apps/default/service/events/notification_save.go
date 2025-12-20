@@ -53,6 +53,7 @@ func (e *NotificationSave) Execute(ctx context.Context, payload any) error {
 	notification := payload.(*models.Notification)
 
 	logger := util.Log(ctx).WithField("type", e.Name()).WithField("notification_id", notification.GetID())
+	defer logger.Release()
 	logger.Debug("event handler started")
 
 	err := e.notificationRepo.Create(ctx, notification)

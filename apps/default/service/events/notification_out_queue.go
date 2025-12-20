@@ -70,6 +70,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	notificationID := *payload.(*string)
 
 	logger := util.Log(ctx).WithField("type", event.Name()).WithField("notification_id", notificationID)
+	defer logger.Release()
 	logger.Debug("event handler started")
 
 	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
