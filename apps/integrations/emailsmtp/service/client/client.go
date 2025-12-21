@@ -126,7 +126,7 @@ func (ms *Client) Send(ctx context.Context, credentials map[string]string, notif
 	extrasData := notification.GetExtras().AsMap()
 	notificationSubject := ""
 	if dt, ok := extrasData["subject"]; ok {
-		if s, ok := dt.(string); ok {
+		if s, subjectOk := dt.(string); subjectOk {
 			notificationSubject = s
 		}
 	}

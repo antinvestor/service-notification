@@ -66,6 +66,7 @@ func (ps *SMTPServer) ReceiveNotification(rw http.ResponseWriter, req *http.Requ
 		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(rw).Encode("successfully handled")
+		return
 	}
 
 	var payload map[string]any
@@ -105,11 +106,11 @@ func (ps *SMTPServer) handleDeliveryReport(ctx context.Context, routeID string, 
 		return apperrors.ErrDataNotFound.Extend("no notification id was found in metadata")
 	}
 
-	externalID := payload["MessageID"].(string)
+	externalID, _ := payload["MessageID"].(string)
 
 	internalStatus := commonv1.STATUS_SUCCESSFUL
-	reportType := payload["Type"]
-	switch reportType.(string) {
+	reportType, _ := payload["Type"].(string)
+	switch reportType {
 	case "HardBounce", "SpamComplaint":
 		internalStatus = commonv1.STATUS_FAILED
 	}
