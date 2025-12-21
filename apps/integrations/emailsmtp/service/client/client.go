@@ -120,6 +120,9 @@ func (ms *Client) Send(ctx context.Context, credentials map[string]string, notif
 		return err
 	}
 
+	// TODO: remove this hack to just see things workign
+	sender.Detail = "info@stawi.im"
+
 	extrasData := notification.GetExtras().AsMap()
 	notificationSubject := ""
 	if dt, ok := extrasData["subject"]; ok {
