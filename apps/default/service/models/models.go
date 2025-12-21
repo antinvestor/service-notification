@@ -65,6 +65,7 @@ type TemplateData struct {
 	LanguageID string `gorm:"type:varchar(50);unique_index:uq_template_by_type"`
 	Type       string `gorm:"type:varchar(10);unique_index:uq_template_by_type"`
 	Detail     string `gorm:"type:text"`
+	Subject    string `gorm:"type:varchar(250)"`
 }
 
 func (td *TemplateData) ToApi(language *notificationv1.Language) *notificationv1.TemplateData {
