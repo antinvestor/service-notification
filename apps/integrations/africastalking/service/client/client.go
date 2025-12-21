@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 
-	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
@@ -17,6 +16,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
 	"github.com/antinvestor/service-notification/internal/constants"
+	"github.com/antinvestor/service-notification/internal/utility"
 )
 
 type Client struct {
@@ -35,30 +35,6 @@ func NewClient(cfg *config.AfricasTalkingConfig, profileCli profilev1connect.Pro
 		profileCli:  profileCli,
 		settingsCli: settingsCli,
 	}, nil
-}
-
-func (ms *Client) contactLinkToPhoneNumber(ctx context.Context, contact *commonv1.ContactLink) (string, error) {
-
-	if contact.GetDetail() != "" {
-		return contact.GetDetail(), nil
-	}
-
-	result, err := ms.profileCli.GetByContact(ctx, connect.NewRequest(&profilev1.GetByContactRequest{Contact: contact.GetContactId()}))
-	if err != nil {
-		return "", err
-	}
-
-	profile := result.Msg.GetData()
-
-	for _, c := range profile.GetContacts() {
-		if c.GetId() == contact.GetContactId() {
-			if c.GetType() == profilev1.ContactType_MSISDN {
-				return c.GetDetail(), nil
-			}
-		}
-	}
-
-	return "", fmt.Errorf("no valid contact exists in request")
 }
 
 func (ms *Client) extractCredentials(ctx context.Context, headers map[string]string) (map[string]string, error) {
@@ -117,9 +93,7 @@ func (ms *Client) Send(ctx context.Context, headers map[string]string, notificat
 		return nil, err
 	}
 
-	recipient := notification.GetRecipient()
-
-	recipientMSISDN, err := ms.contactLinkToPhoneNumber(ctx, recipient)
+	recipient, err := utility.PopulateContactLink(ctx, ms.profileCli, notification.GetRecipient(), profilev1.ContactType_MSISDN)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +101,7 @@ func (ms *Client) Send(ctx context.Context, headers map[string]string, notificat
 	payload := RequestPayload{
 		Username:     credentials[constants.APIUserNameHeaderName],
 		SenderID:     credentials[constants.APISenderIDHeaderName],
-		PhoneNumbers: []string{recipientMSISDN},
+		PhoneNumbers: []string{recipient.GetDetail()},
 		Message:      notification.GetData()}
 
 	apiKey := credentials[constants.APIKeyHeaderName]
