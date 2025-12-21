@@ -108,7 +108,6 @@ func (ms *Client) getConnectedClient(ctx context.Context, credentials map[string
 	return conn, nil
 }
 
-
 func (ms *Client) Send(ctx context.Context, credentials map[string]string, notification *notificationv1.Notification) error {
 
 	recipient, err := utility.PopulateContactLink(ctx, ms.profileCli, notification.GetRecipient(), profilev1.ContactType_EMAIL)
