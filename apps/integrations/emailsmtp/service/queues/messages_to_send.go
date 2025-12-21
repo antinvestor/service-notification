@@ -56,10 +56,14 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 
 	log = log.WithField("notification_id", notification.GetId())
 	log.WithFields(map[string]any{
-		"recipient": notification.GetRecipient().GetProfileId(),
-		"sender":    notification.GetSource().GetProfileId(),
-		"subject":   notification.GetData()}).
-		Debug("processing Email SMTP message")
+		"recipient_profile_id":  notification.GetRecipient().GetProfileId(),
+		"recipient_contact_id":  notification.GetRecipient().GetContactId(),
+		"recipient_detail":      notification.GetRecipient().GetDetail(),
+		"sender_profile_id":     notification.GetSource().GetProfileId(),
+		"sender_contact_id":     notification.GetSource().GetContactId(),
+		"sender_detail":         notification.GetSource().GetDetail(),
+		"subject":               notification.GetData()}).
+		Debug("processing Email SMTP message - incoming notification ContactLink details")
 
 	err = ms.emailSMTPCli.Send(ctx, headers, notification)
 	if err != nil {
