@@ -18,17 +18,17 @@ import (
 )
 
 const (
-	clientTTL       = 5 * time.Minute
-	maxClientsCache = 100
+	connectionTTL = 5 * time.Minute
 )
 
-type cachedClient struct {
-	client    *mail.Client
-	createdAt time.Time
+type connectedClient struct {
+	client      *mail.Client
+	connectedAt time.Time
+	mu          sync.Mutex
 }
 
-func (cc *cachedClient) isExpired() bool {
-	return time.Since(cc.createdAt) > clientTTL
+func (cc *connectedClient) isExpired() bool {
+	return time.Since(cc.connectedAt) > connectionTTL
 }
 
 type Client struct {
@@ -36,8 +36,8 @@ type Client struct {
 	logger      *util.LogEntry
 	profileCli  profilev1connect.ProfileServiceClient
 	settingsCli settingsv1connect.SettingsServiceClient
-	mailCliMap  sync.Map
-	clientMu    sync.Mutex
+	connMap     sync.Map
+	connMu      sync.Mutex
 }
 
 func NewClient(logger *util.LogEntry, cfg *config.EmailSMTPConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli settingsv1connect.SettingsServiceClient) (*Client, error) {
@@ -47,33 +47,13 @@ func NewClient(logger *util.LogEntry, cfg *config.EmailSMTPConfig, profileCli pr
 		logger:      logger,
 		profileCli:  profileCli,
 		settingsCli: settingsCli,
-		mailCliMap:  sync.Map{},
+		connMap:     sync.Map{},
 	}, nil
 }
 
-func (ms *Client) getMailClient(_ context.Context, credentials map[string]string) (*mail.Client, error) {
-	partitionID := credentials[constants.PartitionIDHeaderName]
-
-	if clientObj, ok := ms.mailCliMap.Load(partitionID); ok {
-		if cached, cok := clientObj.(*cachedClient); cok && !cached.isExpired() {
-			return cached.client, nil
-		}
-		ms.mailCliMap.Delete(partitionID)
-	}
-
-	ms.clientMu.Lock()
-	defer ms.clientMu.Unlock()
-
-	if clientObj, ok := ms.mailCliMap.Load(partitionID); ok {
-		if cached, cok := clientObj.(*cachedClient); cok && !cached.isExpired() {
-			return cached.client, nil
-		}
-		ms.mailCliMap.Delete(partitionID)
-	}
-
+func (ms *Client) createMailClient() (*mail.Client, error) {
 	cfg := ms.cfg
-
-	cli, err := mail.NewClient(cfg.SMTPServerHOST,
+	return mail.NewClient(cfg.SMTPServerHOST,
 		mail.WithPort(cfg.SMTPServerPORT),
 		mail.WithTLSPolicy(mail.TLSMandatory),
 		mail.WithSMTPAuth(mail.SMTPAuthPlain),
@@ -82,17 +62,50 @@ func (ms *Client) getMailClient(_ context.Context, credentials map[string]string
 		mail.WithTimeout(15*time.Second),
 		mail.WithTLSConfig(nil),
 	)
+}
+
+func (ms *Client) getConnectedClient(ctx context.Context, credentials map[string]string) (*connectedClient, error) {
+	partitionID := credentials[constants.PartitionIDHeaderName]
+
+	if connObj, ok := ms.connMap.Load(partitionID); ok {
+		if conn, cok := connObj.(*connectedClient); cok && !conn.isExpired() {
+			return conn, nil
+		}
+		if conn, cok := connObj.(*connectedClient); cok {
+			_ = conn.client.Close()
+		}
+		ms.connMap.Delete(partitionID)
+	}
+
+	ms.connMu.Lock()
+	defer ms.connMu.Unlock()
+
+	if connObj, ok := ms.connMap.Load(partitionID); ok {
+		if conn, cok := connObj.(*connectedClient); cok && !conn.isExpired() {
+			return conn, nil
+		}
+		if conn, cok := connObj.(*connectedClient); cok {
+			_ = conn.client.Close()
+		}
+		ms.connMap.Delete(partitionID)
+	}
+
+	cli, err := ms.createMailClient()
 	if err != nil {
 		return nil, err
 	}
 
-	cached := &cachedClient{
-		client:    cli,
-		createdAt: time.Now(),
+	if err := cli.DialWithContext(ctx); err != nil {
+		return nil, fmt.Errorf("failed to establish SMTP connection: %w", err)
 	}
-	ms.mailCliMap.Store(partitionID, cached)
 
-	return cli, nil
+	conn := &connectedClient{
+		client:      cli,
+		connectedAt: time.Now(),
+	}
+	ms.connMap.Store(partitionID, conn)
+
+	return conn, nil
 }
 
 
@@ -116,43 +129,51 @@ func (ms *Client) Send(ctx context.Context, credentials map[string]string, notif
 		}
 	}
 
-	cli, err := ms.getMailClient(ctx, credentials)
+	conn, err := ms.getConnectedClient(ctx, credentials)
 	if err != nil {
 		return err
 	}
-	if cli == nil {
-		return fmt.Errorf("failed to get mail client")
-	}
 
-	err = ms.SendEmail(ctx, cli, notification.GetId(), sender.GetDetail(), recipient.GetDetail(), notificationSubject, notification.GetData())
+	err = ms.sendEmailWithRetry(ctx, credentials, conn, notification.GetId(), sender.GetDetail(), recipient.GetDetail(), notificationSubject, notification.GetData())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// SendEmail immediately sends out messages using the configured settings.
-func (ms *Client) SendEmail(ctx context.Context, cli *mail.Client, messageID, senderEmail, recipientEmail string, subject string, message string) error {
+func (ms *Client) sendEmailWithRetry(ctx context.Context, credentials map[string]string, conn *connectedClient, messageID, senderEmail, recipientEmail, subject, message string) error {
+	conn.mu.Lock()
+	defer conn.mu.Unlock()
 
 	msg := mail.NewMsg()
-	err := msg.From(senderEmail)
-	if err != nil {
+	if err := msg.From(senderEmail); err != nil {
 		return err
 	}
-	err = msg.To(recipientEmail)
-	if err != nil {
+	if err := msg.To(recipientEmail); err != nil {
 		return err
 	}
-	err = msg.SetAddrHeader("X-PM-Metadata-notification-id", messageID)
-	if err != nil {
+	if err := msg.SetAddrHeader("X-PM-Metadata-notification-id", messageID); err != nil {
 		return err
 	}
 	msg.Subject(subject)
 	msg.SetBodyString(mail.TypeTextPlain, message)
 
-	err = cli.DialAndSendWithContext(ctx, msg)
+	err := conn.client.Send(msg)
 	if err != nil {
-		return err
+		partitionID := credentials[constants.PartitionIDHeaderName]
+		ms.connMap.Delete(partitionID)
+		_ = conn.client.Close()
+
+		newConn, dialErr := ms.getConnectedClient(ctx, credentials)
+		if dialErr != nil {
+			return fmt.Errorf("send failed and reconnect failed: %w (original: %v)", dialErr, err)
+		}
+
+		newConn.mu.Lock()
+		defer newConn.mu.Unlock()
+		if retryErr := newConn.client.Send(msg); retryErr != nil {
+			return fmt.Errorf("send failed after retry: %w", retryErr)
+		}
 	}
 
 	return nil
