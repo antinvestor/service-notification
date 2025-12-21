@@ -109,45 +109,16 @@ func (ms *Client) getConnectedClient(ctx context.Context, credentials map[string
 }
 
 func (ms *Client) Send(ctx context.Context, credentials map[string]string, notification *notificationv1.Notification) error {
-	log := util.Log(ctx).WithField("notification_id", notification.GetId())
-
-	// Log recipient ContactLink BEFORE PopulateContactLink
-	log.WithFields(map[string]any{
-		"before_recipient_profile_id": notification.GetRecipient().GetProfileId(),
-		"before_recipient_contact_id": notification.GetRecipient().GetContactId(),
-		"before_recipient_detail":     notification.GetRecipient().GetDetail(),
-	}).Debug("recipient ContactLink BEFORE PopulateContactLink")
 
 	recipient, err := utility.PopulateContactLink(ctx, ms.profileCli, notification.GetRecipient(), profilev1.ContactType_EMAIL)
 	if err != nil {
 		return err
 	}
 
-	// Log recipient ContactLink AFTER PopulateContactLink
-	log.WithFields(map[string]any{
-		"after_recipient_profile_id": recipient.GetProfileId(),
-		"after_recipient_contact_id": recipient.GetContactId(),
-		"after_recipient_detail":     recipient.GetDetail(),
-	}).Debug("recipient ContactLink AFTER PopulateContactLink")
-
-	// Log sender ContactLink BEFORE PopulateContactLink
-	log.WithFields(map[string]any{
-		"before_sender_profile_id": notification.GetSource().GetProfileId(),
-		"before_sender_contact_id": notification.GetSource().GetContactId(),
-		"before_sender_detail":     notification.GetSource().GetDetail(),
-	}).Debug("sender ContactLink BEFORE PopulateContactLink")
-
 	sender, err := utility.PopulateContactLink(ctx, ms.profileCli, notification.GetSource(), profilev1.ContactType_EMAIL)
 	if err != nil {
 		return err
 	}
-
-	// Log sender ContactLink AFTER PopulateContactLink
-	log.WithFields(map[string]any{
-		"after_sender_profile_id": sender.GetProfileId(),
-		"after_sender_contact_id": sender.GetContactId(),
-		"after_sender_detail":     sender.GetDetail(),
-	}).Debug("sender ContactLink AFTER PopulateContactLink")
 
 	extrasData := notification.GetExtras().AsMap()
 	notificationSubject := ""
@@ -184,9 +155,7 @@ func (ms *Client) sendEmailWithRetry(ctx context.Context, credentials map[string
 		return err
 	}
 
-	if err := msg.SetAddrHeader("X-PM-Metadata-notification-id", messageID); err != nil {
-		return err
-	}
+	msg.SetGenHeader("X-PM-Metadata-notification-id", messageID)
 	msg.Subject(subject)
 	msg.SetBodyString(mail.TypeTextPlain, message)
 
