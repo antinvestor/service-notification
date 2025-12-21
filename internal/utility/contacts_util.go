@@ -69,11 +69,11 @@ func PopulateContactLink(
 
 		for i, c := range profile.GetContacts() {
 			log.WithFields(map[string]any{
-				"index":          i,
-				"contact_id":     c.GetId(),
-				"contact_detail": c.GetDetail(),
-				"contact_type":   c.GetType().String(),
-				"looking_for_id": contact.GetContactId(),
+				"index":            i,
+				"contact_id":       c.GetId(),
+				"contact_detail":   c.GetDetail(),
+				"contact_type":     c.GetType().String(),
+				"looking_for_id":   contact.GetContactId(),
 				"looking_for_type": contactType.String(),
 			}).Debug("PopulateContactLink: Checking contact from profile")
 

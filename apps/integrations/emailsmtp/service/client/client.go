@@ -131,19 +131,41 @@ func (ms *Client) Send(ctx context.Context, credentials map[string]string, notif
 		}
 	}
 
+	htmlBody := ""
+	if dt, ok := extrasData["html"]; ok {
+		if s, htmlOk := dt.(string); htmlOk {
+			htmlBody = s
+		}
+	}
+
+	textBody := ""
+	if dt, ok := extrasData["text"]; ok {
+		if s, textOk := dt.(string); textOk {
+			textBody = s
+		}
+	}
+
+	if textBody == "" {
+		textBody = notification.GetData()
+	}
+
+	if textBody == "" && htmlBody == "" {
+		return fmt.Errorf("email body is empty: provide either text or html content")
+	}
+
 	conn, err := ms.getConnectedClient(ctx, credentials)
 	if err != nil {
 		return err
 	}
 
-	err = ms.sendEmailWithRetry(ctx, credentials, conn, notification.GetId(), sender, recipient, notificationSubject, notification.GetData())
+	err = ms.sendEmailWithRetry(ctx, credentials, conn, notification.GetId(), sender, recipient, notificationSubject, textBody, htmlBody)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (ms *Client) sendEmailWithRetry(ctx context.Context, credentials map[string]string, conn *connectedClient, messageID string, sender, recipient *commonv1.ContactLink, subject, message string) error {
+func (ms *Client) sendEmailWithRetry(ctx context.Context, credentials map[string]string, conn *connectedClient, messageID string, sender, recipient *commonv1.ContactLink, subject, textBody, htmlBody string) error {
 	conn.mu.Lock()
 	defer conn.mu.Unlock()
 
@@ -160,7 +182,13 @@ func (ms *Client) sendEmailWithRetry(ctx context.Context, credentials map[string
 
 	msg.SetGenHeader("X-PM-Metadata-notification-id", messageID)
 	msg.Subject(subject)
-	msg.SetBodyString(mail.TypeTextPlain, message)
+
+	if textBody != "" {
+		msg.SetBodyString(mail.TypeTextPlain, textBody)
+	}
+	if htmlBody != "" {
+		msg.AddAlternativeString(mail.TypeTextHTML, htmlBody)
+	}
 
 	err := conn.client.Send(msg)
 	if err != nil {
