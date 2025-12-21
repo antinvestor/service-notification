@@ -74,9 +74,11 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 
 	logger.WithField("auth claim", authClaim).Info("handling queue out request")
 
-	var releaseDate time.Time
+	n := models.NotificationFromAPI(ctx, message)
+	n.OutBound = true
 	if message.AutoRelease {
-		releaseDate = time.Now()
+		releaseDate := time.Now()
+		n.ReleasedAt = &releaseDate
 	}
 
 	language, err := nb.languageRepo.GetOrCreateByCode(ctx, message.GetLanguage())
@@ -85,6 +87,8 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		logger.WithError(err).Warn("could not get language")
 		return nil, err
 	}
+
+	n.LanguageID = language.GetID()
 
 	templateID := ""
 	if message.GetTemplate() != "" {
@@ -97,34 +101,7 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 		templateID = t.GetID()
 	}
 
-	n := models.Notification{
-		ParentID:          message.GetParentId(),
-		TransientID:       message.GetId(),
-		SenderProfileType: message.GetSource().GetProfileType(),
-		SenderProfileID:   message.GetSource().GetProfileId(),
-		SenderContactID:   message.GetSource().GetContactId(),
-
-		RecipientProfileType: message.GetRecipient().GetProfileType(),
-		RecipientProfileID:   message.GetRecipient().GetProfileId(),
-		RecipientContactID:   message.GetRecipient().GetContactId(),
-
-		LanguageID: language.GetID(),
-		OutBound:   true,
-
-		TemplateID: templateID,
-
-		Payload: message.Payload.AsMap(),
-		Message: message.GetData(),
-
-		NotificationType: message.GetType(),
-		ReleasedAt:       &releaseDate,
-		Priority:         int32(message.GetPriority()),
-	}
-
-	n.GenID(ctx)
-	if n.ValidXID(message.GetId()) {
-		n.ID = message.GetId()
-	}
+	n.TemplateID = templateID
 
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
@@ -157,7 +134,10 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 	authClaim := security.ClaimsFromContext(ctx)
 	logger.WithField("auth claim", authClaim).Info("handling queue in request")
 
+	n := models.NotificationFromAPI(ctx, message)
+	n.OutBound = false
 	releaseDate := time.Now()
+	n.ReleasedAt = &releaseDate
 
 	language, err := nb.languageRepo.GetOrCreateByCode(ctx, message.GetLanguage())
 
@@ -166,31 +146,7 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 		return nil, err
 	}
 
-	n := models.Notification{
-		ParentID:          message.GetParentId(),
-		TransientID:       message.GetId(),
-		SenderProfileType: message.GetSource().GetProfileType(),
-		SenderProfileID:   message.GetSource().GetProfileId(),
-		SenderContactID:   message.GetSource().GetContactId(),
-
-		RecipientProfileType: message.GetRecipient().GetProfileType(),
-		RecipientProfileID:   message.GetRecipient().GetProfileId(),
-		RecipientContactID:   message.GetRecipient().GetContactId(),
-		RouteID:              message.GetRouteId(),
-		LanguageID:           language.GetID(),
-		OutBound:             false,
-
-		Payload:          message.GetPayload().AsMap(),
-		Message:          message.GetData(),
-		NotificationType: message.GetType(),
-		ReleasedAt:       &releaseDate,
-		Priority:         int32(message.GetPriority()),
-	}
-
-	n.GenID(ctx)
-	if n.ValidXID(message.GetId()) {
-		n.ID = message.GetId()
-	}
+	n.LanguageID = language.GetID()
 
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"time"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
@@ -113,6 +114,49 @@ type Notification struct {
 
 func (model *Notification) IsReleased() bool {
 	return model.ReleasedAt != nil && !model.ReleasedAt.IsZero()
+}
+
+func NotificationFromAPI(ctx context.Context, notification *notificationv1.Notification) *Notification {
+	if notification == nil {
+		return nil
+	}
+
+	model := &Notification{
+		ParentID:         notification.GetParentId(),
+		TransientID:      notification.GetId(),
+		TemplateID:       notification.GetTemplate(),
+		LanguageID:       notification.GetLanguage(),
+		NotificationType: notification.GetType(),
+		Message:          notification.GetData(),
+		OutBound:         notification.GetOutBound(),
+		RouteID:          notification.GetRouteId(),
+		Priority:         int32(notification.GetPriority()),
+	}
+
+	model.ID = notification.GetId()
+
+	if notification.GetPayload() != nil {
+		model.Payload = (&data.JSONMap{}).FromProtoStruct(notification.GetPayload())
+	}
+
+	if source := notification.GetSource(); source != nil {
+		model.SenderProfileID = source.GetProfileId()
+		model.SenderProfileType = source.GetProfileType()
+		model.SenderContactID = source.GetContactId()
+	}
+
+	if recipient := notification.GetRecipient(); recipient != nil {
+		model.RecipientProfileID = recipient.GetProfileId()
+		model.RecipientProfileType = recipient.GetProfileType()
+		model.RecipientContactID = recipient.GetContactId()
+	}
+
+	model.GenID(ctx)
+	if model.ValidXID(notification.GetId()) {
+		model.ID = notification.GetId()
+	}
+
+	return model
 }
 
 func (model *Notification) ToAPI(status *NotificationStatus, language *Language, message map[string]string) *notificationv1.Notification {
