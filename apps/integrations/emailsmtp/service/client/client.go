@@ -61,7 +61,6 @@ func (ms *Client) createMailClient() (*mail.Client, error) {
 		mail.WithUsername(cfg.SMTPServerAccessKey),
 		mail.WithPassword(cfg.SMTPServerSecretKey),
 		mail.WithTimeout(15*time.Second),
-		mail.WithTLSConfig(nil),
 	)
 }
 
