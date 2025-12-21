@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -16,12 +17,27 @@ import (
 	"github.com/wneessen/go-mail"
 )
 
+const (
+	clientTTL       = 5 * time.Minute
+	maxClientsCache = 100
+)
+
+type cachedClient struct {
+	client    *mail.Client
+	createdAt time.Time
+}
+
+func (cc *cachedClient) isExpired() bool {
+	return time.Since(cc.createdAt) > clientTTL
+}
+
 type Client struct {
 	cfg         *config.EmailSMTPConfig
 	logger      *util.LogEntry
 	profileCli  profilev1connect.ProfileServiceClient
 	settingsCli settingsv1connect.SettingsServiceClient
 	mailCliMap  sync.Map
+	clientMu    sync.Mutex
 }
 
 func NewClient(logger *util.LogEntry, cfg *config.EmailSMTPConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli settingsv1connect.SettingsServiceClient) (*Client, error) {
@@ -37,45 +53,46 @@ func NewClient(logger *util.LogEntry, cfg *config.EmailSMTPConfig, profileCli pr
 
 func (ms *Client) getMailClient(_ context.Context, credentials map[string]string) (*mail.Client, error) {
 	partitionID := credentials[constants.PartitionIDHeaderName]
-	clientObj, ok := ms.mailCliMap.Load(partitionID)
-	if ok {
-		cli, cok := clientObj.(*mail.Client)
-		if cok {
-			return cli, nil
+
+	if clientObj, ok := ms.mailCliMap.Load(partitionID); ok {
+		if cached, cok := clientObj.(*cachedClient); cok && !cached.isExpired() {
+			return cached.client, nil
 		}
+		ms.mailCliMap.Delete(partitionID)
 	}
 
-	// settings, err := ms.settingsCli.Get(ctx, connect.NewRequest(&settingsv1.GetRequest{Key: partitionID}))
-	// if err != nil {
-	// 	return nil, err
-	// }
+	ms.clientMu.Lock()
+	defer ms.clientMu.Unlock()
+
+	if clientObj, ok := ms.mailCliMap.Load(partitionID); ok {
+		if cached, cok := clientObj.(*cachedClient); cok && !cached.isExpired() {
+			return cached.client, nil
+		}
+		ms.mailCliMap.Delete(partitionID)
+	}
 
 	cfg := ms.cfg
 
 	cli, err := mail.NewClient(cfg.SMTPServerHOST,
 		mail.WithPort(cfg.SMTPServerPORT),
-
-		// Enforce STARTTLS upgrade
 		mail.WithTLSPolicy(mail.TLSMandatory),
-
 		mail.WithSMTPAuth(mail.SMTPAuthPlain),
 		mail.WithUsername(cfg.SMTPServerAccessKey),
 		mail.WithPassword(cfg.SMTPServerSecretKey),
-
-		// Reliability
 		mail.WithTimeout(15*time.Second),
-
-		// Use system CAs
 		mail.WithTLSConfig(nil),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	ms.mailCliMap.Store(partitionID, cli)
+	cached := &cachedClient{
+		client:    cli,
+		createdAt: time.Now(),
+	}
+	ms.mailCliMap.Store(partitionID, cached)
 
 	return cli, nil
-
 }
 
 
@@ -93,14 +110,18 @@ func (ms *Client) Send(ctx context.Context, credentials map[string]string, notif
 
 	extrasData := notification.GetExtras().AsMap()
 	notificationSubject := ""
-	dt, ok := extrasData["subject"]
-	if ok {
-		notificationSubject = dt.(string)
+	if dt, ok := extrasData["subject"]; ok {
+		if s, ok := dt.(string); ok {
+			notificationSubject = s
+		}
 	}
 
 	cli, err := ms.getMailClient(ctx, credentials)
-	if cli == nil {
+	if err != nil {
 		return err
+	}
+	if cli == nil {
+		return fmt.Errorf("failed to get mail client")
 	}
 
 	err = ms.SendEmail(ctx, cli, notification.GetId(), sender.GetDetail(), recipient.GetDetail(), notificationSubject, notification.GetData())
