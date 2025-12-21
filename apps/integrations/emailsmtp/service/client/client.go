@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
@@ -133,24 +134,28 @@ func (ms *Client) Send(ctx context.Context, credentials map[string]string, notif
 		return err
 	}
 
-	err = ms.sendEmailWithRetry(ctx, credentials, conn, notification.GetId(), sender.GetDetail(), recipient.GetDetail(), notificationSubject, notification.GetData())
+	err = ms.sendEmailWithRetry(ctx, credentials, conn, notification.GetId(), sender, recipient, notificationSubject, notification.GetData())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (ms *Client) sendEmailWithRetry(ctx context.Context, credentials map[string]string, conn *connectedClient, messageID, senderEmail, recipientEmail, subject, message string) error {
+func (ms *Client) sendEmailWithRetry(ctx context.Context, credentials map[string]string, conn *connectedClient, messageID string, sender, recipient *commonv1.ContactLink, subject, message string) error {
 	conn.mu.Lock()
 	defer conn.mu.Unlock()
 
 	msg := mail.NewMsg()
-	if err := msg.From(senderEmail); err != nil {
+
+	if sender != nil && sender.GetDetail() != "" {
+		if err := msg.From(sender.GetDetail()); err != nil {
+			return err
+		}
+	}
+	if err := msg.To(recipient.GetDetail()); err != nil {
 		return err
 	}
-	if err := msg.To(recipientEmail); err != nil {
-		return err
-	}
+
 	if err := msg.SetAddrHeader("X-PM-Metadata-notification-id", messageID); err != nil {
 		return err
 	}

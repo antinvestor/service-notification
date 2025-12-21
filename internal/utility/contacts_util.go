@@ -2,7 +2,6 @@ package utility
 
 import (
 	"context"
-	"fmt"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
@@ -88,5 +87,5 @@ func PopulateContactLink(
 		}
 	}
 
-	return nil, fmt.Errorf("no valid contact exists in request")
+	return contact, nil
 }
