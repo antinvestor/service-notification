@@ -158,7 +158,7 @@ func setupPartitionClient(
 		apis.WithTokenUsername(clHolder.JwtClientID()),
 		apis.WithTokenPassword(clHolder.JwtClientSecret()),
 		apis.WithScopes(openid.ConstSystemScopeInternal),
-		apis.WithAudiences("service_partition"))
+		apis.WithAudiences("service_tenancy"))
 }
 
 // setupConnectServer initialises and configures the Connect RPC server.
