@@ -7,7 +7,10 @@ import (
 	"text/template"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
+	partitionv1 "buf.build/gen/go/antinvestor/partition/protocolbuffers/go/partition/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/antinvestor/service-notification/internal/constants"
@@ -26,25 +29,32 @@ type NotificationOutQueue struct {
 	qMan     queue.Manager
 	eventMan events.Manager
 
-	ProfileCli             profilev1connect.ProfileServiceClient
-	NotificationRepo       repository.NotificationRepository
-	NotificationStatusRepo repository.NotificationStatusRepository
-	LanguageRepo           repository.LanguageRepository
-	TemplateDataRepo       repository.TemplateDataRepository
+	profileCli   profilev1connect.ProfileServiceClient
+	partitionCli partitionv1connect.PartitionServiceClient
+
+	notificationRepo       repository.NotificationRepository
+	notificationStatusRepo repository.NotificationStatusRepository
+	languageRepo           repository.LanguageRepository
+	templateDataRepo       repository.TemplateDataRepository
 	routeRepo              repository.RouteRepository
 }
 
 // NewNotificationOutQueue creates a new NotificationOutQueue event handler
-func NewNotificationOutQueue(ctx context.Context, qMan queue.Manager, eventMan events.Manager, profileCli profilev1connect.ProfileServiceClient, notificationRepo repository.NotificationRepository, notificationStatusRepo repository.NotificationStatusRepository, languageRepo repository.LanguageRepository, templateDataRepo repository.TemplateDataRepository, routeRepo repository.RouteRepository) *NotificationOutQueue {
+func NewNotificationOutQueue(ctx context.Context, qMan queue.Manager, eventMan events.Manager,
+	profileCli profilev1connect.ProfileServiceClient, partitionCli partitionv1connect.PartitionServiceClient,
+	notificationRepo repository.NotificationRepository, notificationStatusRepo repository.NotificationStatusRepository,
+	languageRepo repository.LanguageRepository, templateDataRepo repository.TemplateDataRepository,
+	routeRepo repository.RouteRepository) *NotificationOutQueue {
 
 	return &NotificationOutQueue{
 		qMan:                   qMan,
 		eventMan:               eventMan,
-		ProfileCli:             profileCli,
-		NotificationRepo:       notificationRepo,
-		NotificationStatusRepo: notificationStatusRepo,
-		LanguageRepo:           languageRepo,
-		TemplateDataRepo:       templateDataRepo,
+		profileCli:             profileCli,
+		partitionCli:           partitionCli,
+		notificationRepo:       notificationRepo,
+		notificationStatusRepo: notificationStatusRepo,
+		languageRepo:           languageRepo,
+		templateDataRepo:       templateDataRepo,
 		routeRepo:              routeRepo,
 	}
 }
@@ -73,26 +83,31 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	defer logger.Release()
 	logger.Debug("event handler started")
 
-	n, err := event.NotificationRepo.GetByID(ctx, notificationID)
+	n, err := event.notificationRepo.GetByID(ctx, notificationID)
 	if err != nil {
 		logger.WithError(err).Warn("could not get notification from db")
 		return err
 	}
 
-	nStatus, err := event.NotificationStatusRepo.GetByID(ctx, n.StatusID)
+	nStatus, err := event.notificationStatusRepo.GetByID(ctx, n.StatusID)
 	if err != nil {
 		logger.WithError(err).WithField("status_id", n.StatusID).Warn("could not get status")
 		return err
 	}
 
-	language, err := event.LanguageRepo.GetByID(ctx, n.LanguageID)
+	language, err := event.languageRepo.GetByID(ctx, n.LanguageID)
 	if err != nil {
 		logger.WithError(err).WithField("language_id", n.LanguageID).Warn("could not get language")
 		return err
 	}
 
-	var templateMap map[string]string
-	templateMap, err = event.formatOutboundNotification(ctx, logger, n)
+	templateMap, err := event.extendWithSupportContacts(ctx, n)
+	if err != nil {
+		logger.WithError(err).WithField("notification_id", n.GetID()).Error("could extend message with support information")
+		return err
+	}
+
+	templateMap, err = event.formatOutboundNotification(ctx, logger, n, templateMap)
 	if err != nil {
 		logger.WithError(err).WithField("notification_id", n.GetID()).Error("could not format outbound notification")
 
@@ -237,9 +252,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 	return nil
 }
 
-func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, logger *util.LogEntry, n *models.Notification) (map[string]string, error) {
-
-	templateMap := make(map[string]string)
+func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, logger *util.LogEntry, n *models.Notification, templateMap map[string]string) (map[string]string, error) {
 
 	if n.Message != "" {
 		templateMap = map[string]string{"default": n.Message}
@@ -250,7 +263,7 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 		return nil, errors.New("no template id specified")
 	}
 
-	tmplDataList, err0 := event.TemplateDataRepo.GetByTemplateIDAndLanguage(ctx, n.LanguageID, n.TemplateID)
+	tmplDataList, err0 := event.templateDataRepo.GetByTemplateIDAndLanguage(ctx, n.LanguageID, n.TemplateID)
 	if err0 != nil {
 		logger.WithError(err0).
 			WithField("template id", n.TemplateID).
@@ -278,4 +291,33 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 
 	return templateMap, nil
 
+}
+
+func (event *NotificationOutQueue) extendWithSupportContacts(ctx context.Context, n *models.Notification) (map[string]string, error) {
+
+	templateMap := make(map[string]string)
+
+	if n.GetPartitionID() == "" {
+		return templateMap, nil
+	}
+
+	resp, err := event.partitionCli.GetPartition(ctx, connect.NewRequest(&partitionv1.GetPartitionRequest{Id: n.GetPartitionID()}))
+	if err != nil {
+		return nil, err
+	}
+
+	partition := resp.Msg.GetData()
+	properties := (&data.JSONMap{}).FromProtoStruct(partition.GetProperties())
+	contacts, ok := properties["support_contacts"]
+	if ok {
+		supportContacts, sOk := contacts.(map[string]any)
+		if sOk {
+
+			for k, v := range supportContacts {
+				templateMap["support_"+k] = v.(string)
+			}
+		}
+	}
+
+	return templateMap, nil
 }

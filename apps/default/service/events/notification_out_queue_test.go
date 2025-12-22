@@ -82,16 +82,16 @@ func (s *NotificationOutQueueTestSuite) Test_formatOutboundNotification_Template
 			TemplateID: "9bsv0s23l8og00vgjq90",
 			LanguageID: "9bsv0s23l8og00vgjqa0",
 			Payload: data.JSONMap{
-				"pin":        "1234",
+				"code":       "1234",
 				"expiryDate": "tomorrow",
 			},
 		}
 
 		event := &NotificationOutQueue{
-			TemplateDataRepo: templateDataRepo,
+			templateDataRepo: templateDataRepo,
 		}
 
-		messageMap, err := event.formatOutboundNotification(ctx, util.Log(ctx), n)
+		messageMap, err := event.formatOutboundNotification(ctx, util.Log(ctx), n, make(map[string]string))
 		require.NoError(t, err)
 		require.NotEmpty(t, messageMap)
 		require.Equal(t, "Your contact verification code is : 1234 and will expire at tomorrow", messageMap["text"])

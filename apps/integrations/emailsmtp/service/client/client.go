@@ -120,10 +120,22 @@ func (ms *Client) Send(ctx context.Context, credentials map[string]string, notif
 		return err
 	}
 
-	// TODO: remove this hack to just see things workign
-	sender.Detail = "info@stawi.im"
-
 	extrasData := notification.GetExtras().AsMap()
+
+	if sender.GetDetail() == "" {
+
+		// Check existence of support email and use that:
+		if dt, ok := extrasData["support_email"]; ok {
+			if s, supportOk := dt.(string); supportOk {
+				sender.Detail = s
+			}
+		}
+	}
+
+	if sender.GetDetail() == "" {
+		return fmt.Errorf("email sender is empty: possibly configure support contacts in partition")
+	}
+
 	notificationSubject := ""
 	if dt, ok := extrasData["subject"]; ok {
 		if s, subjectOk := dt.(string); subjectOk {

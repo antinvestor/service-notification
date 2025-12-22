@@ -102,7 +102,8 @@ func main() {
 			events2.NewNotificationInRoute(ctx, qMan, evtsMan, notificationRepo, routeRepo),
 			events2.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, routeRepo, profileCli),
 			events2.NewNotificationOutRoute(ctx, evtsMan, profileCli, notificationRepo, routeRepo),
-			events2.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)),
+			events2.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, partitionCli,
+				notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)),
 	}
 
 	svc.Init(ctx, serviceOptions...)
