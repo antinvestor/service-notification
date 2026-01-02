@@ -373,11 +373,21 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 
 	logger.Debug("handling search request")
 
-	limits := searchQuery.GetLimits()
+	// Extract pagination from cursor
+	limit := int32(50) // Default limit
+	offset := int32(0)  // Default offset
+	if searchQuery.GetCursor() != nil {
+		if searchQuery.GetCursor().GetLimit() > 0 {
+			limit = searchQuery.GetCursor().GetLimit()
+		}
+		// Page field is now a string cursor, not an integer offset
+		// For backward compatibility, we'll use offset = 0 for now
+		// TODO: Implement cursor-based pagination if needed
+	}
 
 	searchOpts := []data.SearchOption{
-		data.WithSearchLimit(int(limits.GetCount())),
-		data.WithSearchOffset(int(limits.GetPage())),
+		data.WithSearchLimit(int(limit)),
+		data.WithSearchOffset(int(offset)),
 	}
 
 	andQueryVal := map[string]any{}
