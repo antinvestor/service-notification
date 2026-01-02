@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
@@ -373,11 +374,19 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 
 	logger.Debug("handling search request")
 
-	limits := searchQuery.GetLimits()
+	// Extract pagination from cursor
+	var searchOpts []data.SearchOption
 
-	searchOpts := []data.SearchOption{
-		data.WithSearchLimit(int(limits.GetCount())),
-		data.WithSearchOffset(int(limits.GetPage())),
+	cursor := searchQuery.GetCursor()
+
+	if cursor != nil {
+
+		offset, offsetErr := strconv.Atoi(cursor.GetPage())
+		if offsetErr != nil {
+			offset = 0
+		}
+
+		searchOpts = append(searchOpts, data.WithSearchOffset(offset), data.WithSearchLimit(int(cursor.GetLimit())))
 	}
 
 	andQueryVal := map[string]any{}

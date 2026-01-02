@@ -174,9 +174,9 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut() {
 					var nSlice []*notificationv1.Notification
 
 					err0 := resources.NotificationBusiness.Search(ctx, &commonv1.SearchRequest{
-						Limits: &commonv1.Pagination{
-							Count: 10,
-							Page:  0,
+						Cursor: &commonv1.PageCursor{
+							Limit: 10,
+							Page:  "",
 						},
 						IdQuery: got.GetId(),
 					}, func(ctx context.Context, batch []*notificationv1.Notification) error {
