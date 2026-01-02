@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
@@ -374,20 +375,18 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 	logger.Debug("handling search request")
 
 	// Extract pagination from cursor
-	limit := int32(50) // Default limit
-	offset := int32(0)  // Default offset
-	if searchQuery.GetCursor() != nil {
-		if searchQuery.GetCursor().GetLimit() > 0 {
-			limit = searchQuery.GetCursor().GetLimit()
-		}
-		// Page field is now a string cursor, not an integer offset
-		// For backward compatibility, we'll use offset = 0 for now
-		// TODO: Implement cursor-based pagination if needed
-	}
+	var searchOpts []data.SearchOption
 
-	searchOpts := []data.SearchOption{
-		data.WithSearchLimit(int(limit)),
-		data.WithSearchOffset(int(offset)),
+	cursor := searchQuery.GetCursor()
+
+	if cursor != nil {
+
+		offset, offsetErr := strconv.Atoi(cursor.GetPage())
+		if offsetErr != nil {
+			offset = 0
+		}
+
+		searchOpts = append(searchOpts, data.WithSearchOffset(offset), data.WithSearchLimit(int(cursor.GetLimit())))
 	}
 
 	andQueryVal := map[string]any{}
