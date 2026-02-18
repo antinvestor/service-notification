@@ -9,6 +9,7 @@ import (
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"connectrpc.com/connect"
 	apis "github.com/antinvestor/apis/go/common"
+	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	"github.com/antinvestor/apis/go/partition"
 	"github.com/antinvestor/apis/go/profile"
 	aconfig "github.com/antinvestor/service-notification/apps/default/config"
@@ -175,5 +176,9 @@ func setupConnectServer(ctx context.Context, sm security.Manager, workMan worker
 	_, serverHandler := notificationv1connect.NewNotificationServiceHandler(
 		implementation, connect.WithInterceptors(defaultInterceptorList...))
 
-	return serverHandler
+	mux := http.NewServeMux()
+	mux.Handle("/", serverHandler)
+	mux.Handle("/openapi.yaml", apis.NewOpenAPIHandler(notificationv1.ApiSpecFile, nil))
+
+	return mux
 }
