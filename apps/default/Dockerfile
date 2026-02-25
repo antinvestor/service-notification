@@ -2,7 +2,7 @@ ARG TARGETOS=linux
 ARG TARGETARCH=amd64
 
 # ---------- Builder ----------
-FROM golang:1.25 AS builder
+FROM golang:1.26 AS builder
 
 # Add Maintainer Info
 LABEL maintainer="Bwire Peter <bwire517@gmail.com>"
