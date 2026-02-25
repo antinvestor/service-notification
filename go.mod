@@ -3,21 +3,21 @@ module github.com/antinvestor/service-notification
 go 1.26
 
 require (
-	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.11-20260102104630-5c57561a771f.1
-	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20260102123330-d6847f42a19a.2
-	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.11-20260102123330-d6847f42a19a.1
-	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20260102123403-c216ee43d0df.2
-	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.11-20260102123403-c216ee43d0df.1
-	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20260102123445-62e44f8dd82b.2
-	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.11-20260102123445-62e44f8dd82b.1
-	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20260102123521-54fcf9143036.2
-	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.11-20260102123521-54fcf9143036.1
+	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.11-20260219054105-fe125014d75c.1
+	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20260219061917-db3557eecaba.2
+	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.11-20260219061917-db3557eecaba.1
+	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20260219061955-b6e126d51e84.2
+	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.11-20260219061955-b6e126d51e84.1
+	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20260219062039-499f582dea7e.2
+	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.11-20260219062039-499f582dea7e.1
+	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20260219062126-e9b0d15a670e.2
+	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.11-20260219062126-e9b0d15a670e.1
 	connectrpc.com/connect v1.19.1
-	github.com/antinvestor/apis/go/common v1.53.1
-	github.com/antinvestor/apis/go/notification v1.53.4
-	github.com/antinvestor/apis/go/partition v1.53.4
-	github.com/antinvestor/apis/go/profile v1.53.4
-	github.com/antinvestor/apis/go/settings v1.53.4
+	github.com/antinvestor/apis/go/common v1.53.11
+	github.com/antinvestor/apis/go/notification v1.53.13
+	github.com/antinvestor/apis/go/partition v1.53.13
+	github.com/antinvestor/apis/go/profile v1.53.13
+	github.com/antinvestor/apis/go/settings v1.53.13
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
 	github.com/pitabwire/frame v1.74.0
