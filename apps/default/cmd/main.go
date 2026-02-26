@@ -13,6 +13,7 @@ import (
 	"github.com/antinvestor/apis/go/partition"
 	"github.com/antinvestor/apis/go/profile"
 	aconfig "github.com/antinvestor/service-notification/apps/default/config"
+	"github.com/antinvestor/service-notification/apps/default/service/authz"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/handlers"
@@ -91,8 +92,11 @@ func main() {
 	notificationBusiness := business.NewNotificationBusiness(ctx, workMan, evtsMan, profileCli, partitionCli,
 		notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
 
+	// Setup authorization middleware
+	authzMiddleware := authz.NewMiddleware(sm.GetAuthorizer(ctx))
+
 	// Setup Connect server
-	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
+	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness, authzMiddleware)
 
 	// Initialise the service with all options
 	serviceOptions := []frame.Option{
@@ -163,10 +167,10 @@ func setupPartitionClient(
 }
 
 // setupConnectServer initialises and configures the Connect RPC server.
-func setupConnectServer(ctx context.Context, sm security.Manager, workMan workerpool.Manager, notificationBusiness business.NotificationBusiness) http.Handler {
+func setupConnectServer(ctx context.Context, sm security.Manager, workMan workerpool.Manager, notificationBusiness business.NotificationBusiness, authzMiddleware authz.Middleware) http.Handler {
 
 	// Create handler with injected dependencies
-	implementation := handlers.NewNotificationServer(workMan, notificationBusiness)
+	implementation := handlers.NewNotificationServer(workMan, notificationBusiness, authzMiddleware)
 
 	defaultInterceptorList, err := connectInterceptors.DefaultList(ctx, sm.GetAuthenticator(ctx))
 	if err != nil {
