@@ -55,7 +55,7 @@ func (bs *BaseTestSuite) SetupSuite() {
 		)
 		return []definition.TestResource{pg, keto}
 	}
-	bs.BaseTestSuite.SetupSuite()
+	bs.FrameBaseTestSuite.SetupSuite()
 
 	ctx := bs.T().Context()
 
