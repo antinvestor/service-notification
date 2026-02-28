@@ -22,7 +22,7 @@ const (
 	testPartitionID = "partition1"
 )
 
-var testTenancyPath = fmt.Sprintf("%s/%s", testTenantID, testPartitionID)
+var testTenancyPath = fmt.Sprintf("%s/%s", testTenantID, testPartitionID) //nolint:gochecknoglobals // test constant
 
 // ---------------------------------------------------------------------------
 // Test suite with real Keto
@@ -112,7 +112,7 @@ func (s *MiddlewareTestSuite) seedRole(auth security.Authorizer, tenancyPath, pr
 	for _, perm := range permissions {
 		tuples = append(tuples, security.RelationTuple{
 			Object:   security.ObjectRef{Namespace: authz.NamespaceNotifications, ID: tenancyPath},
-			Relation: perm,
+			Relation: authz.GrantedRelation(perm),
 			Subject:  security.SubjectRef{Namespace: authz.NamespaceProfile, ID: profileID},
 		})
 	}
@@ -126,7 +126,7 @@ func TestMiddlewareSuite(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// FunctionChecker (middleware) tests — only checks service_notifications permissions
+// FunctionChecker (middleware) tests -- only checks service_notifications permissions
 // ---------------------------------------------------------------------------
 
 func (s *MiddlewareTestSuite) TestOwnerHasAllPermissions() {
@@ -136,13 +136,13 @@ func (s *MiddlewareTestSuite) TestOwnerHasAllPermissions() {
 	mw := authz.NewMiddleware(auth)
 	ctx := s.ctxWithClaims("user1")
 
-	s.NoError(mw.CanSendNotification(ctx))
-	s.NoError(mw.CanReleaseNotification(ctx))
-	s.NoError(mw.CanSearchNotifications(ctx))
-	s.NoError(mw.CanViewNotificationStatus(ctx))
-	s.NoError(mw.CanUpdateNotificationStatus(ctx))
-	s.NoError(mw.CanManageTemplate(ctx))
-	s.NoError(mw.CanViewTemplate(ctx))
+	s.NoError(mw.CanNotificationSend(ctx))
+	s.NoError(mw.CanNotificationRelease(ctx))
+	s.NoError(mw.CanNotificationSearch(ctx))
+	s.NoError(mw.CanNotificationStatusView(ctx))
+	s.NoError(mw.CanNotificationStatusUpdate(ctx))
+	s.NoError(mw.CanTemplateManage(ctx))
+	s.NoError(mw.CanTemplateView(ctx))
 }
 
 func (s *MiddlewareTestSuite) TestOperatorPermissions() {
@@ -153,15 +153,15 @@ func (s *MiddlewareTestSuite) TestOperatorPermissions() {
 	ctx := s.ctxWithClaims("user2")
 
 	// Operator can send, release, search, view status, view template
-	s.NoError(mw.CanSendNotification(ctx))
-	s.NoError(mw.CanReleaseNotification(ctx))
-	s.NoError(mw.CanSearchNotifications(ctx))
-	s.NoError(mw.CanViewNotificationStatus(ctx))
-	s.NoError(mw.CanViewTemplate(ctx))
+	s.NoError(mw.CanNotificationSend(ctx))
+	s.NoError(mw.CanNotificationRelease(ctx))
+	s.NoError(mw.CanNotificationSearch(ctx))
+	s.NoError(mw.CanNotificationStatusView(ctx))
+	s.NoError(mw.CanTemplateView(ctx))
 
 	// Operator cannot update status or manage templates
-	s.Error(mw.CanUpdateNotificationStatus(ctx))
-	s.Error(mw.CanManageTemplate(ctx))
+	s.Require().Error(mw.CanNotificationStatusUpdate(ctx))
+	s.Require().Error(mw.CanTemplateManage(ctx))
 }
 
 func (s *MiddlewareTestSuite) TestViewerPermissions() {
@@ -172,15 +172,15 @@ func (s *MiddlewareTestSuite) TestViewerPermissions() {
 	ctx := s.ctxWithClaims("user3")
 
 	// Viewer can search, view status, view template
-	s.NoError(mw.CanSearchNotifications(ctx))
-	s.NoError(mw.CanViewNotificationStatus(ctx))
-	s.NoError(mw.CanViewTemplate(ctx))
+	s.NoError(mw.CanNotificationSearch(ctx))
+	s.NoError(mw.CanNotificationStatusView(ctx))
+	s.NoError(mw.CanTemplateView(ctx))
 
 	// Viewer cannot send, release, update status, manage template
-	s.Error(mw.CanSendNotification(ctx))
-	s.Error(mw.CanReleaseNotification(ctx))
-	s.Error(mw.CanUpdateNotificationStatus(ctx))
-	s.Error(mw.CanManageTemplate(ctx))
+	s.Require().Error(mw.CanNotificationSend(ctx))
+	s.Require().Error(mw.CanNotificationRelease(ctx))
+	s.Require().Error(mw.CanNotificationStatusUpdate(ctx))
+	s.Require().Error(mw.CanTemplateManage(ctx))
 }
 
 func (s *MiddlewareTestSuite) TestMemberPermissions() {
@@ -191,22 +191,22 @@ func (s *MiddlewareTestSuite) TestMemberPermissions() {
 	ctx := s.ctxWithClaims("user4")
 
 	// Member can search, view status
-	s.NoError(mw.CanSearchNotifications(ctx))
-	s.NoError(mw.CanViewNotificationStatus(ctx))
+	s.NoError(mw.CanNotificationSearch(ctx))
+	s.NoError(mw.CanNotificationStatusView(ctx))
 
 	// Member cannot send, release, update status, manage/view template
-	s.Error(mw.CanSendNotification(ctx))
-	s.Error(mw.CanReleaseNotification(ctx))
-	s.Error(mw.CanUpdateNotificationStatus(ctx))
-	s.Error(mw.CanManageTemplate(ctx))
-	s.Error(mw.CanViewTemplate(ctx))
+	s.Require().Error(mw.CanNotificationSend(ctx))
+	s.Require().Error(mw.CanNotificationRelease(ctx))
+	s.Require().Error(mw.CanNotificationStatusUpdate(ctx))
+	s.Require().Error(mw.CanTemplateManage(ctx))
+	s.Require().Error(mw.CanTemplateView(ctx))
 }
 
 func (s *MiddlewareTestSuite) TestNoClaims() {
 	auth := s.newAuthorizer()
 	mw := authz.NewMiddleware(auth)
 
-	err := mw.CanSearchNotifications(context.Background())
+	err := mw.CanNotificationSearch(context.Background())
 	s.ErrorIs(err, authorizer.ErrInvalidSubject)
 }
 
@@ -217,12 +217,12 @@ func (s *MiddlewareTestSuite) TestNoTenant() {
 	claims := &security.AuthenticationClaims{}
 	claims.Subject = "user1"
 	ctx := claims.ClaimsToContext(context.Background())
-	err := mw.CanSearchNotifications(ctx)
+	err := mw.CanNotificationSearch(ctx)
 	s.ErrorIs(err, authorizer.ErrInvalidObject)
 }
 
 // ---------------------------------------------------------------------------
-// TenancyAccessChecker tests — data access layer
+// TenancyAccessChecker tests -- data access layer
 // ---------------------------------------------------------------------------
 
 func (s *MiddlewareTestSuite) TestAccessChecker_MemberAllowed() {
@@ -252,11 +252,11 @@ func (s *MiddlewareTestSuite) TestAccessChecker_NoTupleDenied() {
 	checker := authorizer.NewTenancyAccessChecker(auth, authz.NamespaceTenancyAccess)
 
 	ctx := s.ctxWithClaims("unknown-user")
-	s.Error(checker.CheckAccess(ctx))
+	s.Require().Error(checker.CheckAccess(ctx))
 }
 
 // ---------------------------------------------------------------------------
-// Service bot via subject sets — full two-layer check
+// Service bot via subject sets -- full two-layer check
 // ---------------------------------------------------------------------------
 
 func (s *MiddlewareTestSuite) seedServiceBridgeTuples(auth security.Authorizer, tenancyPath string) {
@@ -283,29 +283,28 @@ func (s *MiddlewareTestSuite) TestServiceBotViaSubjectSets() {
 	s.NoError(accessChecker.CheckAccess(botCtx))
 
 	// Layer 2: Functional permissions resolved through subject sets
-	s.NoError(mw.CanSendNotification(botCtx))
-	s.NoError(mw.CanSearchNotifications(botCtx))
-	s.NoError(mw.CanManageTemplate(botCtx))
+	s.NoError(mw.CanNotificationSend(botCtx))
+	s.NoError(mw.CanNotificationSearch(botCtx))
+	s.NoError(mw.CanTemplateManage(botCtx))
 }
 
 func (s *MiddlewareTestSuite) TestDirectPermissionGrant() {
 	auth := s.newAuthorizer()
 	mw := authz.NewMiddleware(auth)
 
-	// User has a direct permission grant for send_notification only
-	err := auth.WriteTuple(s.T().Context(), security.RelationTuple{
-		Object:   security.ObjectRef{Namespace: authz.NamespaceNotifications, ID: testTenancyPath},
-		Relation: authz.PermissionSendNotification,
-		Subject:  security.SubjectRef{Namespace: authz.NamespaceProfile, ID: "user5"},
-	})
+	// User has a direct permission grant (uses granted_ prefix relation)
+	err := auth.WriteTuple(s.T().Context(), authz.BuildPermissionTuple(
+		authz.NamespaceNotifications, testTenancyPath,
+		authz.PermissionNotificationSend, "user5",
+	))
 	s.Require().NoError(err)
 
 	ctx := s.ctxWithClaims("user5")
 
-	// Direct grant works
-	s.NoError(mw.CanSendNotification(ctx))
+	// Direct grant works (OPL permit checks granted_notification_send relation)
+	s.NoError(mw.CanNotificationSend(ctx))
 
 	// Other permissions require their own tuples
-	s.Error(mw.CanSearchNotifications(ctx))
-	s.Error(mw.CanManageTemplate(ctx))
+	s.Require().Error(mw.CanNotificationSearch(ctx))
+	s.Require().Error(mw.CanTemplateManage(ctx))
 }

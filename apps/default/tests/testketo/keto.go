@@ -57,66 +57,68 @@ class service_notifications implements Namespace {
     member: profile_user[]
     service: (profile_user | tenancy_access)[]
 
-    send_notification: (profile_user | service_notifications)[]
-    release_notification: (profile_user | service_notifications)[]
-    search_notifications: (profile_user | service_notifications)[]
-    view_notification_status: (profile_user | service_notifications)[]
-    update_notification_status: (profile_user | service_notifications)[]
-    manage_template: (profile_user | service_notifications)[]
-    view_template: (profile_user | service_notifications)[]
+    // Direct permission grants (prefixed with granted_ to avoid
+    // name conflicts with OPL permits)
+    granted_notification_send: (profile_user | service_notifications)[]
+    granted_notification_release: (profile_user | service_notifications)[]
+    granted_notification_search: (profile_user | service_notifications)[]
+    granted_notification_status_view: (profile_user | service_notifications)[]
+    granted_notification_status_update: (profile_user | service_notifications)[]
+    granted_template_manage: (profile_user | service_notifications)[]
+    granted_template_view: (profile_user | service_notifications)[]
   }
 
   permits = {
-    send_notification: (ctx: Context): boolean =>
+    notification_send: (ctx: Context): boolean =>
       this.related.service.includes(ctx.subject) ||
       this.related.owner.includes(ctx.subject) ||
       this.related.admin.includes(ctx.subject) ||
       this.related.operator.includes(ctx.subject) ||
-      this.related.send_notification.includes(ctx.subject),
+      this.related.granted_notification_send.includes(ctx.subject),
 
-    release_notification: (ctx: Context): boolean =>
+    notification_release: (ctx: Context): boolean =>
       this.related.service.includes(ctx.subject) ||
       this.related.owner.includes(ctx.subject) ||
       this.related.admin.includes(ctx.subject) ||
       this.related.operator.includes(ctx.subject) ||
-      this.related.release_notification.includes(ctx.subject),
+      this.related.granted_notification_release.includes(ctx.subject),
 
-    search_notifications: (ctx: Context): boolean =>
-      this.related.service.includes(ctx.subject) ||
-      this.related.owner.includes(ctx.subject) ||
-      this.related.admin.includes(ctx.subject) ||
-      this.related.operator.includes(ctx.subject) ||
-      this.related.viewer.includes(ctx.subject) ||
-      this.related.member.includes(ctx.subject) ||
-      this.related.search_notifications.includes(ctx.subject),
-
-    view_notification_status: (ctx: Context): boolean =>
+    notification_search: (ctx: Context): boolean =>
       this.related.service.includes(ctx.subject) ||
       this.related.owner.includes(ctx.subject) ||
       this.related.admin.includes(ctx.subject) ||
       this.related.operator.includes(ctx.subject) ||
       this.related.viewer.includes(ctx.subject) ||
       this.related.member.includes(ctx.subject) ||
-      this.related.view_notification_status.includes(ctx.subject),
+      this.related.granted_notification_search.includes(ctx.subject),
 
-    update_notification_status: (ctx: Context): boolean =>
+    notification_status_view: (ctx: Context): boolean =>
       this.related.service.includes(ctx.subject) ||
       this.related.owner.includes(ctx.subject) ||
       this.related.admin.includes(ctx.subject) ||
-      this.related.update_notification_status.includes(ctx.subject),
-
-    manage_template: (ctx: Context): boolean =>
-      this.related.service.includes(ctx.subject) ||
-      this.related.owner.includes(ctx.subject) ||
-      this.related.admin.includes(ctx.subject) ||
-      this.related.manage_template.includes(ctx.subject),
-
-    view_template: (ctx: Context): boolean =>
-      this.related.service.includes(ctx.subject) ||
-      this.permits.manage_template(ctx) ||
       this.related.operator.includes(ctx.subject) ||
       this.related.viewer.includes(ctx.subject) ||
-      this.related.view_template.includes(ctx.subject),
+      this.related.member.includes(ctx.subject) ||
+      this.related.granted_notification_status_view.includes(ctx.subject),
+
+    notification_status_update: (ctx: Context): boolean =>
+      this.related.service.includes(ctx.subject) ||
+      this.related.owner.includes(ctx.subject) ||
+      this.related.admin.includes(ctx.subject) ||
+      this.related.granted_notification_status_update.includes(ctx.subject),
+
+    template_manage: (ctx: Context): boolean =>
+      this.related.service.includes(ctx.subject) ||
+      this.related.owner.includes(ctx.subject) ||
+      this.related.admin.includes(ctx.subject) ||
+      this.related.granted_template_manage.includes(ctx.subject),
+
+    template_view: (ctx: Context): boolean =>
+      this.related.service.includes(ctx.subject) ||
+      this.permits.template_manage(ctx) ||
+      this.related.operator.includes(ctx.subject) ||
+      this.related.viewer.includes(ctx.subject) ||
+      this.related.granted_template_view.includes(ctx.subject),
   }
 }
 `

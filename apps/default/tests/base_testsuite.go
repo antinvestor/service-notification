@@ -228,7 +228,7 @@ func (bs *BaseTestSuite) SeedTenantRole(ctx context.Context, svc *frame.Service,
 	for _, perm := range permissions {
 		tuples = append(tuples, security.RelationTuple{
 			Object:   security.ObjectRef{Namespace: authz.NamespaceNotifications, ID: tenancyPath},
-			Relation: perm,
+			Relation: authz.GrantedRelation(perm),
 			Subject:  security.SubjectRef{Namespace: authz.NamespaceProfile, ID: profileID},
 		})
 	}

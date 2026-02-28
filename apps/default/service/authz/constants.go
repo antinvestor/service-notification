@@ -3,19 +3,37 @@ package authz
 const (
 	NamespaceNotifications = "service_notifications"
 	NamespaceTenancyAccess = "tenancy_access"
-	NamespaceProfile       = "profile/user"
+	NamespaceProfile       = "profile_user"
 )
 
+// Permission constants for notification operations.
+// These names match the OPL permits functions and are used with Keto's Check API.
+// Named as noun_verb (e.g. notification_send) so related permissions group together.
 const (
-	PermissionSendNotification         = "send_notification"
-	PermissionReleaseNotification      = "release_notification"
-	PermissionSearchNotifications      = "search_notifications"
-	PermissionViewNotificationStatus   = "view_notification_status"
-	PermissionUpdateNotificationStatus = "update_notification_status"
-	PermissionManageTemplate           = "manage_template"
-	PermissionViewTemplate             = "view_template"
+	PermissionNotificationSend         = "notification_send"
+	PermissionNotificationRelease      = "notification_release"
+	PermissionNotificationSearch       = "notification_search"
+	PermissionNotificationStatusView   = "notification_status_view"
+	PermissionNotificationStatusUpdate = "notification_status_update"
+	PermissionTemplateManage           = "template_manage"
+	PermissionTemplateView             = "template_view"
 )
 
+// Granted relation constants for direct permission grants in the OPL.
+// These are prefixed with "granted_" to avoid name conflicts with the OPL
+// permits functions -- Keto skips permit evaluation when a relation with
+// the same name exists.
+const (
+	GrantedNotificationSend         = "granted_notification_send"
+	GrantedNotificationRelease      = "granted_notification_release"
+	GrantedNotificationSearch       = "granted_notification_search"
+	GrantedNotificationStatusView   = "granted_notification_status_view"
+	GrantedNotificationStatusUpdate = "granted_notification_status_update"
+	GrantedTemplateManage           = "granted_template_manage"
+	GrantedTemplateView             = "granted_template_view"
+)
+
+// Role constants.
 const (
 	RoleOwner    = "owner"
 	RoleAdmin    = "admin"
@@ -25,35 +43,35 @@ const (
 	RoleService  = "service"
 )
 
-// RolePermissions maps each role to the permissions it grants.
-// These are materialised as direct tuples (Keto v1alpha2 gRPC Check API
-// does not evaluate OPL permits).
-var RolePermissions = map[string][]string{
+// RolePermissions documents the permission model defined in the OPL namespace config.
+// Keto's Check API evaluates OPL permits, so only role tuples need to be written;
+// permission resolution happens automatically through the OPL model.
+var RolePermissions = map[string][]string{ //nolint:gochecknoglobals // permission model registry
 	RoleOwner: {
-		PermissionSendNotification, PermissionReleaseNotification,
-		PermissionSearchNotifications, PermissionViewNotificationStatus,
-		PermissionUpdateNotificationStatus, PermissionManageTemplate, PermissionViewTemplate,
+		PermissionNotificationSend, PermissionNotificationRelease,
+		PermissionNotificationSearch, PermissionNotificationStatusView,
+		PermissionNotificationStatusUpdate, PermissionTemplateManage, PermissionTemplateView,
 	},
 	RoleAdmin: {
-		PermissionSendNotification, PermissionReleaseNotification,
-		PermissionSearchNotifications, PermissionViewNotificationStatus,
-		PermissionUpdateNotificationStatus, PermissionManageTemplate, PermissionViewTemplate,
+		PermissionNotificationSend, PermissionNotificationRelease,
+		PermissionNotificationSearch, PermissionNotificationStatusView,
+		PermissionNotificationStatusUpdate, PermissionTemplateManage, PermissionTemplateView,
 	},
 	RoleOperator: {
-		PermissionSendNotification, PermissionReleaseNotification,
-		PermissionSearchNotifications, PermissionViewNotificationStatus,
-		PermissionViewTemplate,
+		PermissionNotificationSend, PermissionNotificationRelease,
+		PermissionNotificationSearch, PermissionNotificationStatusView,
+		PermissionTemplateView,
 	},
 	RoleViewer: {
-		PermissionSearchNotifications, PermissionViewNotificationStatus,
-		PermissionViewTemplate,
+		PermissionNotificationSearch, PermissionNotificationStatusView,
+		PermissionTemplateView,
 	},
 	RoleMember: {
-		PermissionSearchNotifications, PermissionViewNotificationStatus,
+		PermissionNotificationSearch, PermissionNotificationStatusView,
 	},
 	RoleService: {
-		PermissionSendNotification, PermissionReleaseNotification,
-		PermissionSearchNotifications, PermissionViewNotificationStatus,
-		PermissionUpdateNotificationStatus, PermissionManageTemplate, PermissionViewTemplate,
+		PermissionNotificationSend, PermissionNotificationRelease,
+		PermissionNotificationSearch, PermissionNotificationStatusView,
+		PermissionNotificationStatusUpdate, PermissionTemplateManage, PermissionTemplateView,
 	},
 }

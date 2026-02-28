@@ -20,6 +20,24 @@ func BuildServiceAccessTuple(tenancyPath, profileID string) security.RelationTup
 	}
 }
 
+// GrantedRelation returns the OPL relation name for a direct permission grant.
+// OPL relations are prefixed with "granted_" to avoid name conflicts with
+// the permits functions (Keto skips permit evaluation when a relation with
+// the same name exists).
+func GrantedRelation(permission string) string {
+	return "granted_" + permission
+}
+
+// BuildPermissionTuple creates a single direct permission grant tuple.
+// The relation is automatically prefixed with "granted_" to match the OPL schema.
+func BuildPermissionTuple(namespace, tenancyPath, permission, profileID string) security.RelationTuple {
+	return security.RelationTuple{
+		Object:   security.ObjectRef{Namespace: namespace, ID: tenancyPath},
+		Relation: GrantedRelation(permission),
+		Subject:  security.SubjectRef{Namespace: NamespaceProfile, ID: profileID},
+	}
+}
+
 // BuildServiceInheritanceTuples creates bridge tuples that allow service bots
 // (who have tenancy_access#service) to inherit functional permissions in
 // service_notifications via subject sets.
@@ -35,7 +53,7 @@ func BuildServiceInheritanceTuples(tenancyPath string) []security.RelationTuple 
 		},
 	}
 
-	// Permission bridges: service_notifications#perm <- service_notifications#service (subject set)
+	// Permission bridges: service_notifications#granted_perm <- service_notifications#service (subject set)
 	permissions := RolePermissions[RoleService]
 	tuples := make([]security.RelationTuple, 0, 1+len(permissions))
 	tuples = append(tuples, serviceBridge)
@@ -43,7 +61,7 @@ func BuildServiceInheritanceTuples(tenancyPath string) []security.RelationTuple 
 	for _, perm := range permissions {
 		tuples = append(tuples, security.RelationTuple{
 			Object:   security.ObjectRef{Namespace: NamespaceNotifications, ID: tenancyPath},
-			Relation: perm,
+			Relation: GrantedRelation(perm),
 			Subject: security.SubjectRef{
 				Namespace: NamespaceNotifications,
 				ID:        tenancyPath,

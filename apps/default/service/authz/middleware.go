@@ -8,13 +8,13 @@ import (
 )
 
 type Middleware interface {
-	CanSendNotification(ctx context.Context) error
-	CanReleaseNotification(ctx context.Context) error
-	CanSearchNotifications(ctx context.Context) error
-	CanViewNotificationStatus(ctx context.Context) error
-	CanUpdateNotificationStatus(ctx context.Context) error
-	CanManageTemplate(ctx context.Context) error
-	CanViewTemplate(ctx context.Context) error
+	CanNotificationSend(ctx context.Context) error
+	CanNotificationRelease(ctx context.Context) error
+	CanNotificationSearch(ctx context.Context) error
+	CanNotificationStatusView(ctx context.Context) error
+	CanNotificationStatusUpdate(ctx context.Context) error
+	CanTemplateManage(ctx context.Context) error
+	CanTemplateView(ctx context.Context) error
 }
 
 type middleware struct {
@@ -27,30 +27,30 @@ func NewMiddleware(service security.Authorizer) Middleware {
 	}
 }
 
-func (m *middleware) CanSendNotification(ctx context.Context) error {
-	return m.checker.Check(ctx, PermissionSendNotification)
+func (m *middleware) CanNotificationSend(ctx context.Context) error {
+	return m.checker.Check(ctx, PermissionNotificationSend)
 }
 
-func (m *middleware) CanReleaseNotification(ctx context.Context) error {
-	return m.checker.Check(ctx, PermissionReleaseNotification)
+func (m *middleware) CanNotificationRelease(ctx context.Context) error {
+	return m.checker.Check(ctx, PermissionNotificationRelease)
 }
 
-func (m *middleware) CanSearchNotifications(ctx context.Context) error {
-	return m.checker.Check(ctx, PermissionSearchNotifications)
+func (m *middleware) CanNotificationSearch(ctx context.Context) error {
+	return m.checker.Check(ctx, PermissionNotificationSearch)
 }
 
-func (m *middleware) CanViewNotificationStatus(ctx context.Context) error {
-	return m.checker.Check(ctx, PermissionViewNotificationStatus)
+func (m *middleware) CanNotificationStatusView(ctx context.Context) error {
+	return m.checker.Check(ctx, PermissionNotificationStatusView)
 }
 
-func (m *middleware) CanUpdateNotificationStatus(ctx context.Context) error {
-	return m.checker.Check(ctx, PermissionUpdateNotificationStatus)
+func (m *middleware) CanNotificationStatusUpdate(ctx context.Context) error {
+	return m.checker.Check(ctx, PermissionNotificationStatusUpdate)
 }
 
-func (m *middleware) CanManageTemplate(ctx context.Context) error {
-	return m.checker.Check(ctx, PermissionManageTemplate)
+func (m *middleware) CanTemplateManage(ctx context.Context) error {
+	return m.checker.Check(ctx, PermissionTemplateManage)
 }
 
-func (m *middleware) CanViewTemplate(ctx context.Context) error {
-	return m.checker.Check(ctx, PermissionViewTemplate)
+func (m *middleware) CanTemplateView(ctx context.Context) error {
+	return m.checker.Check(ctx, PermissionTemplateView)
 }

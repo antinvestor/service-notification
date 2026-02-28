@@ -38,7 +38,7 @@ func NewNotificationServer(
 
 // Send method for queueing massages as requested
 func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[notificationv1.SendRequest], stream *connect.ServerStream[notificationv1.SendResponse]) error {
-	if err := ns.authz.CanSendNotification(ctx); err != nil {
+	if err := ns.authz.CanNotificationSend(ctx); err != nil {
 		return authorizer.ToConnectError(err)
 	}
 
@@ -90,7 +90,7 @@ func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[not
 
 // Status request to determine if notification is prepared or released
 func (ns *NotificationServer) Status(ctx context.Context, req *connect.Request[commonv1.StatusRequest]) (*connect.Response[commonv1.StatusResponse], error) {
-	if err := ns.authz.CanViewNotificationStatus(ctx); err != nil {
+	if err := ns.authz.CanNotificationStatusView(ctx); err != nil {
 		return nil, authorizer.ToConnectError(err)
 	}
 
@@ -103,7 +103,7 @@ func (ns *NotificationServer) Status(ctx context.Context, req *connect.Request[c
 
 // StatusUpdate request to allow continuation of notification processing
 func (ns *NotificationServer) StatusUpdate(ctx context.Context, req *connect.Request[commonv1.StatusUpdateRequest]) (*connect.Response[commonv1.StatusUpdateResponse], error) {
-	if err := ns.authz.CanUpdateNotificationStatus(ctx); err != nil {
+	if err := ns.authz.CanNotificationStatusUpdate(ctx); err != nil {
 		return nil, authorizer.ToConnectError(err)
 	}
 
@@ -117,7 +117,7 @@ func (ns *NotificationServer) StatusUpdate(ctx context.Context, req *connect.Req
 
 // Release method for releasing queued massages and returns if notification status if released
 func (ns *NotificationServer) Release(ctx context.Context, req *connect.Request[notificationv1.ReleaseRequest], stream *connect.ServerStream[notificationv1.ReleaseResponse]) error {
-	if err := ns.authz.CanReleaseNotification(ctx); err != nil {
+	if err := ns.authz.CanNotificationRelease(ctx); err != nil {
 		return authorizer.ToConnectError(err)
 	}
 
@@ -144,7 +144,7 @@ func (ns *NotificationServer) Release(ctx context.Context, req *connect.Request[
 
 // Receive method is for client request for particular notification responses from system
 func (ns *NotificationServer) Receive(ctx context.Context, req *connect.Request[notificationv1.ReceiveRequest], stream *connect.ServerStream[notificationv1.ReceiveResponse]) error {
-	if err := ns.authz.CanReleaseNotification(ctx); err != nil {
+	if err := ns.authz.CanNotificationRelease(ctx); err != nil {
 		return authorizer.ToConnectError(err)
 	}
 
@@ -164,7 +164,7 @@ func (ns *NotificationServer) Receive(ctx context.Context, req *connect.Request[
 
 // Search method is for client request for particular notification details from system
 func (ns *NotificationServer) Search(ctx context.Context, req *connect.Request[commonv1.SearchRequest], stream *connect.ServerStream[notificationv1.SearchResponse]) error {
-	if err := ns.authz.CanSearchNotifications(ctx); err != nil {
+	if err := ns.authz.CanNotificationSearch(ctx); err != nil {
 		return authorizer.ToConnectError(err)
 	}
 
@@ -180,7 +180,7 @@ func (ns *NotificationServer) Search(ctx context.Context, req *connect.Request[c
 
 // TemplateSearch method is for client request for templates matching criteria from system
 func (ns *NotificationServer) TemplateSearch(ctx context.Context, req *connect.Request[notificationv1.TemplateSearchRequest], stream *connect.ServerStream[notificationv1.TemplateSearchResponse]) error {
-	if err := ns.authz.CanViewTemplate(ctx); err != nil {
+	if err := ns.authz.CanTemplateView(ctx); err != nil {
 		return authorizer.ToConnectError(err)
 	}
 
@@ -196,7 +196,7 @@ func (ns *NotificationServer) TemplateSearch(ctx context.Context, req *connect.R
 }
 
 func (ns *NotificationServer) TemplateSave(ctx context.Context, req *connect.Request[notificationv1.TemplateSaveRequest]) (*connect.Response[notificationv1.TemplateSaveResponse], error) {
-	if err := ns.authz.CanManageTemplate(ctx); err != nil {
+	if err := ns.authz.CanTemplateManage(ctx); err != nil {
 		return nil, authorizer.ToConnectError(err)
 	}
 
