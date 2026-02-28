@@ -20,9 +20,10 @@ require (
 	github.com/antinvestor/apis/go/settings v1.53.13
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
-	github.com/pitabwire/frame v1.75.0
+	github.com/pitabwire/frame v1.76.1
 	github.com/pitabwire/util v0.6.0
 	github.com/stretchr/testify v1.11.1
+	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/wneessen/go-mail v0.7.2
 	google.golang.org/grpc v1.79.1
 	google.golang.org/protobuf v1.36.11
@@ -108,7 +109,6 @@ require (
 	github.com/shirou/gopsutil/v4 v4.26.1 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/sony/gobreaker/v2 v2.4.0 // indirect
-	github.com/testcontainers/testcontainers-go v0.40.0 // indirect
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.40.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect

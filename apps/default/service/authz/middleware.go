@@ -18,70 +18,39 @@ type Middleware interface {
 }
 
 type middleware struct {
-	authorizer security.Authorizer
+	checker *authorizer.FunctionChecker
 }
 
-func NewMiddleware(authorizer security.Authorizer) Middleware {
-	return &middleware{authorizer: authorizer}
+func NewMiddleware(service security.Authorizer) Middleware {
+	return &middleware{
+		checker: authorizer.NewFunctionChecker(service, NamespaceNotifications),
+	}
 }
 
 func (m *middleware) CanSendNotification(ctx context.Context) error {
-	return m.check(ctx, PermissionSendNotification)
+	return m.checker.Check(ctx, PermissionSendNotification)
 }
 
 func (m *middleware) CanReleaseNotification(ctx context.Context) error {
-	return m.check(ctx, PermissionReleaseNotification)
+	return m.checker.Check(ctx, PermissionReleaseNotification)
 }
 
 func (m *middleware) CanSearchNotifications(ctx context.Context) error {
-	return m.check(ctx, PermissionSearchNotifications)
+	return m.checker.Check(ctx, PermissionSearchNotifications)
 }
 
 func (m *middleware) CanViewNotificationStatus(ctx context.Context) error {
-	return m.check(ctx, PermissionViewNotificationStatus)
+	return m.checker.Check(ctx, PermissionViewNotificationStatus)
 }
 
 func (m *middleware) CanUpdateNotificationStatus(ctx context.Context) error {
-	return m.check(ctx, PermissionUpdateNotificationStatus)
+	return m.checker.Check(ctx, PermissionUpdateNotificationStatus)
 }
 
 func (m *middleware) CanManageTemplate(ctx context.Context) error {
-	return m.check(ctx, PermissionManageTemplate)
+	return m.checker.Check(ctx, PermissionManageTemplate)
 }
 
 func (m *middleware) CanViewTemplate(ctx context.Context) error {
-	return m.check(ctx, PermissionViewTemplate)
-}
-
-func (m *middleware) check(ctx context.Context, permission string) error {
-	claims := security.ClaimsFromContext(ctx)
-	if claims == nil {
-		return authorizer.ErrInvalidSubject
-	}
-
-	subjectID, err := claims.GetSubject()
-	if err != nil || subjectID == "" {
-		return authorizer.ErrInvalidSubject
-	}
-
-	tenantID := claims.GetTenantID()
-	if tenantID == "" {
-		return authorizer.ErrInvalidObject
-	}
-
-	req := security.CheckRequest{
-		Object:     security.ObjectRef{Namespace: NamespaceTenant, ID: tenantID},
-		Permission: permission,
-		Subject:    security.SubjectRef{Namespace: NamespaceProfile, ID: subjectID},
-	}
-
-	result, err := m.authorizer.Check(ctx, req)
-	if err != nil {
-		return err
-	}
-	if !result.Allowed {
-		return authorizer.NewPermissionDeniedError(req.Object, permission, req.Subject, result.Reason)
-	}
-
-	return nil
+	return m.checker.Check(ctx, PermissionViewTemplate)
 }

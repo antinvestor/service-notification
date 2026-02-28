@@ -22,6 +22,7 @@ import (
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/datastore"
 	"github.com/pitabwire/frame/security"
+	"github.com/pitabwire/frame/security/authorizer"
 	connectInterceptors "github.com/pitabwire/frame/security/interceptors/connect"
 	"github.com/pitabwire/frame/security/openid"
 	"github.com/pitabwire/frame/workerpool"
@@ -172,7 +173,13 @@ func setupConnectServer(ctx context.Context, sm security.Manager, workMan worker
 	// Create handler with injected dependencies
 	implementation := handlers.NewNotificationServer(workMan, notificationBusiness, authzMiddleware)
 
-	defaultInterceptorList, err := connectInterceptors.DefaultList(ctx, sm.GetAuthenticator(ctx))
+	// Layer 1: TenancyAccessChecker verifies caller can access the partition.
+	tenancyAccessChecker := authorizer.NewTenancyAccessChecker(
+		sm.GetAuthorizer(ctx), authz.NamespaceTenancyAccess)
+	tenancyAccessInterceptor := connectInterceptors.NewTenancyAccessInterceptor(tenancyAccessChecker)
+
+	defaultInterceptorList, err := connectInterceptors.DefaultList(
+		ctx, sm.GetAuthenticator(ctx), tenancyAccessInterceptor)
 	if err != nil {
 		util.Log(ctx).WithError(err).Fatal("main -- Could not create default interceptors")
 	}
