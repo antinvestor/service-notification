@@ -13,19 +13,19 @@ require (
 	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20260219062126-e9b0d15a670e.2
 	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.11-20260219062126-e9b0d15a670e.1
 	connectrpc.com/connect v1.19.1
-	github.com/antinvestor/apis/go/common v1.53.17
-	github.com/antinvestor/apis/go/notification v1.53.18
-	github.com/antinvestor/apis/go/partition v1.54.0
-	github.com/antinvestor/apis/go/profile v1.53.18
-	github.com/antinvestor/apis/go/settings v1.53.18
+	github.com/antinvestor/apis/go/common v1.55.0
+	github.com/antinvestor/apis/go/notification v1.55.1
+	github.com/antinvestor/apis/go/partition v1.55.1
+	github.com/antinvestor/apis/go/profile v1.55.1
+	github.com/antinvestor/apis/go/settings v1.55.1
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
-	github.com/pitabwire/frame v1.76.5
-	github.com/pitabwire/util v0.6.0
+	github.com/pitabwire/frame v1.76.6
+	github.com/pitabwire/util v0.6.1
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/wneessen/go-mail v0.7.2
-	google.golang.org/grpc v1.79.1
+	google.golang.org/grpc v1.79.2
 	google.golang.org/protobuf v1.36.11
 	gorm.io/gorm v1.31.1
 )
