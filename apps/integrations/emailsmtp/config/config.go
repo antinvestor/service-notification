@@ -10,10 +10,13 @@ type EmailSMTPConfig struct {
 	SettingsIntegrationName string `envDefault:"Email SMTP" env:"SETTINGS_INTEGRATION_NAME"`
 	SettingsIntegrationID   string `envDefault:"notification.emailsmtp" env:"SETTINGS_INTEGRATION_ID"`
 
-	ProfileServiceURI      string `envDefault:"127.0.0.1:7005" env:"PROFILE_SERVICE_URI"`
-	SettingsServiceURI     string `envDefault:"127.0.0.1:7005" env:"SETTINGS_SERVICE_URI"`
-	PartitionServiceURI    string `envDefault:"127.0.0.1:7003" env:"PARTITION_SERVICE_URI"`
-	NotificationServiceURI string `envDefault:"127.0.0.1:7005" env:"NOTIFICATION_SERVICE_URI"`
+	ProfileServiceURI                        string `envDefault:"127.0.0.1:7005" env:"PROFILE_SERVICE_URI"`
+	SettingsServiceURI                       string `envDefault:"127.0.0.1:7005" env:"SETTINGS_SERVICE_URI"`
+	PartitionServiceURI                      string `envDefault:"127.0.0.1:7003" env:"PARTITION_SERVICE_URI"`
+	NotificationServiceURI                   string `envDefault:"127.0.0.1:7005" env:"NOTIFICATION_SERVICE_URI"`
+	ProfileServiceWorkloadAPITargetPath      string `envDefault:"/ns/profile/sa/service-profile" env:"PROFILE_SERVICE_WORKLOAD_API_TARGET_PATH"`
+	SettingsServiceWorkloadAPITargetPath     string `envDefault:"/ns/profile/sa/service-settings" env:"SETTINGS_SERVICE_WORKLOAD_API_TARGET_PATH"`
+	NotificationServiceWorkloadAPITargetPath string `envDefault:"/ns/notifications/sa/service-notification" env:"NOTIFICATION_SERVICE_WORKLOAD_API_TARGET_PATH"`
 
 	// Email smtp queue configuration
 	QueueEmailSMTPDequeueName string `envDefault:"natifications.emailsmtp.dequeue" env:"QUEUE_NOTIFICATION_EMAIL_DEQUEUE_NAME"`

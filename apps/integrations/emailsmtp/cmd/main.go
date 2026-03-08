@@ -17,8 +17,6 @@ import (
 	"github.com/antinvestor/service-notification/internal/events"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
-	"github.com/pitabwire/frame/security"
-	"github.com/pitabwire/frame/security/openid"
 	"github.com/pitabwire/util"
 )
 
@@ -36,25 +34,24 @@ func main() {
 		cfg.ServiceName = "integration_notification_emailsmtp"
 	}
 
-	ctx, svc := frame.NewServiceWithContext(ctx, frame.WithConfig(&cfg), frame.WithRegisterServerOauth2Client())
+	ctx, svc := frame.NewServiceWithContext(ctx, frame.WithConfig(&cfg))
 	defer svc.Stop(ctx)
 
 	logger := svc.Log(ctx)
 
-	sm := svc.SecurityManager()
 	eventsMan := svc.EventsManager()
 
-	notificationCli, err := setupNotificationClient(ctx, sm, cfg)
+	notificationCli, err := setupNotificationClient(ctx, cfg)
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup notification client")
 	}
 
-	profileCli, err := setupProfileClient(ctx, sm, cfg)
+	profileCli, err := setupProfileClient(ctx, cfg)
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
 
-	settingsCli, err := setupSettingsClient(ctx, sm, cfg)
+	settingsCli, err := setupSettingsClient(ctx, cfg)
 	if err != nil {
 		logger.WithError(err).Fatal("could not setup profile client")
 	}
@@ -86,41 +83,32 @@ func main() {
 // setupProfileClient creates and configures the profile client.
 func setupProfileClient(
 	ctx context.Context,
-	clHolder security.InternalOauth2ClientHolder,
 	cfg aconfig.EmailSMTPConfig) (profilev1connect.ProfileServiceClient, error) {
-	return profile.NewClient(ctx,
-		apis.WithEndpoint(cfg.ProfileServiceURI),
-		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
-		apis.WithTokenUsername(clHolder.JwtClientID()),
-		apis.WithTokenPassword(clHolder.JwtClientSecret()),
-		apis.WithScopes(openid.ConstSystemScopeInternal),
-		apis.WithAudiences("service_profile"))
+	return profile.NewClient(ctx, &cfg, apis.ServiceTarget{
+		Endpoint:              cfg.ProfileServiceURI,
+		WorkloadAPITargetPath: cfg.ProfileServiceWorkloadAPITargetPath,
+		Audiences:             []string{"service_profile"},
+	})
 }
 
 // setupNotificationClient creates and configures the notification client.
 func setupNotificationClient(
 	ctx context.Context,
-	clHolder security.InternalOauth2ClientHolder,
 	cfg aconfig.EmailSMTPConfig) (notificationv1connect.NotificationServiceClient, error) {
-	return notification.NewClient(ctx,
-		apis.WithEndpoint(cfg.NotificationServiceURI),
-		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
-		apis.WithTokenUsername(clHolder.JwtClientID()),
-		apis.WithTokenPassword(clHolder.JwtClientSecret()),
-		apis.WithScopes(openid.ConstSystemScopeInternal),
-		apis.WithAudiences("service_notifications"))
+	return notification.NewClient(ctx, &cfg, apis.ServiceTarget{
+		Endpoint:              cfg.NotificationServiceURI,
+		WorkloadAPITargetPath: cfg.NotificationServiceWorkloadAPITargetPath,
+		Audiences:             []string{"service_notifications"},
+	})
 }
 
 // setupSettingsClient creates and configures the settings client.
 func setupSettingsClient(
 	ctx context.Context,
-	clHolder security.InternalOauth2ClientHolder,
 	cfg aconfig.EmailSMTPConfig) (settingsv1connect.SettingsServiceClient, error) {
-	return settings.NewClient(ctx,
-		apis.WithEndpoint(cfg.SettingsServiceURI),
-		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
-		apis.WithTokenUsername(clHolder.JwtClientID()),
-		apis.WithTokenPassword(clHolder.JwtClientSecret()),
-		apis.WithScopes(openid.ConstSystemScopeInternal),
-		apis.WithAudiences("service_settings"))
+	return settings.NewClient(ctx, &cfg, apis.ServiceTarget{
+		Endpoint:              cfg.SettingsServiceURI,
+		WorkloadAPITargetPath: cfg.SettingsServiceWorkloadAPITargetPath,
+		Audiences:             []string{"service_settings"},
+	})
 }

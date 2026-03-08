@@ -24,7 +24,6 @@ import (
 	"github.com/pitabwire/frame/security"
 	"github.com/pitabwire/frame/security/authorizer"
 	connectInterceptors "github.com/pitabwire/frame/security/interceptors/connect"
-	"github.com/pitabwire/frame/security/openid"
 	"github.com/pitabwire/frame/workerpool"
 	"github.com/pitabwire/util"
 )
@@ -47,7 +46,6 @@ func main() {
 	ctx, svc := frame.NewServiceWithContext(
 		tmpCtx,
 		frame.WithConfig(&cfg),
-		frame.WithRegisterServerOauth2Client(),
 		frame.WithDatastore(),
 	)
 	defer svc.Stop(ctx)
@@ -65,12 +63,12 @@ func main() {
 	}
 
 	// Setup clients
-	profileCli, err := setupProfileClient(ctx, sm, cfg)
+	profileCli, err := setupProfileClient(ctx, cfg)
 	if err != nil {
 		log.WithError(err).Fatal("main -- Could not setup profile client")
 	}
 
-	partitionCli, err := setupPartitionClient(ctx, sm, cfg)
+	partitionCli, err := setupPartitionClient(ctx, cfg)
 	if err != nil {
 		log.WithError(err).Fatal("main -- Could not setup partition client")
 	}
@@ -142,29 +140,23 @@ func handleDatabaseMigration(
 // setupProfileClient creates and configures the profile client.
 func setupProfileClient(
 	ctx context.Context,
-	clHolder security.InternalOauth2ClientHolder,
 	cfg aconfig.NotificationConfig) (profilev1connect.ProfileServiceClient, error) {
-	return profile.NewClient(ctx,
-		apis.WithEndpoint(cfg.ProfileServiceURI),
-		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
-		apis.WithTokenUsername(clHolder.JwtClientID()),
-		apis.WithTokenPassword(clHolder.JwtClientSecret()),
-		apis.WithScopes(openid.ConstSystemScopeInternal),
-		apis.WithAudiences("service_profile"))
+	return profile.NewClient(ctx, &cfg, apis.ServiceTarget{
+		Endpoint:              cfg.ProfileServiceURI,
+		WorkloadAPITargetPath: cfg.ProfileServiceWorkloadAPITargetPath,
+		Audiences:             []string{"service_profile"},
+	})
 }
 
 // setupPartitionClient creates and configures the partition client.
 func setupPartitionClient(
 	ctx context.Context,
-	clHolder security.InternalOauth2ClientHolder,
 	cfg aconfig.NotificationConfig) (partitionv1connect.PartitionServiceClient, error) {
-	return partition.NewClient(ctx,
-		apis.WithEndpoint(cfg.PartitionServiceURI),
-		apis.WithTokenEndpoint(cfg.GetOauth2TokenEndpoint()),
-		apis.WithTokenUsername(clHolder.JwtClientID()),
-		apis.WithTokenPassword(clHolder.JwtClientSecret()),
-		apis.WithScopes(openid.ConstSystemScopeInternal),
-		apis.WithAudiences("service_tenancy"))
+	return partition.NewClient(ctx, &cfg, apis.ServiceTarget{
+		Endpoint:              cfg.PartitionServiceURI,
+		WorkloadAPITargetPath: cfg.PartitionServiceWorkloadAPITargetPath,
+		Audiences:             []string{"service_tenancy"},
+	})
 }
 
 // setupConnectServer initialises and configures the Connect RPC server.
