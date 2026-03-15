@@ -20,7 +20,7 @@ require (
 	github.com/antinvestor/apis/go/settings v1.55.17
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
-	github.com/pitabwire/frame v1.79.1
+	github.com/pitabwire/frame v1.80.0
 	github.com/pitabwire/util v0.6.1
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.41.0
