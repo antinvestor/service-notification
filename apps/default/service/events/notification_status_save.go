@@ -6,6 +6,7 @@ import (
 
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
+	"github.com/pitabwire/frame/data"
 	"github.com/pitabwire/util"
 )
 
@@ -56,8 +57,12 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error
 
 	err := e.notificationStatusRepo.Create(ctx, nStatus)
 	if err != nil {
-		logger.WithError(err).Error("could not save notification status to db")
-		return err
+		if data.ErrorIsDuplicateKey(err) {
+			logger.Debug("notification status already exists, skipping duplicate")
+		} else {
+			logger.WithError(err).Error("could not save notification status to db")
+			return err
+		}
 	}
 
 	n, err := e.NotificationRepo.GetByID(ctx, nStatus.NotificationID)

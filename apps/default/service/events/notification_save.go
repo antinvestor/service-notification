@@ -58,6 +58,10 @@ func (e *NotificationSave) Execute(ctx context.Context, payload any) error {
 
 	err := e.notificationRepo.Create(ctx, notification)
 	if err != nil {
+		if data.ErrorIsDuplicateKey(err) {
+			logger.Debug("notification already exists, skipping duplicate")
+			return nil
+		}
 		logger.WithError(err).Error("could not save to db")
 		return err
 	}
