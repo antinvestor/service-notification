@@ -2,6 +2,8 @@ module github.com/antinvestor/service-notification
 
 go 1.26
 
+toolchain go1.26.1
+
 require (
 	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.11-20260219054105-fe125014d75c.1
 	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20260219061917-db3557eecaba.2
@@ -20,7 +22,7 @@ require (
 	github.com/antinvestor/apis/go/settings v1.55.17
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
-	github.com/pitabwire/frame v1.80.0
+	github.com/pitabwire/frame v1.80.1
 	github.com/pitabwire/util v0.6.1
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.41.0
