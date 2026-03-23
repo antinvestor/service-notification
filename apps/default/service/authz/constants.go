@@ -1,7 +1,7 @@
 package authz
 
 const (
-	NamespaceNotifications = "service_notifications"
+	NamespaceNotifications = "service_notification"
 	NamespaceTenancyAccess = "tenancy_access"
 	NamespaceProfile       = "profile_user"
 )

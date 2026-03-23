@@ -39,7 +39,7 @@ func main() {
 	}
 
 	if cfg.Name() == "" {
-		cfg.ServiceName = "service_notifications"
+		cfg.ServiceName = "service_notification"
 	}
 
 	// Create service

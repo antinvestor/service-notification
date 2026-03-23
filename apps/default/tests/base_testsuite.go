@@ -211,7 +211,7 @@ func (bs *BaseTestSuite) SeedTenantAccess(ctx context.Context, svc *frame.Servic
 	bs.Require().NoError(err, "failed to seed tenant access")
 }
 
-// SeedTenantRole writes functional permission tuples in the service_notifications
+// SeedTenantRole writes functional permission tuples in the service_notification
 // namespace for the given role. Uses tenancyPath (tenantID/partitionID) as object ID.
 func (bs *BaseTestSuite) SeedTenantRole(ctx context.Context, svc *frame.Service, tenantID, partitionID, profileID, role string) {
 	auth := svc.SecurityManager().GetAuthorizer(ctx)

@@ -40,7 +40,7 @@ func BuildPermissionTuple(namespace, tenancyPath, permission, profileID string) 
 
 // BuildServiceInheritanceTuples creates bridge tuples that allow service bots
 // (who have tenancy_access#service) to inherit functional permissions in
-// service_notifications via subject sets.
+// service_notification via subject sets.
 // Only the bridge tuple is needed — the OPL permits already check the service
 // role directly, so explicit granted_* tuples per permission are redundant.
 func BuildServiceInheritanceTuples(tenancyPath string) []security.RelationTuple {

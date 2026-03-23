@@ -98,7 +98,7 @@ func (s *MiddlewareTestSuite) ctxWithSystemInternalClaims(subjectID string) cont
 	return claims.ClaimsToContext(context.Background())
 }
 
-// seedRole writes functional permission tuples in service_notifications namespace.
+// seedRole writes functional permission tuples in service_notification namespace.
 func (s *MiddlewareTestSuite) seedRole(auth security.Authorizer, tenancyPath, profileID, role string) {
 	permissions := authz.RolePermissions[role]
 	tuples := make([]security.RelationTuple, 0, 1+len(permissions))
@@ -126,7 +126,7 @@ func TestMiddlewareSuite(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// FunctionChecker (middleware) tests -- only checks service_notifications permissions
+// FunctionChecker (middleware) tests -- only checks service_notification permissions
 // ---------------------------------------------------------------------------
 
 func (s *MiddlewareTestSuite) TestOwnerHasAllPermissions() {

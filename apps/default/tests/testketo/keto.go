@@ -48,7 +48,7 @@ class tenancy_access implements Namespace {
   }
 }
 
-class service_notifications implements Namespace {
+class service_notification implements Namespace {
   related: {
     owner: profile_user[]
     admin: profile_user[]
@@ -59,13 +59,13 @@ class service_notifications implements Namespace {
 
     // Direct permission grants (prefixed with granted_ to avoid
     // name conflicts with OPL permits)
-    granted_notification_send: (profile_user | service_notifications)[]
-    granted_notification_release: (profile_user | service_notifications)[]
-    granted_notification_search: (profile_user | service_notifications)[]
-    granted_notification_status_view: (profile_user | service_notifications)[]
-    granted_notification_status_update: (profile_user | service_notifications)[]
-    granted_template_manage: (profile_user | service_notifications)[]
-    granted_template_view: (profile_user | service_notifications)[]
+    granted_notification_send: (profile_user | service_notification)[]
+    granted_notification_release: (profile_user | service_notification)[]
+    granted_notification_search: (profile_user | service_notification)[]
+    granted_notification_status_view: (profile_user | service_notification)[]
+    granted_notification_status_update: (profile_user | service_notification)[]
+    granted_template_manage: (profile_user | service_notification)[]
+    granted_template_view: (profile_user | service_notification)[]
   }
 
   permits = {
