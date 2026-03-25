@@ -100,7 +100,9 @@ func main() {
 
 	// Initialise the service with all options
 	serviceOptions := []frame.Option{
-		frame.WithOPL("service_notification", mustReadOPL(notificationv1.OPLSpecFiles, "service_notification.opl.ts")),
+// TODO: re-enable after Go import migration
+// TODO: re-enable after Go import migration
+// // 		frame.WithOPL("service_notification", mustReadOPL(notificationv1.OPLSpecFiles, "service_notification.opl.ts")),
 		frame.WithHTTPHandler(connectHandler),
 		frame.WithRegisterEvents(
 			events2.NewNotificationSave(ctx, evtsMan, notificationRepo),
