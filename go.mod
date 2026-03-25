@@ -8,21 +8,21 @@ require (
 	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.11-20260219054105-fe125014d75c.1
 	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.1-20260219061917-db3557eecaba.2
 	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.11-20260219061917-db3557eecaba.1
-	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20260306034803-bec59545427a.2
-	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.11-20260306034803-bec59545427a.1
+	buf.build/gen/go/antinvestor/partition/connectrpc/go v1.19.1-20260321071111-e3ff42086d9d.2
+	buf.build/gen/go/antinvestor/partition/protocolbuffers/go v1.36.11-20260321071111-e3ff42086d9d.1
 	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.1-20260219062039-499f582dea7e.2
 	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.11-20260219062039-499f582dea7e.1
 	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20260219062126-e9b0d15a670e.2
 	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.11-20260219062126-e9b0d15a670e.1
 	connectrpc.com/connect v1.19.1
-	github.com/antinvestor/apis/go/common v1.58.0
-	github.com/antinvestor/apis/go/notification v1.58.0
-	github.com/antinvestor/apis/go/partition v1.58.0
-	github.com/antinvestor/apis/go/profile v1.58.0
-	github.com/antinvestor/apis/go/settings v1.58.0
+	github.com/antinvestor/apis/go/common v1.55.18
+	github.com/antinvestor/apis/go/notification v1.56.0
+	github.com/antinvestor/apis/go/partition v1.56.0
+	github.com/antinvestor/apis/go/profile v1.56.0
+	github.com/antinvestor/apis/go/settings v1.56.0
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
-	github.com/pitabwire/frame v1.82.0
+	github.com/pitabwire/frame v1.81.1
 	github.com/pitabwire/util v0.7.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.41.0
@@ -68,8 +68,6 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/cel-go v0.27.0 // indirect
-	github.com/google/gnostic v0.7.1 // indirect
-	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.19.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
@@ -150,7 +148,6 @@ require (
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	gocloud.dev v0.45.0 // indirect
 	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
