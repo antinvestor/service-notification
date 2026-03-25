@@ -26,9 +26,8 @@ import (
 
 type BaseTestSuite struct {
 	internaltests.BaseTestSuite
-	AuthzMiddleware authz.Middleware
-	ketoReadURI     string
-	ketoWriteURI    string
+	ketoReadURI  string
+	ketoWriteURI string
 }
 
 // ServiceResources holds all repositories and business object for easy reuse in tests
@@ -114,10 +113,6 @@ func (bs *BaseTestSuite) CreateService(
 		frame.WithConfig(&cfg),
 		frame.WithDatastore(),
 		frametests.WithNoopDriver())
-
-	// Use real Keto authoriser via SecurityManager
-	sm := svc.SecurityManager()
-	bs.AuthzMiddleware = authz.NewMiddleware(sm.GetAuthorizer(ctx))
 
 	profileCli := bs.GetProfileCli(ctx)
 	partitionCli := bs.GetPartitionCli(ctx)

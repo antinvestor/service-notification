@@ -2,13 +2,17 @@ package main
 
 import (
 	"context"
+	"embed"
+	"fmt"
 	"net/http"
 
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	notificationpb "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"connectrpc.com/connect"
 	apis "github.com/antinvestor/apis/go/common"
+	"github.com/antinvestor/apis/go/common/permissions"
 	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
 	"github.com/antinvestor/apis/go/partition"
 	"github.com/antinvestor/apis/go/profile"
@@ -91,14 +95,12 @@ func main() {
 	notificationBusiness := business.NewNotificationBusiness(ctx, workMan, evtsMan, profileCli, partitionCli,
 		notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
 
-	// Setup authorization middleware
-	authzMiddleware := authz.NewMiddleware(sm.GetAuthorizer(ctx))
-
 	// Setup Connect server
-	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness, authzMiddleware)
+	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
 
 	// Initialise the service with all options
 	serviceOptions := []frame.Option{
+		frame.WithOPL("service_notification", mustReadOPL(notificationv1.OPLSpecFiles, "service_notification.opl.ts")),
 		frame.WithHTTPHandler(connectHandler),
 		frame.WithRegisterEvents(
 			events2.NewNotificationSave(ctx, evtsMan, notificationRepo),
@@ -160,18 +162,25 @@ func setupPartitionClient(
 }
 
 // setupConnectServer initialises and configures the Connect RPC server.
-func setupConnectServer(ctx context.Context, sm security.Manager, workMan workerpool.Manager, notificationBusiness business.NotificationBusiness, authzMiddleware authz.Middleware) http.Handler {
+func setupConnectServer(ctx context.Context, sm security.Manager, workMan workerpool.Manager, notificationBusiness business.NotificationBusiness) http.Handler {
 
 	// Create handler with injected dependencies
-	implementation := handlers.NewNotificationServer(workMan, notificationBusiness, authzMiddleware)
+	implementation := handlers.NewNotificationServer(workMan, notificationBusiness)
+
+	auth := sm.GetAuthorizer(ctx)
 
 	// Layer 1: TenancyAccessChecker verifies caller can access the partition.
-	tenancyAccessChecker := authorizer.NewTenancyAccessChecker(
-		sm.GetAuthorizer(ctx), authz.NamespaceTenancyAccess)
+	tenancyAccessChecker := authorizer.NewTenancyAccessChecker(auth, authz.NamespaceTenancyAccess)
 	tenancyAccessInterceptor := connectInterceptors.NewTenancyAccessInterceptor(tenancyAccessChecker)
 
+	// Layer 2: FunctionAccessInterceptor enforces per-RPC permissions from proto annotations.
+	sd := notificationpb.File_notification_v1_notification_proto.Services().ByName("NotificationService")
+	procMap := permissions.BuildProcedureMap(sd)
+	functionChecker := authorizer.NewFunctionChecker(auth, "service_notification")
+	functionAccessInterceptor := connectInterceptors.NewFunctionAccessInterceptor(functionChecker, procMap)
+
 	defaultInterceptorList, err := connectInterceptors.DefaultList(
-		ctx, sm.GetAuthenticator(ctx), tenancyAccessInterceptor)
+		ctx, sm.GetAuthenticator(ctx), tenancyAccessInterceptor, functionAccessInterceptor)
 	if err != nil {
 		util.Log(ctx).WithError(err).Fatal("main -- Could not create default interceptors")
 	}
@@ -184,4 +193,12 @@ func setupConnectServer(ctx context.Context, sm security.Manager, workMan worker
 	mux.Handle("/openapi.yaml", apis.NewOpenAPIHandler(notificationv1.ApiSpecFile, nil))
 
 	return mux
+}
+
+func mustReadOPL(fs embed.FS, name string) []byte {
+	data, err := fs.ReadFile(name)
+	if err != nil {
+		panic(fmt.Sprintf("failed to read OPL file %s: %v", name, err))
+	}
+	return data
 }
