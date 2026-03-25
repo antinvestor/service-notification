@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"embed"
-	"fmt"
+	_ "embed"
 	"net/http"
 
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
@@ -11,11 +10,9 @@ import (
 	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"connectrpc.com/connect"
-	apis "github.com/antinvestor/apis/go/common"
-	"github.com/antinvestor/apis/go/common/permissions"
-	notificationv1 "github.com/antinvestor/apis/go/notification/v1"
-	"github.com/antinvestor/apis/go/partition"
-	"github.com/antinvestor/apis/go/profile"
+	apis "github.com/antinvestor/common"
+	"github.com/antinvestor/common/connection"
+	"github.com/antinvestor/common/permissions"
 	aconfig "github.com/antinvestor/service-notification/apps/default/config"
 	"github.com/antinvestor/service-notification/apps/default/service/authz"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
@@ -31,6 +28,9 @@ import (
 	"github.com/pitabwire/frame/workerpool"
 	"github.com/pitabwire/util"
 )
+
+//go:embed spec/notification.openapi.yaml
+var notificationAPISpecFile []byte
 
 func main() {
 	tmpCtx := context.Background()
@@ -100,9 +100,6 @@ func main() {
 
 	// Initialise the service with all options
 	serviceOptions := []frame.Option{
-// TODO: re-enable after Go import migration
-// TODO: re-enable after Go import migration
-// // 		frame.WithOPL("service_notification", mustReadOPL(notificationv1.OPLSpecFiles, "service_notification.opl.ts")),
 		frame.WithHTTPHandler(connectHandler),
 		frame.WithRegisterEvents(
 			events2.NewNotificationSave(ctx, evtsMan, notificationRepo),
@@ -145,22 +142,22 @@ func handleDatabaseMigration(
 func setupProfileClient(
 	ctx context.Context,
 	cfg aconfig.NotificationConfig) (profilev1connect.ProfileServiceClient, error) {
-	return profile.NewClient(ctx, &cfg, apis.ServiceTarget{
+	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.ProfileServiceURI,
 		WorkloadAPITargetPath: cfg.ProfileServiceWorkloadAPITargetPath,
 		Audiences:             []string{"service_profile"},
-	})
+	}, profilev1connect.NewProfileServiceClient)
 }
 
 // setupPartitionClient creates and configures the partition client.
 func setupPartitionClient(
 	ctx context.Context,
 	cfg aconfig.NotificationConfig) (partitionv1connect.PartitionServiceClient, error) {
-	return partition.NewClient(ctx, &cfg, apis.ServiceTarget{
+	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.PartitionServiceURI,
 		WorkloadAPITargetPath: cfg.PartitionServiceWorkloadAPITargetPath,
 		Audiences:             []string{"service_tenancy"},
-	})
+	}, partitionv1connect.NewPartitionServiceClient)
 }
 
 // setupConnectServer initialises and configures the Connect RPC server.
@@ -192,15 +189,7 @@ func setupConnectServer(ctx context.Context, sm security.Manager, workMan worker
 
 	mux := http.NewServeMux()
 	mux.Handle("/", serverHandler)
-	mux.Handle("/openapi.yaml", apis.NewOpenAPIHandler(notificationv1.ApiSpecFile, nil))
+	mux.Handle("/openapi.yaml", apis.NewOpenAPIHandler(notificationAPISpecFile, nil))
 
 	return mux
-}
-
-func mustReadOPL(fs embed.FS, name string) []byte {
-	data, err := fs.ReadFile(name)
-	if err != nil {
-		panic(fmt.Sprintf("failed to read OPL file %s: %v", name, err))
-	}
-	return data
 }

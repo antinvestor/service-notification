@@ -6,10 +6,8 @@ import (
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
-	apis "github.com/antinvestor/apis/go/common"
-	"github.com/antinvestor/apis/go/notification"
-	"github.com/antinvestor/apis/go/profile"
-	"github.com/antinvestor/apis/go/settings"
+	apis "github.com/antinvestor/common"
+	"github.com/antinvestor/common/connection"
 	aconfig "github.com/antinvestor/service-notification/apps/integrations/emailsmtp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/handlers"
@@ -84,31 +82,31 @@ func main() {
 func setupProfileClient(
 	ctx context.Context,
 	cfg aconfig.EmailSMTPConfig) (profilev1connect.ProfileServiceClient, error) {
-	return profile.NewClient(ctx, &cfg, apis.ServiceTarget{
+	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.ProfileServiceURI,
 		WorkloadAPITargetPath: cfg.ProfileServiceWorkloadAPITargetPath,
 		Audiences:             []string{"service_profile"},
-	})
+	}, profilev1connect.NewProfileServiceClient)
 }
 
 // setupNotificationClient creates and configures the notification client.
 func setupNotificationClient(
 	ctx context.Context,
 	cfg aconfig.EmailSMTPConfig) (notificationv1connect.NotificationServiceClient, error) {
-	return notification.NewClient(ctx, &cfg, apis.ServiceTarget{
+	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.NotificationServiceURI,
 		WorkloadAPITargetPath: cfg.NotificationServiceWorkloadAPITargetPath,
 		Audiences:             []string{"service_notification"},
-	})
+	}, notificationv1connect.NewNotificationServiceClient)
 }
 
 // setupSettingsClient creates and configures the settings client.
 func setupSettingsClient(
 	ctx context.Context,
 	cfg aconfig.EmailSMTPConfig) (settingsv1connect.SettingsServiceClient, error) {
-	return settings.NewClient(ctx, &cfg, apis.ServiceTarget{
+	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.SettingsServiceURI,
 		WorkloadAPITargetPath: cfg.SettingsServiceWorkloadAPITargetPath,
 		Audiences:             []string{"service_setting"},
-	})
+	}, settingsv1connect.NewSettingsServiceClient)
 }

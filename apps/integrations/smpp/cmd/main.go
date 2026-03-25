@@ -6,10 +6,8 @@ import (
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	apis "github.com/antinvestor/apis/go/common"
-	"github.com/antinvestor/apis/go/notification"
-	"github.com/antinvestor/apis/go/partition"
-	"github.com/antinvestor/apis/go/profile"
+	apis "github.com/antinvestor/common"
+	"github.com/antinvestor/common/connection"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/events"
@@ -108,11 +106,11 @@ func setupProfileClient(
 	cfg config.TemplateConfig,
 	audiences []string,
 ) (profilev1connect.ProfileServiceClient, error) {
-	return profile.NewClient(ctx, &cfg, apis.ServiceTarget{
+	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.ProfileServiceURI,
 		WorkloadAPITargetPath: cfg.ProfileServiceWorkloadAPITargetPath,
 		Audiences:             audiences,
-	})
+	}, profilev1connect.NewProfileServiceClient)
 }
 
 func setupPartitionClient(
@@ -120,11 +118,11 @@ func setupPartitionClient(
 	cfg config.TemplateConfig,
 	audiences []string,
 ) (partitionv1connect.PartitionServiceClient, error) {
-	return partition.NewClient(ctx, &cfg, apis.ServiceTarget{
+	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.PartitionServiceURI,
 		WorkloadAPITargetPath: cfg.PartitionServiceWorkloadAPITargetPath,
 		Audiences:             audiences,
-	})
+	}, partitionv1connect.NewPartitionServiceClient)
 }
 
 func setupNotificationClient(
@@ -132,9 +130,9 @@ func setupNotificationClient(
 	cfg config.TemplateConfig,
 	audiences []string,
 ) (notificationv1connect.NotificationServiceClient, error) {
-	return notification.NewClient(ctx, &cfg, apis.ServiceTarget{
+	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.NotificationServiceURI,
 		WorkloadAPITargetPath: cfg.NotificationServiceWorkloadAPITargetPath,
 		Audiences:             audiences,
-	})
+	}, notificationv1connect.NewNotificationServiceClient)
 }

@@ -9,9 +9,6 @@ import (
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"github.com/antinvestor/apis/go/notification"
-	"github.com/antinvestor/apis/go/partition"
-	"github.com/antinvestor/apis/go/profile"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/handlers"
 	"github.com/gorilla/mux"
@@ -53,9 +50,6 @@ func (h *templateServer) addHandler(router *mux.Router,
 	f func(w http.ResponseWriter, r *http.Request) error, path string, name string, method string) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r = r.WithContext(frame.ToContext(r.Context(), h.Service))
-		r = r.WithContext(profile.ToContext(r.Context(), h.ProfileCli))
-		r = r.WithContext(partition.ToContext(r.Context(), h.PartitionCli))
-		r = r.WithContext(notification.ToContext(r.Context(), h.NotificationCli))
 
 		err := f(w, r)
 		if err != nil {
