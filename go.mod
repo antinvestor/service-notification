@@ -15,7 +15,7 @@ require (
 	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.1-20260324161250-0e292d0a2261.2
 	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.11-20260324161250-0e292d0a2261.1
 	connectrpc.com/connect v1.19.1
-	github.com/antinvestor/common v1.2.1
+	github.com/antinvestor/common v1.3.0
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
 	github.com/pitabwire/frame v1.83.0
