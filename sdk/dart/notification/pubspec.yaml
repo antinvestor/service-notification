@@ -1,6 +1,6 @@
 name: antinvestor_api_notification
 description: Dart client library for Ant Investor Notification Service
-version: 0.1.0
+version: 1.53.0
 repository: https://github.com/antinvestor/service-notification
 homepage: https://github.com/antinvestor/service-notification
 issue_tracker: https://github.com/antinvestor/service-notification/issues
