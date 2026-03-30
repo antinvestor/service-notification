@@ -7,8 +7,8 @@ import (
 
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	notificationpb "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
 	"connectrpc.com/connect"
 	apis "github.com/antinvestor/common"
 	"github.com/antinvestor/common/connection"
@@ -72,7 +72,7 @@ func main() {
 		log.WithError(err).Fatal("main -- Could not setup profile client")
 	}
 
-	partitionCli, err := setupPartitionClient(ctx, cfg)
+	tenancyCli, err := setupTenancyClient(ctx, cfg)
 	if err != nil {
 		log.WithError(err).Fatal("main -- Could not setup partition client")
 	}
@@ -92,7 +92,7 @@ func main() {
 	routeRepo := repository.NewRouteRepository(ctx, dbPool, workMan)
 
 	// Create business logic with all dependencies
-	notificationBusiness := business.NewNotificationBusiness(ctx, workMan, evtsMan, profileCli, partitionCli,
+	notificationBusiness := business.NewNotificationBusiness(ctx, workMan, evtsMan, profileCli, tenancyCli,
 		notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
 
 	// Setup Connect server
@@ -107,7 +107,7 @@ func main() {
 			events2.NewNotificationInRoute(ctx, qMan, evtsMan, notificationRepo, routeRepo),
 			events2.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, routeRepo, profileCli),
 			events2.NewNotificationOutRoute(ctx, evtsMan, profileCli, notificationRepo, routeRepo),
-			events2.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, partitionCli,
+			events2.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, tenancyCli,
 				notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)),
 	}
 
@@ -149,15 +149,15 @@ func setupProfileClient(
 	}, profilev1connect.NewProfileServiceClient)
 }
 
-// setupPartitionClient creates and configures the partition client.
-func setupPartitionClient(
+// setupTenancyClient creates and configures the partition client.
+func setupTenancyClient(
 	ctx context.Context,
-	cfg aconfig.NotificationConfig) (partitionv1connect.PartitionServiceClient, error) {
+	cfg aconfig.NotificationConfig) (tenancyv1connect.TenancyServiceClient, error) {
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
-		Endpoint:              cfg.PartitionServiceURI,
-		WorkloadAPITargetPath: cfg.PartitionServiceWorkloadAPITargetPath,
+		Endpoint:              cfg.TenancyServiceURI,
+		WorkloadAPITargetPath: cfg.TenancyServiceWorkloadAPITargetPath,
 		Audiences:             []string{"service_tenancy"},
-	}, partitionv1connect.NewPartitionServiceClient)
+	}, tenancyv1connect.NewTenancyServiceClient)
 }
 
 // setupConnectServer initialises and configures the Connect RPC server.

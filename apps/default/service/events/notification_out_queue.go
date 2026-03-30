@@ -7,9 +7,9 @@ import (
 	"text/template"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
-	partitionv1 "buf.build/gen/go/antinvestor/partition/protocolbuffers/go/partition/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
+	tenancyv1 "buf.build/gen/go/antinvestor/tenancy/protocolbuffers/go/tenancy/v1"
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
@@ -29,8 +29,8 @@ type NotificationOutQueue struct {
 	qMan     queue.Manager
 	eventMan events.Manager
 
-	profileCli   profilev1connect.ProfileServiceClient
-	partitionCli partitionv1connect.PartitionServiceClient
+	profileCli profilev1connect.ProfileServiceClient
+	tenancyCli tenancyv1connect.TenancyServiceClient
 
 	notificationRepo       repository.NotificationRepository
 	notificationStatusRepo repository.NotificationStatusRepository
@@ -41,7 +41,7 @@ type NotificationOutQueue struct {
 
 // NewNotificationOutQueue creates a new NotificationOutQueue event handler
 func NewNotificationOutQueue(ctx context.Context, qMan queue.Manager, eventMan events.Manager,
-	profileCli profilev1connect.ProfileServiceClient, partitionCli partitionv1connect.PartitionServiceClient,
+	profileCli profilev1connect.ProfileServiceClient, tenancyCli tenancyv1connect.TenancyServiceClient,
 	notificationRepo repository.NotificationRepository, notificationStatusRepo repository.NotificationStatusRepository,
 	languageRepo repository.LanguageRepository, templateDataRepo repository.TemplateDataRepository,
 	routeRepo repository.RouteRepository) *NotificationOutQueue {
@@ -50,7 +50,7 @@ func NewNotificationOutQueue(ctx context.Context, qMan queue.Manager, eventMan e
 		qMan:                   qMan,
 		eventMan:               eventMan,
 		profileCli:             profileCli,
-		partitionCli:           partitionCli,
+		tenancyCli:             tenancyCli,
 		notificationRepo:       notificationRepo,
 		notificationStatusRepo: notificationStatusRepo,
 		languageRepo:           languageRepo,
@@ -301,7 +301,7 @@ func (event *NotificationOutQueue) extendWithSupportContacts(ctx context.Context
 		return templateMap, nil
 	}
 
-	resp, err := event.partitionCli.GetPartition(ctx, connect.NewRequest(&partitionv1.GetPartitionRequest{Id: n.GetPartitionID()}))
+	resp, err := event.tenancyCli.GetPartition(ctx, connect.NewRequest(&tenancyv1.GetPartitionRequest{Id: n.GetPartitionID()}))
 	if err != nil {
 		return nil, err
 	}

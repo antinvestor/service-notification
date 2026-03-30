@@ -3,8 +3,8 @@ package business
 import (
 	"context"
 
-	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/events"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/models"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/repository"
@@ -20,8 +20,8 @@ type TemplateBusiness interface {
 
 func NewTemplateBusiness(ctx context.Context, dbPool pool.Pool, eventsMan fevents.Manager,
 	profileCli profilev1connect.ProfileServiceClient,
-	partitionCli partitionv1connect.PartitionServiceClient) (TemplateBusiness, error) {
-	if dbPool == nil || profileCli == nil || partitionCli == nil {
+	tenancyCli tenancyv1connect.TenancyServiceClient) (TemplateBusiness, error) {
+	if dbPool == nil || profileCli == nil || tenancyCli == nil {
 		return nil, ErrorInitializationFail
 	}
 

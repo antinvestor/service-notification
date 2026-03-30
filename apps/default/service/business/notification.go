@@ -8,8 +8,8 @@ import (
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
 	"github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
@@ -33,7 +33,7 @@ type NotificationBusiness interface {
 
 func NewNotificationBusiness(_ context.Context,
 	workMan workerpool.Manager, eventsMan fevents.Manager,
-	profileCli profilev1connect.ProfileServiceClient, partitionCli partitionv1connect.PartitionServiceClient,
+	profileCli profilev1connect.ProfileServiceClient, tenancyCli tenancyv1connect.TenancyServiceClient,
 	notificationRepo repository.NotificationRepository,
 	notificationStatusRepo repository.NotificationStatusRepository,
 	languageRepo repository.LanguageRepository,
@@ -45,7 +45,7 @@ func NewNotificationBusiness(_ context.Context,
 		workMan:                workMan,
 		eventsMan:              eventsMan,
 		profileCli:             profileCli,
-		partitionCli:           partitionCli,
+		tenancyCli:             tenancyCli,
 		notificationRepo:       notificationRepo,
 		notificationStatusRepo: notificationStatusRepo,
 		languageRepo:           languageRepo,
@@ -59,7 +59,7 @@ type notificationBusiness struct {
 	eventsMan              fevents.Manager
 	workMan                workerpool.Manager
 	profileCli             profilev1connect.ProfileServiceClient
-	partitionCli           partitionv1connect.PartitionServiceClient
+	tenancyCli             tenancyv1connect.TenancyServiceClient
 	notificationRepo       repository.NotificationRepository
 	notificationStatusRepo repository.NotificationStatusRepository
 	languageRepo           repository.LanguageRepository

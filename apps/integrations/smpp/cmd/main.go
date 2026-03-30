@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
-	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
 	apis "github.com/antinvestor/common"
 	"github.com/antinvestor/common/connection"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/config"
@@ -62,7 +62,7 @@ func main() {
 		log.WithError(err).Fatal("could not setup profile client")
 	}
 
-	partitionCli, err := setupPartitionClient(ctx, cfg, audienceList)
+	tenancyCli, err := setupTenancyClient(ctx, cfg, audienceList)
 	if err != nil {
 		log.WithError(err).Fatal("could not setup partition client")
 	}
@@ -78,7 +78,7 @@ func main() {
 		return
 	}
 
-	authServiceHandlers := service.NewAuthRouterV1(svc, &cfg, profileCli, partitionCli, notificationCli)
+	authServiceHandlers := service.NewAuthRouterV1(svc, &cfg, profileCli, tenancyCli, notificationCli)
 
 	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(authServiceHandlers),
@@ -113,16 +113,16 @@ func setupProfileClient(
 	}, profilev1connect.NewProfileServiceClient)
 }
 
-func setupPartitionClient(
+func setupTenancyClient(
 	ctx context.Context,
 	cfg config.TemplateConfig,
 	audiences []string,
-) (partitionv1connect.PartitionServiceClient, error) {
+) (tenancyv1connect.TenancyServiceClient, error) {
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
-		Endpoint:              cfg.PartitionServiceURI,
-		WorkloadAPITargetPath: cfg.PartitionServiceWorkloadAPITargetPath,
+		Endpoint:              cfg.TenancyServiceURI,
+		WorkloadAPITargetPath: cfg.TenancyServiceWorkloadAPITargetPath,
 		Audiences:             audiences,
-	}, partitionv1connect.NewPartitionServiceClient)
+	}, tenancyv1connect.NewTenancyServiceClient)
 }
 
 func setupNotificationClient(

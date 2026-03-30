@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
-	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/handlers"
 	"github.com/gorilla/mux"
@@ -20,7 +20,7 @@ type templateServer struct {
 	Service         *frame.Service
 	Config          *config.TemplateConfig
 	ProfileCli      profilev1connect.ProfileServiceClient
-	PartitionCli    partitionv1connect.PartitionServiceClient
+	TenancyCli      tenancyv1connect.TenancyServiceClient
 	NotificationCli notificationv1connect.NotificationServiceClient
 }
 
@@ -67,7 +67,7 @@ func (h *templateServer) addHandler(router *mux.Router,
 func NewAuthRouterV1(service *frame.Service,
 	templateConfig *config.TemplateConfig,
 	profileCli profilev1connect.ProfileServiceClient,
-	partitionCli partitionv1connect.PartitionServiceClient,
+	tenancyCli tenancyv1connect.TenancyServiceClient,
 	notificationCli notificationv1connect.NotificationServiceClient) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
@@ -75,7 +75,7 @@ func NewAuthRouterV1(service *frame.Service,
 		Service:         service,
 		Config:          templateConfig,
 		ProfileCli:      profileCli,
-		PartitionCli:    partitionCli,
+		TenancyCli:      tenancyCli,
 		NotificationCli: notificationCli,
 	}
 

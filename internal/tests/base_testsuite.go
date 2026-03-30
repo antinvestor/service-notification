@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"buf.build/gen/go/antinvestor/partition/connectrpc/go/partition/v1/partitionv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
 	"github.com/pitabwire/frame/frametests"
 	"github.com/pitabwire/frame/frametests/definition"
 	"github.com/pitabwire/frame/frametests/deps/testpostgres"
@@ -38,7 +38,7 @@ func (bs *BaseTestSuite) GetProfileCli(_ context.Context) profilev1connect.Profi
 	return nil
 }
 
-func (bs *BaseTestSuite) GetPartitionCli(_ context.Context) partitionv1connect.PartitionServiceClient {
+func (bs *BaseTestSuite) GetTenancyCli(_ context.Context) tenancyv1connect.TenancyServiceClient {
 	// For now, return nil as we don't need actual partition client for basic tests
 	return nil
 }

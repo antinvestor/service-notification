@@ -574,7 +574,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //		ctxService *ctxSrv
 //
 //		profileCli  profilev1connect.ProfileServiceClient
-//		partitionCl partitionv1connect.PartitionServiceClient
+//		partitionCl tenancyv1connect.TenancyServiceClient
 //		resultCount int
 //	}
 //	type args struct {
@@ -592,7 +592,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //			fields: fields{
 //				ctxService:  &ctxSrv{ctx: ctx, srv: service},
 //				profileCli:  nts.getProfileCli(ctx),
-//				partitionCl: nts.getPartitionCli(ctx),
+//				partitionCl: nts.getTenancyCli(ctx),
 //				resultCount: 1,
 //			},
 //			args: args{
@@ -605,7 +605,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //			fields: fields{
 //				ctxService:  &ctxSrv{ctx: ctx, srv: service},
 //				profileCli:  nts.getProfileCli(ctx),
-//				partitionCl: nts.getPartitionCli(ctx),
+//				partitionCl: nts.getTenancyCli(ctx),
 //				resultCount: 0,
 //			},
 //			args: args{
@@ -618,7 +618,7 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //			fields: fields{
 //				ctxService:  &ctxSrv{ctx: ctx, srv: service},
 //				profileCli:  nts.getProfileCli(ctx),
-//				partitionCl: nts.getPartitionCli(ctx),
+//				partitionCl: nts.getTenancyCli(ctx),
 //				resultCount: 3,
 //			},
 //			args: args{

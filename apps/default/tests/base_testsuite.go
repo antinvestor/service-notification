@@ -115,7 +115,7 @@ func (bs *BaseTestSuite) CreateService(
 		frametests.WithNoopDriver())
 
 	profileCli := bs.GetProfileCli(ctx)
-	partitionCli := bs.GetPartitionCli(ctx)
+	tenancyCli := bs.GetTenancyCli(ctx)
 
 	// Get managers from service (similar to main.go pattern)
 	workMan := svc.WorkManager()
@@ -138,7 +138,7 @@ func (bs *BaseTestSuite) CreateService(
 		events.NewNotificationInRoute(ctx, qMan, evtsMan, notificationRepo, routeRepo),
 		events.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, routeRepo, profileCli),
 		events.NewNotificationOutRoute(ctx, evtsMan, profileCli, notificationRepo, routeRepo),
-		events.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, partitionCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)))
+		events.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, tenancyCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)))
 
 	// Get absolute path to migrations directory using source file location
 	// This file is in apps/default/service/tests, so migrations are at ../../migrations/0001
@@ -157,7 +157,7 @@ func (bs *BaseTestSuite) CreateService(
 		workMan,
 		evtsMan,
 		profileCli,
-		partitionCli,
+		tenancyCli,
 		notificationRepo,
 		notificationStatusRepo,
 		languageRepo,
