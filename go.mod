@@ -15,11 +15,11 @@ require (
 	buf.build/gen/go/antinvestor/tenancy/connectrpc/go v1.19.1-20260330064539-b81b51773e97.2
 	buf.build/gen/go/antinvestor/tenancy/protocolbuffers/go v1.36.11-20260330064539-b81b51773e97.1
 	connectrpc.com/connect v1.19.1
-	github.com/antinvestor/common v1.3.1
+	github.com/antinvestor/common v1.4.0
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
-	github.com/pitabwire/frame v1.92.2
-	github.com/pitabwire/util v0.7.0
+	github.com/pitabwire/frame v1.93.0
+	github.com/pitabwire/util v0.8.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.41.0
 	github.com/wneessen/go-mail v0.7.2
