@@ -50,7 +50,7 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 
 	err := proto.Unmarshal(payload, notification)
 	if err != nil {
-		log.WithError(err).WithField("payload", payload).Error("failed to unmarshal notification")
+		log.WithError(err).Error("failed to unmarshal notification")
 		return nil
 	}
 
@@ -121,6 +121,6 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		return nil
 	}
 
-	log.Debug("Email SMTP message sent successfully")
+	log.Info("email sent via SMTP")
 	return nil
 }

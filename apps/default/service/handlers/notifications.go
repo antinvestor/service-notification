@@ -36,39 +36,23 @@ func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[not
 
 	logger := util.Log(ctx).WithField("method", "Send")
 
-	logger.Info("starting notification send request processing")
-
 	var responses []*commonv1.StatusResponse
 	data := req.Msg.GetData()
 
-	logger.WithField("item_count", len(data)).Info("processing notification send request")
+	logger.WithField("item_count", len(data)).Debug("processing notification send request")
 
 	for i, notification := range data {
-		logger.WithFields(map[string]interface{}{
-			"item_index":      i,
-			"notification_id": notification.GetId(),
-		}).Debug("processing notification item")
-
 		resp, err := ns.notificationBusiness.QueueOut(ctx, notification)
 		if err != nil {
-			logger.WithFields(map[string]interface{}{
+			logger.WithFields(map[string]any{
 				"item_index":      i,
 				"notification_id": notification.GetId(),
-				"error":           err,
-			}).Error("failed to queue notification")
+			}).WithError(err).Error("failed to queue notification")
 			return apperrors.CleanErr(err)
 		}
 
-		logger.WithFields(map[string]interface{}{
-			"item_index":      i,
-			"notification_id": notification.GetId(),
-			"response_id":     resp.GetId(),
-		}).Debug("successfully queued notification")
-
 		responses = append(responses, resp)
 	}
-
-	logger.WithField("response_count", len(responses)).Info("sending notification send response")
 
 	err := stream.Send(&notificationv1.SendResponse{Data: responses})
 	if err != nil {
@@ -76,7 +60,7 @@ func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[not
 		return apperrors.CleanErr(err)
 	}
 
-	logger.Info("completed notification send request processing")
+	logger.WithField("item_count", len(responses)).Info("notifications queued for send")
 	return nil
 }
 

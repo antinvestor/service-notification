@@ -79,7 +79,7 @@ func (event *NotificationOutQueue) Validate(ctx context.Context, payload any) er
 func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) error {
 	notificationID := *payload.(*string)
 
-	logger := util.Log(ctx).WithField("type", event.Name()).WithField("notification_id", notificationID)
+	logger := util.Log(ctx).WithFields(map[string]any{"type": event.Name(), "notification_id": notificationID})
 	defer logger.Release()
 	logger.Debug("event handler started")
 
@@ -103,13 +103,13 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 
 	templateMap, err := event.extendWithSupportContacts(ctx, n)
 	if err != nil {
-		logger.WithError(err).WithField("notification_id", n.GetID()).Error("could extend message with support information")
+		logger.WithError(err).Error("could not extend message with support information")
 		return err
 	}
 
 	templateMap, err = event.formatOutboundNotification(ctx, logger, n, templateMap)
 	if err != nil {
-		logger.WithError(err).WithField("notification_id", n.GetID()).Error("could not format outbound notification")
+		logger.WithError(err).Error("could not format outbound notification")
 
 		nStatus = &models.NotificationStatus{
 			NotificationID: n.GetID(),
@@ -129,7 +129,7 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 
 	binaryProto, err := proto.Marshal(apiNotification)
 	if err != nil {
-		logger.WithError(err).WithField("notification_id", n.GetID()).Error("could not marshal notification")
+		logger.WithError(err).Error("could not marshal notification")
 
 		nStatus = &models.NotificationStatus{
 			NotificationID: n.GetID(),
@@ -265,9 +265,10 @@ func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Contex
 
 	tmplDataList, err0 := event.templateDataRepo.GetByTemplateIDAndLanguage(ctx, n.LanguageID, n.TemplateID)
 	if err0 != nil {
-		logger.WithError(err0).
-			WithField("template id", n.TemplateID).
-			WithField("language id", n.LanguageID).Error("could not get template data")
+		logger.WithError(err0).WithFields(map[string]any{
+			"template_id": n.TemplateID,
+			"language_id": n.LanguageID,
+		}).Error("could not get template data")
 		tmplDataList = []*models.TemplateData{}
 	}
 

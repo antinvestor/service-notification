@@ -32,9 +32,10 @@ type ErrorResponse struct {
 func (h *templateServer) writeError(w http.ResponseWriter, err error, code int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 
-	util.Log(context.Background()).
-		With("code", code).
-		With("message", msg).WithError(err).Error("internal service error")
+	util.Log(context.Background()).WithFields(map[string]any{
+		"code":    code,
+		"message": msg,
+	}).WithError(err).Error("internal service error")
 	w.WriteHeader(code)
 
 	encErr := json.NewEncoder(w).Encode(&ErrorResponse{

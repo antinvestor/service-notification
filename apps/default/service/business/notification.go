@@ -15,7 +15,6 @@ import (
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/pitabwire/frame/data"
 	fevents "github.com/pitabwire/frame/events"
-	"github.com/pitabwire/frame/security"
 	"github.com/pitabwire/frame/workerpool"
 	"github.com/pitabwire/util"
 )
@@ -69,11 +68,9 @@ type notificationBusiness struct {
 }
 
 func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificationv1.Notification) (*commonv1.StatusResponse, error) {
-	logger := util.Log(ctx).WithField("request", message)
+	logger := util.Log(ctx)
 
-	authClaim := security.ClaimsFromContext(ctx)
-
-	logger.WithField("auth claim", authClaim).Info("handling queue out request")
+	logger.Debug("handling queue out request")
 
 	n := models.NotificationFromAPI(ctx, message)
 	n.OutBound = true
@@ -130,10 +127,9 @@ func (nb *notificationBusiness) QueueOut(ctx context.Context, message *notificat
 }
 
 func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificationv1.Notification) (*commonv1.StatusResponse, error) {
-	logger := util.Log(ctx).WithField("request", message)
+	logger := util.Log(ctx)
 
-	authClaim := security.ClaimsFromContext(ctx)
-	logger.WithField("auth claim", authClaim).Info("handling queue in request")
+	logger.Debug("handling queue in request")
 
 	n := models.NotificationFromAPI(ctx, message)
 	n.OutBound = false
@@ -174,8 +170,8 @@ func (nb *notificationBusiness) QueueIn(ctx context.Context, message *notificati
 }
 
 func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
-	logger := util.Log(ctx).WithField("request", statusReq)
-	logger.Info("handling status check request")
+	logger := util.Log(ctx).WithField("notification_id", statusReq.GetId())
+	logger.Debug("handling status check request")
 
 	n, err := nb.notificationRepo.GetByID(ctx, statusReq.GetId())
 	if err != nil {
@@ -192,7 +188,7 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error) {
-	logger := util.Log(ctx).WithField("request", statusReq)
+	logger := util.Log(ctx).WithField("notification_id", statusReq.GetId())
 	logger.Debug("handling status update request")
 
 	n, err := nb.notificationRepo.GetByID(ctx, statusReq.GetId())
@@ -225,7 +221,7 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 
 	job := workerpool.NewJob(func(ctx context.Context, resultPipe workerpool.JobResultPipe[*notificationv1.ReleaseResponse]) error {
 
-		logger := util.Log(ctx).WithField("request", releaseReq)
+		logger := util.Log(ctx)
 		logger.Debug("handling release request")
 
 		notificationList, err := nb.notificationRepo.GetByIDList(ctx, releaseReq.GetId()...)
@@ -370,7 +366,7 @@ func (nb *notificationBusiness) convertNotificationsToAPI(
 
 func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv1.SearchRequest, consumer func(ctx context.Context, batch []*notificationv1.Notification) error) error {
 
-	logger := util.Log(ctx).WithField("request", searchQuery)
+	logger := util.Log(ctx)
 
 	logger.Debug("handling search request")
 
@@ -424,7 +420,7 @@ func (nb *notificationBusiness) Search(ctx context.Context, searchQuery *commonv
 	query := data.NewSearchQuery(searchOpts...)
 	results, err := nb.notificationRepo.Search(ctx, query)
 	if err != nil {
-		logger.WithError(err).Error("failed to search notifications")
+		logger.WithError(err).Warn("failed to search notifications")
 		return err
 	}
 
@@ -508,10 +504,9 @@ func (nb *notificationBusiness) convertTemplatesToAPI(ctx context.Context, langu
 
 func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery *notificationv1.TemplateSearchRequest, consumer func(ctx context.Context, batch []*notificationv1.Template) error) error {
 
-	logger := util.Log(ctx).WithField("request", searchQuery)
+	logger := util.Log(ctx)
 
-	authClaims := security.ClaimsFromContext(ctx)
-	logger.WithField("claims", authClaims).Debug("handling template searchQuery request")
+	logger.Debug("handling template search request")
 
 	searchOpts := []data.SearchOption{
 		data.WithSearchLimit(int(searchQuery.GetCount())),
@@ -567,10 +562,9 @@ func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery 
 }
 
 func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.Template, error) {
-	logger := util.Log(ctx).WithField("request", req)
+	logger := util.Log(ctx).WithField("template_name", req.GetName())
 
-	authClaims := security.ClaimsFromContext(ctx)
-	logger.WithField("claims", authClaims).Info("handling template request update")
+	logger.Debug("handling template save request")
 
 	language, err := nb.languageRepo.GetOrCreateByCode(ctx, req.GetLanguageCode())
 

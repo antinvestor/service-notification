@@ -112,7 +112,7 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 
 	rs := resp.SMSMessageData.Recipients[0]
 
-	extrasMap := map[string]any{"status": rs.Status, "cost": rs.Cost, "status code": strconv.Itoa(rs.StatusCode)}
+	extrasMap := map[string]any{"status": rs.Status, "cost": rs.Cost, "status_code": strconv.Itoa(rs.StatusCode)}
 	extra, _ := structpb.NewStruct(extrasMap)
 	if rs.StatusCode >= 500 && rs.StatusCode < 502 {
 
@@ -153,7 +153,7 @@ func (ms *messageToSend) Handle(ctx context.Context, headers map[string]string, 
 		"message_id":  rs.MessageId,
 		"status":      rs.Status,
 		"cost":        rs.Cost,
-		"status_code": rs.StatusCode}).
-		Debug("Africa's Talking SMS message sent successfully")
+		"status_code": rs.StatusCode,
+	}).Info("SMS sent via Africa's Talking")
 	return nil
 }

@@ -44,10 +44,10 @@ func (e *TemplateSave) Validate(ctx context.Context, payload any) error {
 func (e *TemplateSave) Execute(ctx context.Context, payload any) error {
 	template := payload.(*models.Template)
 
-	logger := util.Log(ctx).With("type", e.Name())
-	logger.With("payload", template).Info("handling event")
+	logger := util.Log(ctx).WithField("type", e.Name())
+	logger.Debug("handling event")
 
-	result := e.dbPool.DB(ctx, false).Debug().Clauses(clause.OnConflict{
+	result := e.dbPool.DB(ctx, false).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		UpdateAll: true,
 	}).Create(template)
@@ -57,7 +57,7 @@ func (e *TemplateSave) Execute(ctx context.Context, payload any) error {
 		logger.WithError(err).Warn("could not save to db")
 		return err
 	}
-	logger.With("rows affected", result.RowsAffected).Info("successfully saved record to db")
+	logger.WithField("rows_affected", result.RowsAffected).Debug("successfully saved record to db")
 
 	return nil
 }

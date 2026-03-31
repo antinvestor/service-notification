@@ -50,7 +50,7 @@ func (e *NotificationStatusUpdate) Validate(_ context.Context, payload any) erro
 func (e *NotificationStatusUpdate) Execute(ctx context.Context, payload any) error {
 	statusUpdateRequest := payload.(*commonv1.StatusUpdateRequest)
 
-	logger := util.Log(ctx).WithField("type", e.Name()).WithField("notification_id", statusUpdateRequest.GetId())
+	logger := util.Log(ctx).WithFields(map[string]any{"type": e.Name(), "notification_id": statusUpdateRequest.GetId()})
 	defer logger.Release()
 
 	logger.Debug("event handler started")
