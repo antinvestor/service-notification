@@ -98,9 +98,13 @@ func main() {
 	// Setup Connect server
 	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
 
+	// Register permission manifest for the notification service namespace.
+	notificationSD := notificationpb.File_notification_v1_notification_proto.Services().ByName("NotificationService")
+
 	// Initialise the service with all options
 	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(connectHandler),
+		frame.WithPermissionRegistration(notificationSD),
 		frame.WithRegisterEvents(
 			events2.NewNotificationSave(ctx, evtsMan, notificationRepo),
 			events2.NewNotificationStatusSave(ctx, notificationRepo, notificationStatusRepo),
