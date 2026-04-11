@@ -1,0 +1,414 @@
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
+import 'package:antinvestor_ui_core/widgets/error_helpers.dart';
+import 'package:antinvestor_ui_core/widgets/form_field_card.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../providers/notification_providers.dart';
+import '../providers/template_providers.dart';
+import '../widgets/channel_selector.dart';
+import '../widgets/language_selector.dart';
+
+/// Screen for composing and sending a new notification.
+class NotificationSendScreen extends ConsumerStatefulWidget {
+  const NotificationSendScreen({super.key});
+
+  @override
+  ConsumerState<NotificationSendScreen> createState() =>
+      _NotificationSendScreenState();
+}
+
+class _NotificationSendScreenState
+    extends ConsumerState<NotificationSendScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _recipientController = TextEditingController();
+  final _sourceController = TextEditingController();
+  final _payloadController = TextEditingController();
+  final _templateController = TextEditingController();
+
+  String _selectedLanguage = 'en';
+  Set<String> _selectedChannels = {'SMS'};
+  Priority _selectedPriority = Priority.LOW;
+  bool _autoRelease = true;
+  bool _outBound = true;
+  bool _sending = false;
+  String? _error;
+
+  // Data key-value pairs
+  final List<MapEntry<String, String>> _dataEntries = [];
+
+  @override
+  void dispose() {
+    _recipientController.dispose();
+    _sourceController.dispose();
+    _payloadController.dispose();
+    _templateController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go('/notifications'),
+        ),
+        title: Text(
+          'Compose Notification',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          FilledButton.icon(
+            onPressed: _sending ? null : _send,
+            icon: _sending
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.send, size: 18),
+            label: Text(_sending ? 'Sending...' : 'Send'),
+          ),
+          const SizedBox(width: 16),
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Recipient
+              FormFieldCard(
+                label: 'Recipient',
+                description: 'The target address (phone number, email, etc).',
+                isRequired: true,
+                child: TextFormField(
+                  controller: _recipientController,
+                  decoration: InputDecoration(
+                    hintText: 'e.g., +254700000000',
+                    prefixIcon: const Icon(Icons.person_outline),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                ),
+              ),
+
+              // Source
+              FormFieldCard(
+                label: 'Source',
+                description: 'The sender identifier.',
+                child: TextFormField(
+                  controller: _sourceController,
+                  decoration: InputDecoration(
+                    hintText: 'e.g., MYAPP',
+                    prefixIcon: const Icon(Icons.account_circle_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Channel selector
+              FormFieldCard(
+                label: 'Channels',
+                description: 'Select one or more delivery channels.',
+                isRequired: true,
+                child: ChannelSelector(
+                  selectedChannels: _selectedChannels,
+                  onChanged: (channels) {
+                    setState(() => _selectedChannels = channels);
+                  },
+                ),
+              ),
+
+              // Template
+              FormFieldCard(
+                label: 'Template',
+                description:
+                    'Template name to use for rendering the notification.',
+                child: TextFormField(
+                  controller: _templateController,
+                  decoration: InputDecoration(
+                    hintText: 'e.g., welcome_message',
+                    prefixIcon: const Icon(Icons.description_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Language
+              FormFieldCard(
+                label: 'Language',
+                description: 'Language for the notification content.',
+                child: LanguageSelector(
+                  selectedLanguage: _selectedLanguage,
+                  onChanged: (lang) {
+                    setState(() => _selectedLanguage = lang);
+                  },
+                ),
+              ),
+
+              // Priority
+              FormFieldCard(
+                label: 'Priority',
+                description: 'Delivery priority level.',
+                child: SegmentedButton<Priority>(
+                  segments: const [
+                    ButtonSegment(
+                      value: Priority.HIGH,
+                      label: Text('High'),
+                      icon: Icon(Icons.keyboard_double_arrow_up, size: 16),
+                    ),
+                    ButtonSegment(
+                      value: Priority.LOW,
+                      label: Text('Low'),
+                      icon: Icon(Icons.keyboard_arrow_down, size: 16),
+                    ),
+                    ButtonSegment(
+                      value: Priority.VERY_LOW,
+                      label: Text('Very Low'),
+                      icon: Icon(Icons.arrow_downward, size: 16),
+                    ),
+                  ],
+                  selected: {_selectedPriority},
+                  onSelectionChanged: (set) {
+                    setState(() => _selectedPriority = set.first);
+                  },
+                  showSelectedIcon: false,
+                ),
+              ),
+
+              // Payload
+              FormFieldCard(
+                label: 'Payload',
+                description: 'Raw message content or body text.',
+                child: TextFormField(
+                  controller: _payloadController,
+                  maxLines: 5,
+                  minLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Enter notification body...',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Data key-value pairs
+              FormFieldCard(
+                label: 'Data',
+                description:
+                    'Template variables as key-value pairs.',
+                child: Column(
+                  children: [
+                    for (var i = 0; i < _dataEntries.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: _dataEntries[i].key,
+                                decoration: InputDecoration(
+                                  hintText: 'Key',
+                                  isDense: true,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onChanged: (val) {
+                                  _dataEntries[i] =
+                                      MapEntry(val, _dataEntries[i].value);
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: _dataEntries[i].value,
+                                decoration: InputDecoration(
+                                  hintText: 'Value',
+                                  isDense: true,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onChanged: (val) {
+                                  _dataEntries[i] =
+                                      MapEntry(_dataEntries[i].key, val);
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline,
+                                  size: 20),
+                              onPressed: () {
+                                setState(() => _dataEntries.removeAt(i));
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _dataEntries.add(const MapEntry('', ''));
+                          });
+                        },
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add Entry'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Options row
+              Row(
+                children: [
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: const Text('Auto Release'),
+                      value: _autoRelease,
+                      onChanged: (v) {
+                        setState(() => _autoRelease = v ?? true);
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: const Text('Outbound'),
+                      value: _outBound,
+                      onChanged: (v) {
+                        setState(() => _outBound = v ?? true);
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Error display
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 20,
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _send() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedChannels.isEmpty) {
+      setState(() => _error = 'Please select at least one channel.');
+      return;
+    }
+
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
+
+    try {
+      final notifier = ref.read(notificationNotifierProvider.notifier);
+
+      final notification = Notification()
+        ..recipient = (ContactLink()..detail = _recipientController.text.trim())
+        ..source = (ContactLink()..detail = _sourceController.text.trim())
+        ..type = _selectedChannels.first
+        ..template = _templateController.text.trim()
+        ..language = _selectedLanguage
+        ..priority = _selectedPriority
+        ..autoRelease = _autoRelease
+        ..outBound = _outBound;
+
+      // Set payload as Struct if provided
+      if (_payloadController.text.trim().isNotEmpty) {
+        notification.data = _payloadController.text.trim();
+      }
+
+      // Add data entries as concatenated string
+      for (final entry in _dataEntries) {
+        if (entry.key.isNotEmpty) {
+          notification.data = '${notification.data}\n${entry.key}=${entry.value}';
+        }
+      }
+
+      final request = SendRequest();
+      request.data.add(notification);
+
+      await notifier.send(request);
+
+      if (mounted) {
+        setState(() => _sending = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notification sent successfully'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        context.go('/notifications');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _sending = false;
+          _error = friendlyError(e);
+        });
+      }
+    }
+  }
+}
