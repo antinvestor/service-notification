@@ -1,5 +1,6 @@
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
 import 'package:antinvestor_ui_core/navigation/nav_items.dart';
+import 'package:antinvestor_ui_core/permissions/permission_manifest.dart';
 import 'package:antinvestor_ui_core/routing/route_module.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -84,24 +85,28 @@ class NotificationRouteModule extends RouteModule {
         icon: Icons.notifications_outlined,
         activeIcon: Icons.notifications,
         route: '/notifications',
+        requiredPermissions: {'notification_search'},
         children: [
           NavItem(
             id: 'notification-inbox',
             label: 'Inbox',
             icon: Icons.inbox,
             route: '/notifications',
+            requiredPermissions: {'notification_search'},
           ),
           NavItem(
             id: 'notification-send',
             label: 'Compose',
             icon: Icons.send,
             route: '/notifications/send',
+            requiredPermissions: {'notification_send'},
           ),
           NavItem(
             id: 'notification-templates',
             label: 'Templates',
             icon: Icons.description,
             route: '/notifications/templates',
+            requiredPermissions: {'template_manage'},
           ),
         ],
       ),
@@ -110,10 +115,37 @@ class NotificationRouteModule extends RouteModule {
 
   @override
   Map<String, Set<String>> get routePermissions => {
-        '/notifications': {'notification:read', 'admin'},
-        '/notifications/detail': {'notification:read', 'admin'},
-        '/notifications/send': {'notification:write', 'admin'},
-        '/notifications/templates': {'notification:read', 'admin'},
-        '/notifications/templates/edit': {'notification:write', 'admin'},
+        '/notifications': {'notification_search'},
+        '/notifications/detail': {'notification_search'},
+        '/notifications/send': {'notification_send'},
+        '/notifications/templates': {'template_manage'},
+        '/notifications/templates/edit': {'template_manage'},
       };
+
+  @override
+  PermissionManifest get permissionManifest => const PermissionManifest(
+        namespace: 'service_notification',
+        permissions: [
+          PermissionEntry(
+            key: 'notification_send',
+            label: 'Send Notifications',
+            scope: PermissionScope.action,
+          ),
+          PermissionEntry(
+            key: 'notification_search',
+            label: 'Search Notifications',
+            scope: PermissionScope.service,
+          ),
+          PermissionEntry(
+            key: 'notification_status_view',
+            label: 'View Notification Status',
+            scope: PermissionScope.feature,
+          ),
+          PermissionEntry(
+            key: 'template_manage',
+            label: 'Manage Templates',
+            scope: PermissionScope.feature,
+          ),
+        ],
+      );
 }
