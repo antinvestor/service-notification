@@ -2,8 +2,16 @@ name: antinvestor_ui_notification
 description: >
   Notification management UI library for Antinvestor. Embeddable screens and widgets
   for sending, receiving, searching notifications, and managing templates.
-publish_to: 'none'
 version: 0.1.0
+repository: https://github.com/antinvestor/service-notification
+homepage: https://github.com/antinvestor/service-notification/tree/main/ui
+issue_tracker: https://github.com/antinvestor/service-notification/issues
+topics:
+  - flutter
+  - ui
+  - notification
+  - antinvestor
+  - messaging
 
 environment:
   sdk: ^3.11.0
@@ -11,8 +19,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  antinvestor_ui_core:
-    path: ../../common/ui_core
+  antinvestor_ui_core: ^0.1.0
   antinvestor_api_notification: ^1.53.0
   antinvestor_api_common: ^1.52.0
   connectrpc: ^1.0.0
