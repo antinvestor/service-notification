@@ -1,16 +1,16 @@
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
-import 'package:antinvestor_ui_core/widgets/entity_list_page.dart';
-import 'package:antinvestor_ui_core/widgets/error_helpers.dart';
+import 'package:antinvestor_ui_core/antinvestor_ui_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/notification_providers.dart';
-import '../widgets/notification_tile.dart';
+import '../widgets/notification_status_badge.dart';
+import '../widgets/priority_badge.dart';
 
-/// Screen displaying the notification inbox using EntityListPage.
-///
-/// Supports search, filtering, and navigating to notification details.
+/// Screen displaying the notification inbox using AdminEntityListPage with
+/// DataTable, CSV export, and audit callback.
 class NotificationInboxScreen extends ConsumerStatefulWidget {
   const NotificationInboxScreen({super.key});
 
@@ -35,23 +35,6 @@ class _NotificationInboxScreenState
     final asyncNotifications =
         ref.watch(notificationSearchProvider(_searchParams));
 
-    return asyncNotifications.when(
-      loading: () => _buildShell(theme, isLoading: true, items: const []),
-      error: (error, _) => _buildShell(
-        theme,
-        error: friendlyError(error),
-        items: const [],
-      ),
-      data: (notifications) => _buildShell(theme, items: notifications),
-    );
-  }
-
-  Widget _buildShell(
-    ThemeData theme, {
-    required List<Notification> items,
-    bool isLoading = false,
-    String? error,
-  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -75,35 +58,83 @@ class _NotificationInboxScreenState
             ),
           ),
         ),
-
+        const SizedBox(height: 8),
         // Main list
         Expanded(
-          child: EntityListPage<Notification>(
-            title: 'Notifications',
-            icon: Icons.notifications,
-            items: items,
-            isLoading: isLoading,
-            error: error,
-            onRetry: _refresh,
-            searchHint: 'Search notifications...',
-            onSearchChanged: (query) {
-              setState(() => _searchQuery = query.trim());
-            },
-            actionLabel: 'Compose',
-            onAction: () => context.go('/notifications/send'),
-            itemBuilder: (context, notification) {
-              return NotificationTile(
-                notification: notification,
-                isUnread: notification.status.state.name == 'PENDING' ||
-                    notification.status.state.name == 'QUEUED',
-                onTap: () {
-                  context.go(
-                    '/notifications/detail/${notification.id}',
-                    extra: notification,
-                  );
-                },
-              );
-            },
+          child: asyncNotifications.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline,
+                      size: 48, color: theme.colorScheme.error),
+                  const SizedBox(height: 16),
+                  Text('$error', style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 16),
+                  FilledButton.tonal(
+                    onPressed: _refresh,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+            data: (notifications) => AdminEntityListPage<Notification>(
+              title: 'Notifications',
+              breadcrumbs: const ['Home', 'Notifications'],
+              columns: const [
+                DataColumn(label: Text('Type')),
+                DataColumn(label: Text('Template')),
+                DataColumn(label: Text('Source')),
+                DataColumn(label: Text('Recipient')),
+                DataColumn(label: Text('Priority')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('Date')),
+              ],
+              items: notifications,
+              onSearch: (query) {
+                setState(() => _searchQuery = query.trim());
+              },
+              searchHint: 'Search notifications...',
+              onAdd: () => context.go('/notifications/send'),
+              addLabel: 'Compose',
+              onRowNavigate: (notification) {
+                context.go(
+                  '/notifications/detail/${notification.id}',
+                  extra: notification,
+                );
+              },
+              rowBuilder: (notification, selected, onSelect) {
+                return DataRow(
+                  selected: selected,
+                  onSelectChanged: (_) => onSelect(),
+                  cells: [
+                    DataCell(Text(notification.type)),
+                    DataCell(Text(notification.template)),
+                    DataCell(Text(notification.source.detail)),
+                    DataCell(Text(notification.recipient.detail)),
+                    DataCell(PriorityBadge(priority: notification.priority)),
+                    DataCell(NotificationStatusBadge(
+                      status: notification.status.state.name,
+                    )),
+                    DataCell(Text(notification.status.id)),
+                  ],
+                );
+              },
+              exportRow: (notification) => [
+                notification.type,
+                notification.template,
+                notification.source.detail,
+                notification.recipient.detail,
+                notification.priority.name,
+                notification.status.state.name,
+                notification.status.id,
+              ],
+              onExport: (format, count) {
+                debugPrint(
+                    '[AUDIT] Exported $count Notifications as $format');
+              },
+            ),
           ),
         ),
       ],
