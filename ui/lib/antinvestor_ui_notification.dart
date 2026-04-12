@@ -2,7 +2,7 @@
 ///
 /// Provides embeddable screens, widgets, and Riverpod providers for sending,
 /// receiving, searching notifications, and managing templates.
-library antinvestor_ui_notification;
+library;
 
 // Providers
 export 'src/providers/notification_transport_provider.dart';

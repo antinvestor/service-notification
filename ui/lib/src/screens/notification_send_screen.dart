@@ -1,4 +1,5 @@
-import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    as notif;
 import 'package:antinvestor_ui_core/widgets/error_helpers.dart';
 import 'package:antinvestor_ui_core/widgets/form_field_card.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/notification_providers.dart';
-import '../providers/template_providers.dart';
 import '../widgets/channel_selector.dart';
 import '../widgets/language_selector.dart';
 
@@ -29,7 +29,7 @@ class _NotificationSendScreenState
 
   String _selectedLanguage = 'en';
   Set<String> _selectedChannels = {'SMS'};
-  Priority _selectedPriority = Priority.LOW;
+  notif.PRIORITY _selectedPriority = notif.PRIORITY.LOW;
   bool _autoRelease = true;
   bool _outBound = true;
   bool _sending = false;
@@ -171,22 +171,22 @@ class _NotificationSendScreenState
               FormFieldCard(
                 label: 'Priority',
                 description: 'Delivery priority level.',
-                child: SegmentedButton<Priority>(
-                  segments: const [
+                child: SegmentedButton<notif.PRIORITY>(
+                  segments: [
                     ButtonSegment(
-                      value: Priority.HIGH,
-                      label: Text('High'),
-                      icon: Icon(Icons.keyboard_double_arrow_up, size: 16),
+                      value: notif.PRIORITY.HIGH,
+                      label: const Text('High'),
+                      icon: const Icon(Icons.keyboard_double_arrow_up, size: 16),
                     ),
                     ButtonSegment(
-                      value: Priority.LOW,
-                      label: Text('Low'),
-                      icon: Icon(Icons.keyboard_arrow_down, size: 16),
+                      value: notif.PRIORITY.LOW,
+                      label: const Text('Low'),
+                      icon: const Icon(Icons.keyboard_arrow_down, size: 16),
                     ),
                     ButtonSegment(
-                      value: Priority.VERY_LOW,
-                      label: Text('Very Low'),
-                      icon: Icon(Icons.arrow_downward, size: 16),
+                      value: notif.PRIORITY.VERY_LOW,
+                      label: const Text('Very Low'),
+                      icon: const Icon(Icons.arrow_downward, size: 16),
                     ),
                   ],
                   selected: {_selectedPriority},
@@ -365,9 +365,9 @@ class _NotificationSendScreenState
     try {
       final notifier = ref.read(notificationNotifierProvider.notifier);
 
-      final notification = Notification()
-        ..recipient = (ContactLink()..detail = _recipientController.text.trim())
-        ..source = (ContactLink()..detail = _sourceController.text.trim())
+      final notification = notif.Notification()
+        ..recipient = (notif.ContactLink()..detail = _recipientController.text.trim())
+        ..source = (notif.ContactLink()..detail = _sourceController.text.trim())
         ..type = _selectedChannels.first
         ..template = _templateController.text.trim()
         ..language = _selectedLanguage
@@ -387,7 +387,7 @@ class _NotificationSendScreenState
         }
       }
 
-      final request = SendRequest();
+      final request = notif.SendRequest();
       request.data.add(notification);
 
       await notifier.send(request);

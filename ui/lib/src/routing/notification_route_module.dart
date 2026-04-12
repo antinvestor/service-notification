@@ -1,4 +1,5 @@
-import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    as notif;
 import 'package:antinvestor_ui_core/navigation/nav_items.dart';
 import 'package:antinvestor_ui_core/permissions/permission_manifest.dart';
 import 'package:antinvestor_ui_core/routing/route_module.dart';
@@ -37,7 +38,7 @@ class NotificationRouteModule extends RouteModule {
               final id = state.pathParameters['id'] ?? '';
               final extra = state.extra;
               final notification =
-                  extra is Notification ? extra : null;
+                  extra is notif.Notification ? extra : null;
               return NotificationDetailScreen(
                 notificationId: id,
                 initialNotification: notification,
@@ -62,7 +63,7 @@ class NotificationRouteModule extends RouteModule {
                   final id = state.pathParameters['id'] ?? '';
                   final extra = state.extra;
                   final template =
-                      extra is Template ? extra : null;
+                      extra is notif.Template ? extra : null;
                   return TemplateEditScreen(
                     templateId: id,
                     initialTemplate: template,

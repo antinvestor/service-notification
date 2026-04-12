@@ -14,16 +14,16 @@ class PriorityBadge extends StatelessWidget {
     required this.priority,
   });
 
-  final Priority priority;
+  final PRIORITY priority;
 
   @override
   Widget build(BuildContext context) {
     return StatusBadge.fromEnum(
       value: priority,
       mapper: (p) => switch (p) {
-        Priority.HIGH => ('HIGH', Colors.red, Icons.keyboard_double_arrow_up),
-        Priority.LOW => ('LOW', Colors.blue, Icons.keyboard_arrow_down),
-        Priority.VERY_LOW => ('VERY LOW', Colors.grey, Icons.arrow_downward),
+        PRIORITY.HIGH => ('HIGH', Colors.red, Icons.keyboard_double_arrow_up),
+        PRIORITY.LOW => ('LOW', Colors.blue, Icons.keyboard_arrow_down),
+        PRIORITY.VERY_LOW => ('VERY LOW', Colors.grey, Icons.arrow_downward),
         _ => ('NORMAL', Colors.blueGrey, null),
       },
     );

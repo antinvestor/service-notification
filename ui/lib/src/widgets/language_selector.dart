@@ -24,7 +24,7 @@ class LanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: selectedLanguage.isEmpty
+      initialValue: selectedLanguage.isEmpty
           ? availableLanguages.first.code
           : selectedLanguage,
       decoration: InputDecoration(

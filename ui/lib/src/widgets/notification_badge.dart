@@ -1,4 +1,5 @@
-import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    as notif;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,17 +7,17 @@ import '../providers/notification_providers.dart';
 
 /// Counts unread notifications for a recipient.
 ///
-/// Uses [notificationReceiveProvider] to fetch notifications and counts those
+/// Uses [notificationSearchProvider] to fetch notifications and counts those
 /// whose status indicates they are unread/pending.
 final unreadCountProvider =
     FutureProvider.family<int, String>((ref, recipientId) async {
   if (recipientId.isEmpty) return 0;
-  final notifications =
-      await ref.watch(notificationReceiveProvider(recipientId).future);
+  final params = NotificationSearchParams(recipient: recipientId);
+  final notifications = await ref.watch(notificationSearchProvider(params).future);
   return notifications
       .where((n) =>
-          n.status == NotificationStatus.NOTIFICATION_STATUS_PENDING ||
-          n.status == NotificationStatus.NOTIFICATION_STATUS_SENT)
+          n.status.status == notif.STATUS.QUEUED ||
+          n.status.status == notif.STATUS.IN_PROCESS)
       .length;
 });
 
@@ -60,7 +61,7 @@ class NotificationBadge extends ConsumerWidget {
     final count = countAsync.when(
       data: (c) => c,
       loading: () => 0,
-      error: (_, __) => 0,
+      error: (_, _) => 0,
     );
 
     final icon = child ?? const Icon(Icons.notifications_outlined);
@@ -121,14 +122,14 @@ class InlineNotificationList extends ConsumerWidget {
 
   final String recipientId;
   final int maxItems;
-  final ValueChanged<Notification>? onTap;
+  final ValueChanged<notif.Notification>? onTap;
   final String emptyMessage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final notificationsAsync =
-        ref.watch(notificationReceiveProvider(recipientId));
+    final params = NotificationSearchParams(recipient: recipientId);
+    final notificationsAsync = ref.watch(notificationSearchProvider(params));
 
     return notificationsAsync.when(
       loading: () => const Center(
@@ -179,7 +180,7 @@ class _CompactNotificationTile extends StatelessWidget {
     this.onTap,
   });
 
-  final Notification notification;
+  final notif.Notification notification;
   final VoidCallback? onTap;
 
   IconData _typeIcon(String type) {
@@ -192,7 +193,7 @@ class _CompactNotificationTile extends StatelessWidget {
     return Icons.campaign_outlined;
   }
 
-  String _title(Notification n) {
+  String _title(notif.Notification n) {
     if (n.template.isNotEmpty) return n.template;
     if (n.type.isNotEmpty) return n.type;
     return 'Notification';
@@ -202,8 +203,8 @@ class _CompactNotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isUnread =
-        notification.status == NotificationStatus.NOTIFICATION_STATUS_PENDING ||
-        notification.status == NotificationStatus.NOTIFICATION_STATUS_SENT;
+        notification.status.status == notif.STATUS.QUEUED ||
+        notification.status.status == notif.STATUS.IN_PROCESS;
 
     return InkWell(
       onTap: onTap,

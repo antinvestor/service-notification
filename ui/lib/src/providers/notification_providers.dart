@@ -1,4 +1,5 @@
-import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    as notif;
 import 'package:antinvestor_ui_core/api/stream_helpers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,9 +31,9 @@ class NotificationSearchParams {
 
 /// Search notifications with optional filters.
 final notificationSearchProvider = FutureProvider.family<
-    List<Notification>, NotificationSearchParams>((ref, params) async {
+    List<notif.Notification>, NotificationSearchParams>((ref, params) async {
   final client = ref.watch(notificationServiceClientProvider);
-  final request = SearchRequest()
+  final request = notif.SearchRequest()
     ..query = params.query;
   if (params.type.isNotEmpty) {
     request.properties.add('type:${params.type}');
@@ -41,7 +42,7 @@ final notificationSearchProvider = FutureProvider.family<
     request.properties.add('recipient:${params.recipient}');
   }
   final stream = client.search(request);
-  return collectStream<SearchResponse, Notification>(
+  return collectStream<notif.SearchResponse, notif.Notification>(
     stream,
     extract: (r) => r.data,
   );
@@ -49,12 +50,12 @@ final notificationSearchProvider = FutureProvider.family<
 
 /// Acknowledge receipt of notifications.
 final notificationReceiveProvider =
-    FutureProvider.family<List<StatusResponse>, List<Notification>>((ref, notifications) async {
+    FutureProvider.family<List<notif.StatusResponse>, List<notif.Notification>>((ref, notifications) async {
   final client = ref.watch(notificationServiceClientProvider);
-  final request = ReceiveRequest();
+  final request = notif.ReceiveRequest();
   request.data.addAll(notifications);
   final stream = client.receive(request);
-  return collectStream<ReceiveResponse, StatusResponse>(
+  return collectStream<notif.ReceiveResponse, notif.StatusResponse>(
     stream,
     extract: (r) => r.data,
   );
@@ -62,18 +63,21 @@ final notificationReceiveProvider =
 
 /// Get notification status by ID.
 final notificationStatusProvider =
-    FutureProvider.family<StatusResponse, String>((ref, notificationId) async {
+    FutureProvider.family<notif.StatusResponse, String>((ref, notificationId) async {
   final client = ref.watch(notificationServiceClientProvider);
-  final request = StatusRequest()..id = notificationId;
+  final request = notif.StatusRequest()..id = notificationId;
   return client.status(request);
 });
 
 /// Notifier for notification mutations (send, release, status update).
-class NotificationNotifier extends StateNotifier<AsyncValue<void>> {
-  NotificationNotifier(this._client) : super(const AsyncValue.data(null));
-  final NotificationServiceClient _client;
+class NotificationNotifier extends Notifier<AsyncValue<void>> {
+  @override
+  AsyncValue<void> build() => const AsyncValue.data(null);
 
-  Future<void> send(SendRequest request) async {
+  notif.NotificationServiceClient get _client =>
+      ref.read(notificationServiceClientProvider);
+
+  Future<void> send(notif.SendRequest request) async {
     state = const AsyncValue.loading();
     try {
       final stream = _client.send(request);
@@ -87,7 +91,7 @@ class NotificationNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> release(ReleaseRequest request) async {
+  Future<void> release(notif.ReleaseRequest request) async {
     state = const AsyncValue.loading();
     try {
       final stream = _client.release(request);
@@ -101,10 +105,10 @@ class NotificationNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> statusUpdate(StatusUpdateRequest request) async {
+  Future<void> statusUpdate(notif.StatusUpdateRequest request) async {
     state = const AsyncValue.loading();
     try {
-      final response = await _client.statusUpdate(request);
+      await _client.statusUpdate(request);
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -114,7 +118,5 @@ class NotificationNotifier extends StateNotifier<AsyncValue<void>> {
 }
 
 final notificationNotifierProvider =
-    StateNotifierProvider<NotificationNotifier, AsyncValue<void>>((ref) {
-  final client = ref.watch(notificationServiceClientProvider);
-  return NotificationNotifier(client);
-});
+    NotifierProvider<NotificationNotifier, AsyncValue<void>>(
+        NotificationNotifier.new);

@@ -1,4 +1,5 @@
-import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    as notif;
 import 'package:flutter/material.dart';
 
 import 'notification_status_badge.dart';
@@ -16,7 +17,7 @@ class NotificationTile extends StatelessWidget {
     this.isUnread = false,
   });
 
-  final Notification notification;
+  final notif.Notification notification;
   final VoidCallback? onTap;
   final bool isUnread;
 
@@ -36,26 +37,13 @@ class NotificationTile extends StatelessWidget {
     return Icons.campaign_outlined;
   }
 
-  String _formatTimestamp(Notification n) {
-    if (!n.hasCreated()) return '';
-    final ts = n.created.toDateTime();
-    final now = DateTime.now();
-    final diff = now.difference(ts);
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 30) return '${diff.inDays}d ago';
-    return '${ts.year}-${ts.month.toString().padLeft(2, '0')}-'
-        '${ts.day.toString().padLeft(2, '0')}';
-  }
-
-  String _title(Notification n) {
+  String _title(notif.Notification n) {
     if (n.template.isNotEmpty) return n.template;
     if (n.type.isNotEmpty) return n.type;
     return 'Notification';
   }
 
-  String _subtitle(Notification n) {
+  String _subtitle(notif.Notification n) {
     if (n.hasRecipient() && n.recipient.detail.isNotEmpty) {
       return 'To: ${n.recipient.detail}';
     }
@@ -68,7 +56,6 @@ class NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final timestamp = _formatTimestamp(notification);
 
     return Card(
       elevation: 0,
@@ -138,7 +125,7 @@ class NotificationTile extends StatelessWidget {
                 ),
               ),
 
-              // Priority + status + timestamp
+              // Priority + status
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -150,15 +137,6 @@ class NotificationTile extends StatelessWidget {
                       NotificationStatusBadge(status: notification.status.state.name),
                     ],
                   ),
-                  if (timestamp.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      timestamp,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
                 ],
               ),
               const SizedBox(width: 4),

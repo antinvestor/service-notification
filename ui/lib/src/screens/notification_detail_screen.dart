@@ -1,4 +1,5 @@
-import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    as notif;
 import 'package:antinvestor_ui_core/widgets/error_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,7 @@ class NotificationDetailScreen extends ConsumerStatefulWidget {
   });
 
   final String notificationId;
-  final Notification? initialNotification;
+  final notif.Notification? initialNotification;
 
   @override
   ConsumerState<NotificationDetailScreen> createState() =>
@@ -163,7 +164,7 @@ class _NotificationDetailScreenState
     );
   }
 
-  Widget _buildMetadataCard(ThemeData theme, Notification notification) {
+  Widget _buildMetadataCard(ThemeData theme, notif.Notification notification) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -200,7 +201,7 @@ class _NotificationDetailScreenState
     );
   }
 
-  Widget _buildRoutingCard(ThemeData theme, Notification notification) {
+  Widget _buildRoutingCard(ThemeData theme, notif.Notification notification) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -230,7 +231,7 @@ class _NotificationDetailScreenState
     );
   }
 
-  Widget _buildPayloadCard(ThemeData theme, Notification notification) {
+  Widget _buildPayloadCard(ThemeData theme, notif.Notification notification) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -271,7 +272,7 @@ class _NotificationDetailScreenState
     );
   }
 
-  Widget _buildDataCard(ThemeData theme, Notification notification) {
+  Widget _buildDataCard(ThemeData theme, notif.Notification notification) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -304,7 +305,7 @@ class _NotificationDetailScreenState
     );
   }
 
-  Widget _buildExtrasCard(ThemeData theme, Notification notification) {
+  Widget _buildExtrasCard(ThemeData theme, notif.Notification notification) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -362,7 +363,7 @@ class _NotificationDetailScreenState
     );
   }
 
-  Future<void> _release(Notification notification) async {
+  Future<void> _release(notif.Notification notification) async {
     setState(() {
       _releasing = true;
       _error = null;
@@ -370,7 +371,7 @@ class _NotificationDetailScreenState
 
     try {
       final notifier = ref.read(notificationNotifierProvider.notifier);
-      final request = ReleaseRequest()..id.add(notification.id);
+      final request = notif.ReleaseRequest()..id.add(notification.id);
       await notifier.release(request);
 
       if (mounted) {

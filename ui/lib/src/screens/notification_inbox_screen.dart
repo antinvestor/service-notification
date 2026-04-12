@@ -1,6 +1,6 @@
-import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    as notif;
 import 'package:antinvestor_ui_core/antinvestor_ui_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -79,7 +79,7 @@ class _NotificationInboxScreenState
                 ],
               ),
             ),
-            data: (notifications) => AdminEntityListPage<Notification>(
+            data: (notifications) => AdminEntityListPage<notif.Notification>(
               title: 'Notifications',
               breadcrumbs: const ['Home', 'Notifications'],
               columns: const [

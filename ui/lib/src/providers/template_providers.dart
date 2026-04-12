@@ -17,9 +17,12 @@ final templateSearchProvider =
 });
 
 /// Notifier for template mutations.
-class TemplateNotifier extends StateNotifier<AsyncValue<void>> {
-  TemplateNotifier(this._client) : super(const AsyncValue.data(null));
-  final NotificationServiceClient _client;
+class TemplateNotifier extends Notifier<AsyncValue<void>> {
+  @override
+  AsyncValue<void> build() => const AsyncValue.data(null);
+
+  NotificationServiceClient get _client =>
+      ref.read(notificationServiceClientProvider);
 
   Future<Template> save(TemplateSaveRequest request) async {
     state = const AsyncValue.loading();
@@ -35,7 +38,5 @@ class TemplateNotifier extends StateNotifier<AsyncValue<void>> {
 }
 
 final templateNotifierProvider =
-    StateNotifierProvider<TemplateNotifier, AsyncValue<void>>((ref) {
-  final client = ref.watch(notificationServiceClientProvider);
-  return TemplateNotifier(client);
-});
+    NotifierProvider<TemplateNotifier, AsyncValue<void>>(
+        TemplateNotifier.new);
