@@ -2,7 +2,7 @@ name: antinvestor_ui_notification
 description: >
   Notification management UI library for Antinvestor. Embeddable screens and widgets
   for sending, receiving, searching notifications, and managing templates.
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/antinvestor/service-notification
 homepage: https://github.com/antinvestor/service-notification/tree/main/ui
 issue_tracker: https://github.com/antinvestor/service-notification/issues
