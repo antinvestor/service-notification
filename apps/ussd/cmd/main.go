@@ -13,7 +13,7 @@ import (
 	ussdEvents "github.com/antinvestor/service-notification/apps/ussd/service/events"
 	"github.com/antinvestor/service-notification/apps/ussd/service/handlers"
 	"github.com/antinvestor/service-notification/apps/ussd/service/repository"
-	"github.com/antinvestor/service-notification/internal/events"
+	"github.com/antinvestor/service-notification/pkg/events"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/datastore"
@@ -47,9 +47,9 @@ func main() {
 
 	// Handle database migration if requested
 	if cfg.DoDatabaseMigrate() {
-		err := repository.Migrate(ctx, dbManager, cfg.GetDatabaseMigrationPath())
-		if err != nil {
-			log.WithError(err).Fatal("main -- Could not migrate successfully")
+		errMigrate := repository.Migrate(ctx, dbManager, cfg.GetDatabaseMigrationPath())
+		if errMigrate != nil {
+			log.WithError(errMigrate).Fatal("main -- Could not migrate successfully")
 		}
 		return
 	}

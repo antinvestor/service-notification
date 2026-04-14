@@ -251,12 +251,12 @@ func (ub *ussdBusiness) duplicateMenuRecursive(ctx context.Context, sourceMenuID
 	}
 	newMenu.GenID(ctx)
 
-	if err := ub.menuRepo.Create(ctx, newMenu); err != nil {
-		return nil, err
+	if errCreate := ub.menuRepo.Create(ctx, newMenu); errCreate != nil {
+		return nil, errCreate
 	}
 
-	if err := ub.copyTranslations(ctx, source.GetID(), newMenu.GetID()); err != nil {
-		logger.WithError(err).Warn("failed to copy translations")
+	if errCopy := ub.copyTranslations(ctx, source.GetID(), newMenu.GetID()); errCopy != nil {
+		logger.WithError(errCopy).Warn("failed to copy translations")
 	}
 
 	children, err := ub.menuRepo.GetByParentID(ctx, sourceMenuID)

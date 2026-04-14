@@ -12,8 +12,8 @@ import (
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/config"
-	"github.com/antinvestor/service-notification/internal/constants"
-	"github.com/antinvestor/service-notification/internal/utility"
+	"github.com/antinvestor/service-notification/pkg/constants"
+	"github.com/antinvestor/service-notification/pkg/utility"
 	"github.com/pitabwire/util"
 	"github.com/wneessen/go-mail"
 )

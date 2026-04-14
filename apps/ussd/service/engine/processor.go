@@ -96,8 +96,8 @@ func (p *Processor) ProcessRequest(ctx context.Context, req USSDRequest) USSDRes
 	}
 
 	// Authenticate
-	if err := p.authenticate(req, svcConfig); err != nil {
-		logger.WithError(err).Warn("authentication failed")
+	if errAuth := p.authenticate(req, svcConfig); errAuth != nil {
+		logger.WithError(errAuth).Warn("authentication failed")
 		return USSDResponse{Message: "Authentication failed", IsEnd: true}
 	}
 
@@ -140,8 +140,8 @@ func (p *Processor) ProcessRequest(ctx context.Context, req USSDRequest) USSDRes
 		return p.buildResponse(svcConfig, "Thank you. Goodbye.", false, true, session.GetID())
 
 	case models.NavRestart, models.NavRestartH:
-		newState, err := p.sessionManager.ResetSession(ctx, session, initialMenuID, lang, sessionExpiryMinutes)
-		if err != nil {
+		newState, errReset := p.sessionManager.ResetSession(ctx, session, initialMenuID, lang, sessionExpiryMinutes)
+		if errReset != nil {
 			return USSDResponse{Message: "Service error", IsEnd: true}
 		}
 		session = newState.Session

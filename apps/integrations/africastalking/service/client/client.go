@@ -15,8 +15,8 @@ import (
 	settingsv1 "buf.build/gen/go/antinvestor/settingz/protocolbuffers/go/settings/v1"
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
-	"github.com/antinvestor/service-notification/internal/constants"
-	"github.com/antinvestor/service-notification/internal/utility"
+	"github.com/antinvestor/service-notification/pkg/constants"
+	"github.com/antinvestor/service-notification/pkg/utility"
 )
 
 type Client struct {

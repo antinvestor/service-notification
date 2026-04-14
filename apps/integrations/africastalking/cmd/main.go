@@ -12,7 +12,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/handlers"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/queue"
-	"github.com/antinvestor/service-notification/internal/events"
+	"github.com/antinvestor/service-notification/pkg/events"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/util"

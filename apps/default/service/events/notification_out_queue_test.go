@@ -7,7 +7,7 @@ import (
 	aconfig "github.com/antinvestor/service-notification/apps/default/config"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	internaltests "github.com/antinvestor/service-notification/internal/tests"
+	internaltests "github.com/antinvestor/service-notification/pkg/tests"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/data"

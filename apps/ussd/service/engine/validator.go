@@ -145,7 +145,7 @@ func (iv *InputValidator) validateExternalURL(ctx context.Context, menu *models.
 		logger.WithError(err).Warn("external validation request failed")
 		return ValidationResult{Valid: false, ErrorMessage: "Validation service unavailable"}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusOK {
 		return ValidationResult{Valid: true}

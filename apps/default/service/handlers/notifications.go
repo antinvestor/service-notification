@@ -8,7 +8,7 @@ import (
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
-	"github.com/antinvestor/service-notification/internal/apperrors"
+	"github.com/antinvestor/service-notification/pkg/apperrors"
 	"github.com/pitabwire/frame/workerpool"
 	"github.com/pitabwire/util"
 )

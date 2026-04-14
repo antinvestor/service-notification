@@ -11,7 +11,7 @@ import (
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
-	"github.com/antinvestor/service-notification/internal/apperrors"
+	"github.com/antinvestor/service-notification/pkg/apperrors"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/types/known/structpb"
 )

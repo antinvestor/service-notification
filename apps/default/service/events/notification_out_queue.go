@@ -13,7 +13,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/antinvestor/service-notification/internal/constants"
+	"github.com/antinvestor/service-notification/pkg/constants"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/data"
 	"github.com/pitabwire/frame/events"

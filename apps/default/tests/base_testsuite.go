@@ -12,7 +12,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/antinvestor/service-notification/apps/default/tests/testketo"
-	internaltests "github.com/antinvestor/service-notification/internal/tests"
+	internaltests "github.com/antinvestor/service-notification/pkg/tests"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/datastore"
