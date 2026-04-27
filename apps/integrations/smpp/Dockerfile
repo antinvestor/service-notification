@@ -18,6 +18,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy project files
+COPY ./pkg ./pkg
 COPY ./apps/integrations/smpp ./apps/integrations/smpp
 # Build static binary for target platform
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
