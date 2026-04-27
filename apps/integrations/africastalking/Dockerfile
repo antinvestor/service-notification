@@ -19,8 +19,6 @@ RUN go mod download
 
 # Copy project files
 COPY ./apps/integrations/africastalking ./apps/integrations/africastalking
-COPY ./internal ./internal
-
 # Build static binary for target platform
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath \
