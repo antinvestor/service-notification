@@ -26,3 +26,4 @@ coverage.html
 # Shared Makefile cache
 .tmp/
 WORK_STATE.md
+.claude/
