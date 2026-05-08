@@ -22,6 +22,7 @@ export 'src/widgets/language_selector.dart';
 export 'src/widgets/notification_badge.dart';
 
 // Screens
+export 'src/screens/notification_dashboard_screen.dart';
 export 'src/screens/notification_inbox_screen.dart';
 export 'src/screens/notification_detail_screen.dart';
 export 'src/screens/notification_send_screen.dart';
