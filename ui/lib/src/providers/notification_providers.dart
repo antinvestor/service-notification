@@ -94,9 +94,10 @@ final notificationByIdProvider = FutureProvider.autoDispose
 });
 
 /// Acknowledge receipt of notifications. Used by the end-user inbox.
-final notificationReceiveProvider = FutureProvider.family<
+final notificationReceiveProvider = FutureProvider.autoDispose.family<
     List<notif.StatusResponse>,
     List<notif.Notification>>((ref, notifications) async {
+  ref.watch(tenancyScopeProvider);
   final client = ref.watch(notificationServiceClientProvider);
   final request = notif.ReceiveRequest()..data.addAll(notifications);
   final stream = client.receive(request);
@@ -107,9 +108,10 @@ final notificationReceiveProvider = FutureProvider.family<
 });
 
 /// Get notification status by ID.
-final notificationStatusProvider = FutureProvider.family<
+final notificationStatusProvider = FutureProvider.autoDispose.family<
     notif.StatusResponse,
     String>((ref, notificationId) async {
+  ref.watch(tenancyScopeProvider);
   final client = ref.watch(notificationServiceClientProvider);
   final request = notif.StatusRequest()..id = notificationId;
   return client.status(request);
