@@ -2,6 +2,7 @@ import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     as notif;
 import 'package:antinvestor_ui_core/antinvestor_ui_core.dart';
 import 'package:flutter/material.dart';
+import 'package:protobuf/protobuf.dart';
 
 /// Editable channel × language matrix for a Template's variants.
 ///
@@ -28,12 +29,32 @@ class TemplateVariantMatrix extends StatefulWidget {
 
 class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
   ({String channel, String language})? _editing;
+  TextEditingController? _editingController;
 
   notif.TemplateData? _findVariant(String channel, String language) {
     for (final v in widget.variants) {
       if (v.type == channel && v.language.code == language) return v;
     }
     return null;
+  }
+
+  void _openCell(String channel, String language) {
+    final variant = _findVariant(channel, language);
+    _editingController?.dispose();
+    _editingController = TextEditingController(text: variant?.detail ?? '');
+    setState(() => _editing = (channel: channel, language: language));
+  }
+
+  void _closeEditor() {
+    _editingController?.dispose();
+    _editingController = null;
+    setState(() => _editing = null);
+  }
+
+  @override
+  void dispose() {
+    _editingController?.dispose();
+    super.dispose();
   }
 
   void _saveCell({
@@ -45,7 +66,7 @@ class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
     final i = next.indexWhere(
         (v) => v.type == channel && v.language.code == language);
     if (i >= 0) {
-      next[i] = next[i]..detail = detail;
+      next[i] = next[i].deepCopy()..detail = detail;
     } else {
       next.add(notif.TemplateData()
         ..type = channel
@@ -53,11 +74,7 @@ class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
         ..language = (notif.Language()..code = language));
     }
     widget.onChanged(next);
-    setState(() => _editing = null);
-  }
-
-  void _openCell(String channel, String language) {
-    setState(() => _editing = (channel: channel, language: language));
+    _closeEditor();
   }
 
   @override
@@ -148,8 +165,6 @@ class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
 
   Widget _buildEditor(BuildContext context, {bool sheet = false}) {
     final cell = _editing!;
-    final variant = _findVariant(cell.channel, cell.language);
-    final controller = TextEditingController(text: variant?.detail ?? '');
     final theme = Theme.of(context);
     return FormFieldCard(
       label: '${cell.channel} · ${cell.language}',
@@ -159,7 +174,7 @@ class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
         children: [
           TextField(
             key: const Key('cell-editor-content'),
-            controller: controller,
+            controller: _editingController!,
             minLines: 3,
             maxLines: 8,
             decoration: InputDecoration(
@@ -174,7 +189,7 @@ class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => setState(() => _editing = null),
+                onPressed: _closeEditor,
                 child: const Text('Cancel'),
               ),
               const SizedBox(width: 8),
@@ -183,7 +198,7 @@ class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
                 onPressed: () => _saveCell(
                   channel: cell.channel,
                   language: cell.language,
-                  detail: controller.text,
+                  detail: _editingController!.text,
                 ),
                 child: const Text('Save'),
               ),
