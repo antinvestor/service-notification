@@ -40,7 +40,7 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
     super.initState();
     final t = widget.initialTemplate;
     _nameController = TextEditingController(text: t?.name ?? '');
-    _variants = t == null ? <notif.TemplateData>[] : List.of(t.data);
+    _variants = t == null ? <notif.TemplateData>[] : decodeTemplateVariants(t);
   }
 
   @override

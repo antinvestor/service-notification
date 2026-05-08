@@ -120,6 +120,79 @@ void main() {
     expect(find.byKey(const Key('cell-SMS-en')), findsOneWidget);
   });
 
+  testWidgets('decodes Struct fallback variants on init', (tester) async {
+    // Build a template whose variants are stored only in extra.fields['variants']
+    // (the Struct fallback written by TemplateNotifier.save when the backend
+    // does not populate the typed data field).
+    final variantStruct = notif.Struct()
+      ..fields['type'] = (notif.Value()..stringValue = 'SMS')
+      ..fields['language'] = (notif.Value()..stringValue = 'en')
+      ..fields['languageName'] = (notif.Value()..stringValue = 'English')
+      ..fields['detail'] = (notif.Value()..stringValue = 'Struct body');
+    final extra = notif.Struct()
+      ..fields['variants'] = (notif.Value()
+        ..listValue = (notif.ListValue()
+          ..values.add(notif.Value()..structValue = variantStruct)));
+    final template = notif.Template()
+      ..name = 'fallback'
+      ..extra = extra;
+    // Intentionally no `data` field set (simulates Struct-only backend echo).
+
+    final fake = FakeNotificationClient();
+    final tenancy = TenancyContext()
+      ..initializeFromLogin(
+        LoginLevel.root,
+        partitionId: 'part-test',
+        partitionName: 'Test Partition',
+        orgId: null,
+        orgName: 'Test Org',
+        branchId: null,
+        branchName: 'Test Branch',
+      );
+
+    final router = GoRouter(
+      initialLocation: '/edit',
+      routes: [
+        GoRoute(
+          path: '/edit',
+          builder: (_, __) => TemplateEditScreen(
+            templateId: 'tmpl-fallback',
+            initialTemplate: template,
+          ),
+        ),
+        GoRoute(
+          path: '/notifications/templates',
+          builder: (_, __) => const Scaffold(body: Text('Templates')),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tenancyContextProvider.overrideWithValue(tenancy),
+          notificationServiceClientProvider.overrideWithValue(fake.client),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The matrix cell for (SMS, en) should already contain 'Struct body'
+    // because decodeTemplateVariants decoded the Struct fallback.
+    expect(find.byKey(const Key('cell-SMS-en')), findsOneWidget);
+    // Tapping the cell opens the editor pre-filled with the decoded content.
+    await tester.tap(find.byKey(const Key('cell-SMS-en')));
+    await tester.pumpAndSettle();
+    // The cell editor is a TextField (not TextFormField) keyed 'cell-editor-content'.
+    expect(
+      (tester.widget(find.byKey(const Key('cell-editor-content'))) as TextField)
+          .controller
+          ?.text,
+      'Struct body',
+    );
+  });
+
   testWidgets('initialises from initialTemplate', (tester) async {
     final fake = FakeNotificationClient();
     final template = notif.Template()
