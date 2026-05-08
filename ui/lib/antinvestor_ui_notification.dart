@@ -10,6 +10,7 @@ export 'src/providers/tenancy_aware_providers.dart';
 export 'src/providers/notification_providers.dart';
 export 'src/providers/template_providers.dart';
 export 'src/providers/language_providers.dart';
+export 'src/providers/stats_providers.dart';
 
 // Widgets
 export 'src/widgets/notification_status_badge.dart';
