@@ -69,6 +69,30 @@ final notificationSearchProvider = FutureProvider.autoDispose
   );
 });
 
+/// Fetch a single notification by ID. Used by detail screens that arrive
+/// via deep-link without a pre-loaded `Notification` (e.g., URL refresh,
+/// share-link).
+final notificationByIdProvider = FutureProvider.autoDispose
+    .family<notif.Notification?, String>((ref, id) async {
+  if (id.isEmpty) return null;
+  final scope = ref.watch(tenancyScopeProvider);
+  final client = ref.watch(notificationServiceClientProvider);
+  final request = notif.SearchRequest();
+  request.properties.add('id:$id');
+  if (scope.partitionId.isNotEmpty) {
+    request.properties.add('partition:${scope.partitionId}');
+  }
+  final stream = client.search(request);
+  final results = await collectStream<notif.SearchResponse, notif.Notification>(
+    stream,
+    extract: (r) => r.data,
+  );
+  for (final n in results) {
+    if (n.id == id) return n;
+  }
+  return null;
+});
+
 /// Acknowledge receipt of notifications. Used by the end-user inbox.
 final notificationReceiveProvider = FutureProvider.family<
     List<notif.StatusResponse>,

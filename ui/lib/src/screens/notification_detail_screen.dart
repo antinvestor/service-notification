@@ -33,12 +33,22 @@ class _NotificationDetailScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final notification = widget.initialNotification;
-
-    if (notification == null) {
-      return _buildNotFound(theme);
+    final initial = widget.initialNotification;
+    if (initial != null) {
+      return _buildScreen(theme, initial);
     }
 
+    // Deep-link path: fetch by ID.
+    final asyncN = ref.watch(notificationByIdProvider(widget.notificationId));
+    return asyncN.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => _buildNotFound(theme),
+      data: (n) => n == null ? _buildNotFound(theme) : _buildScreen(theme, n),
+    );
+  }
+
+  Widget _buildScreen(ThemeData theme, notif.Notification notification) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(

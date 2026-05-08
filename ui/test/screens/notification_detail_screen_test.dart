@@ -49,6 +49,31 @@ void main() {
     expect(find.byType(AuditTrailEntry), findsWidgets);
   });
 
+  testWidgets('deep-link without initialNotification fetches by id',
+      (tester) async {
+    final n = makeNotification(id: 'n42', template: 'welcome')
+      ..status = (notif.StatusResponse()..state = notif.STATE.ACTIVE);
+    final fake = FakeNotificationClient()..nextSearchResults = [n];
+    final tenancy = TenancyContext()
+      ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        tenancyContextProvider.overrideWithValue(tenancy),
+        notificationServiceClientProvider.overrideWithValue(fake.client),
+      ],
+      child: MaterialApp.router(
+        routerConfig: _routerFor(const NotificationDetailScreen(
+          notificationId: 'n42',
+        )),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('welcome'), findsWidgets);
+    expect(fake.searchRequests, hasLength(1));
+    expect(fake.searchRequests.single.properties, contains('id:n42'));
+  });
+
   testWidgets('retry calls Release with the notification id', (tester) async {
     final fake = FakeNotificationClient();
     final n = makeNotification(id: 'n1')
