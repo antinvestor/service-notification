@@ -48,7 +48,6 @@ class NotificationStats {
           delivered++;
           break;
         case notif.STATE.INACTIVE:
-        case notif.STATE.DELETED:
           failed++;
           if (n.template.isNotEmpty) {
             failuresByTemplate.update(
