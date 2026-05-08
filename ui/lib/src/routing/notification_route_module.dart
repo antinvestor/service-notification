@@ -6,6 +6,10 @@ import 'package:antinvestor_ui_core/routing/route_module.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../screens/end_user_inbox_screen.dart';
+import '../screens/language_edit_screen.dart';
+import '../screens/language_list_screen.dart';
+import '../screens/notification_dashboard_screen.dart';
 import '../screens/notification_detail_screen.dart';
 import '../screens/notification_inbox_screen.dart';
 import '../screens/notification_send_screen.dart';
@@ -15,12 +19,17 @@ import '../screens/template_list_screen.dart';
 /// Route module for notification management.
 ///
 /// Registers the following routes:
-/// - `/notifications` - notification inbox
+/// - `/notifications` - notification dashboard (landing)
+/// - `/notifications/inbox` - notification inbox
 /// - `/notifications/detail/:id` - notification detail view
 /// - `/notifications/send` - compose and send a notification
 /// - `/notifications/templates` - template list
 /// - `/notifications/templates/edit` - create new template
 /// - `/notifications/templates/edit/:id` - edit existing template
+/// - `/notifications/languages` - language list
+/// - `/notifications/languages/edit` - create new language
+/// - `/notifications/languages/edit/:id` - edit existing language
+/// - `/me/notifications` - end-user notification inbox
 class NotificationRouteModule extends RouteModule {
   @override
   String get moduleId => 'notification';
@@ -30,8 +39,12 @@ class NotificationRouteModule extends RouteModule {
     return [
       GoRoute(
         path: '/notifications',
-        builder: (context, state) => const NotificationInboxScreen(),
+        builder: (context, state) => const NotificationDashboardScreen(),
         routes: [
+          GoRoute(
+            path: 'inbox',
+            builder: (context, state) => const NotificationInboxScreen(),
+          ),
           GoRoute(
             path: 'detail/:id',
             builder: (context, state) {
@@ -72,7 +85,38 @@ class NotificationRouteModule extends RouteModule {
               ),
             ],
           ),
+          GoRoute(
+            path: 'languages',
+            builder: (context, state) => const LanguageListScreen(),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) => const LanguageEditScreen(),
+              ),
+              GoRoute(
+                path: 'edit/:id',
+                builder: (context, state) {
+                  final id = state.pathParameters['id'] ?? '';
+                  final extra = state.extra;
+                  final language =
+                      extra is notif.Language ? extra : null;
+                  return LanguageEditScreen(
+                    languageCode: id,
+                    initialLanguage: language,
+                  );
+                },
+              ),
+            ],
+          ),
         ],
+      ),
+      GoRoute(
+        path: '/me/notifications',
+        builder: (context, state) {
+          final extra = state.extra;
+          final profileId = extra is String ? extra : 'me';
+          return EndUserInboxScreen(profileId: profileId);
+        },
       ),
     ];
   }
@@ -89,10 +133,17 @@ class NotificationRouteModule extends RouteModule {
         requiredPermissions: {'notification_search'},
         children: [
           NavItem(
+            id: 'notification-dashboard',
+            label: 'Dashboard',
+            icon: Icons.dashboard_outlined,
+            route: '/notifications',
+            requiredPermissions: {'notification_search'},
+          ),
+          NavItem(
             id: 'notification-inbox',
             label: 'Inbox',
             icon: Icons.inbox,
-            route: '/notifications',
+            route: '/notifications/inbox',
             requiredPermissions: {'notification_search'},
           ),
           NavItem(
@@ -109,6 +160,13 @@ class NotificationRouteModule extends RouteModule {
             route: '/notifications/templates',
             requiredPermissions: {'template_manage'},
           ),
+          NavItem(
+            id: 'notification-languages',
+            label: 'Languages',
+            icon: Icons.language,
+            route: '/notifications/languages',
+            requiredPermissions: {'template_manage'},
+          ),
         ],
       ),
     ];
@@ -117,10 +175,14 @@ class NotificationRouteModule extends RouteModule {
   @override
   Map<String, Set<String>> get routePermissions => {
         '/notifications': {'notification_search'},
-        '/notifications/detail': {'notification_search'},
+        '/notifications/inbox': {'notification_search'},
+        '/notifications/detail': {'notification_status_view'},
         '/notifications/send': {'notification_send'},
-        '/notifications/templates': {'template_manage'},
+        '/notifications/templates': {'template_view'},
         '/notifications/templates/edit': {'template_manage'},
+        '/notifications/languages': {'template_view'},
+        '/notifications/languages/edit': {'template_manage'},
+        '/me/notifications': {'notification_search'},
       };
 
   @override
@@ -144,7 +206,12 @@ class NotificationRouteModule extends RouteModule {
           ),
           PermissionEntry(
             key: 'template_manage',
-            label: 'Manage Templates',
+            label: 'Manage Templates and Languages',
+            scope: PermissionScope.feature,
+          ),
+          PermissionEntry(
+            key: 'template_view',
+            label: 'View Templates and Languages',
             scope: PermissionScope.feature,
           ),
         ],
