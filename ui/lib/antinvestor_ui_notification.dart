@@ -23,6 +23,7 @@ export 'src/widgets/notification_badge.dart';
 export 'src/widgets/template_variant_matrix.dart';
 
 // Screens
+export 'src/screens/end_user_inbox_screen.dart';
 export 'src/screens/notification_dashboard_screen.dart';
 export 'src/screens/notification_inbox_screen.dart';
 export 'src/screens/notification_detail_screen.dart';
