@@ -21,7 +21,8 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final asyncTemplates = ref.watch(templateSearchProvider(_searchQuery));
+    final asyncTemplates =
+        ref.watch(templateSearchProvider(TemplateSearchParams(query: _searchQuery)));
 
     return asyncTemplates.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -36,7 +37,7 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
             const SizedBox(height: 16),
             FilledButton.tonal(
               onPressed: () =>
-                  ref.invalidate(templateSearchProvider(_searchQuery)),
+                  ref.invalidate(templateSearchProvider(TemplateSearchParams(query: _searchQuery))),
               child: const Text('Retry'),
             ),
           ],

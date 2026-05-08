@@ -306,10 +306,17 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
     try {
       final notifier = ref.read(templateNotifierProvider.notifier);
 
-      final request = TemplateSaveRequest()
-        ..name = _nameController.text.trim()
-        ..languageCode = _dataEntries.isNotEmpty ? _dataEntries.first.language : 'en';
-      await notifier.save(request);
+      final variants = _dataEntries.map((entry) {
+        return TemplateData()
+          ..type = entry.typeController.text.trim()
+          ..detail = entry.detailController.text.trim()
+          ..language = (Language()..code = entry.language);
+      }).toList();
+
+      await notifier.save(
+        name: _nameController.text.trim(),
+        variants: variants,
+      );
 
       if (mounted) {
         setState(() => _saving = false);
