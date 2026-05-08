@@ -86,7 +86,8 @@ class TemplateNotifier extends Notifier<AsyncValue<void>> {
       final request = notif.TemplateSaveRequest()
         ..name = name
         ..languageCode = defaultLang
-        ..data = dataStruct;
+        ..data = dataStruct
+        ..extra = dataStruct;
 
       final response = await _client.templateSave(request);
       ref.invalidate(templateSearchProvider);
@@ -103,11 +104,24 @@ final templateNotifierProvider =
     NotifierProvider<TemplateNotifier, AsyncValue<void>>(TemplateNotifier.new);
 
 /// Decodes a Template's variants. Prefers the proto's typed
-/// `repeated TemplateData data` if populated; otherwise returns an empty
-/// list. (The legacy `data Struct.variants` shape used by `save` is the
-/// write contract; reads come back as proto-typed `TemplateData` once the
-/// backend reflects the round-trip.)
+/// `repeated TemplateData data` field if populated; otherwise falls back
+/// to the Struct contract written by [TemplateNotifier.save] (variants
+/// list stored under `extra.fields['variants']`).
 List<notif.TemplateData> decodeTemplateVariants(notif.Template template) {
   if (template.data.isNotEmpty) return List.of(template.data);
-  return const [];
+
+  if (!template.hasExtra()) return const [];
+  final variantsField = template.extra.fields['variants'];
+  if (variantsField == null) return const [];
+  final list = variantsField.listValue.values;
+  return list.map((v) {
+    final s = v.structValue;
+    final type = s.fields['type']?.stringValue ?? '';
+    final language = s.fields['language']?.stringValue ?? '';
+    final detail = s.fields['detail']?.stringValue ?? '';
+    return notif.TemplateData()
+      ..type = type
+      ..detail = detail
+      ..language = (notif.Language()..code = language);
+  }).toList();
 }
