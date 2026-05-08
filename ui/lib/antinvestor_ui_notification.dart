@@ -29,6 +29,7 @@ export 'src/screens/notification_detail_screen.dart';
 export 'src/screens/notification_send_screen.dart';
 export 'src/screens/template_list_screen.dart';
 export 'src/screens/template_edit_screen.dart';
+export 'src/screens/language_list_screen.dart';
 
 // Routing
 export 'src/routing/notification_route_module.dart';
