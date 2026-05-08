@@ -382,7 +382,9 @@ class _NotificationDetailScreenState
             const SizedBox(height: 12),
             AuditTrailEntry(
               action: action,
-              timestamp: n.status.id,
+              // Backend does not currently surface a delivery timestamp;
+              // AuditTrailEntry handles empty.
+              timestamp: '',
               performedBy: 'system',
               icon: icon,
               color: color,

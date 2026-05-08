@@ -109,7 +109,6 @@ class _NotificationInboxScreenState
                 DataColumn(label: Text('Recipient')),
                 DataColumn(label: Text('Priority')),
                 DataColumn(label: Text('Status')),
-                DataColumn(label: Text('Date')),
               ],
               items: notifications,
               onSearch: (query) {
@@ -137,7 +136,6 @@ class _NotificationInboxScreenState
                     DataCell(NotificationStatusBadge(
                       status: notification.status.state.name,
                     )),
-                    DataCell(Text(notification.status.id)),
                   ],
                 );
               },
@@ -148,7 +146,6 @@ class _NotificationInboxScreenState
                 notification.recipient.detail,
                 notification.priority.name,
                 notification.status.state.name,
-                notification.status.id,
               ],
               onExport: (format, count) {
                 debugPrint(
