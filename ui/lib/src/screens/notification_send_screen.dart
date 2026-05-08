@@ -67,6 +67,7 @@ class _NotificationSendScreenState
         ),
         actions: [
           FilledButton.icon(
+            key: const Key('send-submit-button'),
             onPressed: _sending ? null : _send,
             icon: _sending
                 ? const SizedBox(
@@ -96,6 +97,7 @@ class _NotificationSendScreenState
                 description: 'The target address (phone number, email, etc).',
                 isRequired: true,
                 child: TextFormField(
+                  key: const Key('send-recipient-field'),
                   controller: _recipientController,
                   decoration: InputDecoration(
                     hintText: 'e.g., +254700000000',
@@ -229,6 +231,7 @@ class _NotificationSendScreenState
                           children: [
                             Expanded(
                               child: TextFormField(
+                                key: Key('send-data-key-$i'),
                                 initialValue: _dataEntries[i].key,
                                 decoration: InputDecoration(
                                   hintText: 'Key',
@@ -246,6 +249,7 @@ class _NotificationSendScreenState
                             const SizedBox(width: 8),
                             Expanded(
                               child: TextFormField(
+                                key: Key('send-data-value-$i'),
                                 initialValue: _dataEntries[i].value,
                                 decoration: InputDecoration(
                                   hintText: 'Value',
@@ -273,6 +277,7 @@ class _NotificationSendScreenState
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
+                        key: const Key('send-data-add-button'),
                         onPressed: () {
                           setState(() {
                             _dataEntries.add(const MapEntry('', ''));
@@ -375,15 +380,21 @@ class _NotificationSendScreenState
         ..autoRelease = _autoRelease
         ..outBound = _outBound;
 
-      // Set payload as Struct if provided
+      // Body: pre-rendered text goes into `data`.
       if (_payloadController.text.trim().isNotEmpty) {
         notification.data = _payloadController.text.trim();
       }
 
-      // Add data entries as concatenated string
-      for (final entry in _dataEntries) {
-        if (entry.key.isNotEmpty) {
-          notification.data = '${notification.data}\n${entry.key}=${entry.value}';
+      // Template variables go into `payload` Struct.
+      if (_dataEntries.isNotEmpty) {
+        final payload = notif.Struct();
+        for (final entry in _dataEntries) {
+          if (entry.key.isNotEmpty) {
+            payload.fields[entry.key] = notif.Value()..stringValue = entry.value;
+          }
+        }
+        if (payload.fields.isNotEmpty) {
+          notification.payload = payload;
         }
       }
 
