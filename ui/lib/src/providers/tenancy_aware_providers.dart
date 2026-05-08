@@ -1,6 +1,15 @@
 import 'package:antinvestor_ui_core/antinvestor_ui_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Wires `tenancy.notifyListeners()` to `ref.invalidateSelf()`, with cleanup
+/// on dispose. Use inside any Provider whose value is projected from a
+/// ChangeNotifier so that downstream `ref.watch`ers rebuild on change.
+void _bridgeChangeNotifier(Ref ref, TenancyContext tenancy) {
+  void onChange() => ref.invalidateSelf();
+  tenancy.addListener(onChange);
+  ref.onDispose(() => tenancy.removeListener(onChange));
+}
+
 /// Riverpod-friendly view of TenancyContext.partitionId.
 ///
 /// Reads `tenancyContextProvider`, listens for `notifyListeners()` calls,
@@ -8,9 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// `ref.watch` this rebuild automatically.
 final partitionIdProvider = Provider<String>((ref) {
   final tenancy = ref.watch(tenancyContextProvider);
-  void onChange() => ref.invalidateSelf();
-  tenancy.addListener(onChange);
-  ref.onDispose(() => tenancy.removeListener(onChange));
+  _bridgeChangeNotifier(ref, tenancy);
   return tenancy.partitionId;
 });
 
@@ -39,14 +46,16 @@ class TenancyScope {
   @override
   int get hashCode =>
       Object.hash(partitionId, organizationId, branchId);
+
+  @override
+  String toString() =>
+      'TenancyScope(partition: $partitionId, org: $organizationId, branch: $branchId)';
 }
 
 /// Same bridge as `partitionIdProvider`, exposing the org/branch axes too.
 final tenancyScopeProvider = Provider<TenancyScope>((ref) {
   final tenancy = ref.watch(tenancyContextProvider);
-  void onChange() => ref.invalidateSelf();
-  tenancy.addListener(onChange);
-  ref.onDispose(() => tenancy.removeListener(onChange));
+  _bridgeChangeNotifier(ref, tenancy);
   return TenancyScope(
     partitionId: tenancy.partitionId,
     organizationId: tenancy.organizationId,

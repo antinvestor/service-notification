@@ -29,15 +29,13 @@ void main() {
       // Establish a subscription so invalidation rebuilds.
       final sub = container.listen<String>(
         partitionIdProvider,
-        (_, __) {},
+        (_, _) {},
       );
       addTearDown(sub.close);
       expect(container.read(partitionIdProvider), 'p1');
 
       tenancy.selectPartition('p2', 'Two');
-      // Allow the listener to fire and provider to rebuild.
-      await Future<void>.delayed(Duration.zero);
-
+      await container.pump();
       expect(container.read(partitionIdProvider), 'p2');
     });
   });
