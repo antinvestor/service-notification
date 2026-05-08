@@ -31,6 +31,10 @@ class NotificationSearchParams {
 
   @override
   int get hashCode => Object.hash(query, type, language, recipient);
+
+  @override
+  String toString() =>
+      'NotificationSearchParams(query: $query, type: $type, language: $language, recipient: $recipient)';
 }
 
 /// Search notifications scoped to the active tenancy.
@@ -102,6 +106,7 @@ class NotificationNotifier extends Notifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final stream = _client.send(request);
+      // Drain the stream; per-message status responses are not surfaced to callers.
       await for (final _ in stream) {}
       ref.invalidate(notificationSearchProvider);
       state = const AsyncValue.data(null);
@@ -115,6 +120,7 @@ class NotificationNotifier extends Notifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       final stream = _client.release(request);
+      // Drain the stream; per-message status responses are not surfaced to callers.
       await for (final _ in stream) {}
       ref.invalidate(notificationSearchProvider);
       state = const AsyncValue.data(null);
