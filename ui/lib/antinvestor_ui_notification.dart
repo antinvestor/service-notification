@@ -6,6 +6,7 @@ library;
 
 // Providers
 export 'src/providers/notification_transport_provider.dart';
+export 'src/providers/tenancy_aware_providers.dart';
 export 'src/providers/notification_providers.dart';
 export 'src/providers/template_providers.dart';
 
