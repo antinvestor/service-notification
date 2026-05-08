@@ -1,14 +1,17 @@
-import 'package:antinvestor_api_notification/antinvestor_api_notification.dart';
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    as notif;
 import 'package:antinvestor_ui_core/widgets/error_helpers.dart';
 import 'package:antinvestor_ui_core/widgets/form_field_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/language_providers.dart';
 import '../providers/template_providers.dart';
-import '../widgets/language_selector.dart';
+import '../widgets/template_preview.dart';
+import '../widgets/template_variant_matrix.dart';
 
-/// Screen for creating or editing a notification template.
+/// Create or edit a notification template using the variants matrix.
 class TemplateEditScreen extends ConsumerStatefulWidget {
   const TemplateEditScreen({
     super.key,
@@ -17,7 +20,7 @@ class TemplateEditScreen extends ConsumerStatefulWidget {
   });
 
   final String? templateId;
-  final Template? initialTemplate;
+  final notif.Template? initialTemplate;
 
   @override
   ConsumerState<TemplateEditScreen> createState() => _TemplateEditScreenState();
@@ -26,8 +29,7 @@ class TemplateEditScreen extends ConsumerStatefulWidget {
 class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  late List<_TemplateDataEntry> _dataEntries;
-
+  late List<notif.TemplateData> _variants;
   bool _saving = false;
   String? _error;
 
@@ -38,35 +40,26 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
     super.initState();
     final t = widget.initialTemplate;
     _nameController = TextEditingController(text: t?.name ?? '');
-    _dataEntries = t?.data.map((td) {
-          return _TemplateDataEntry(
-            typeController: TextEditingController(text: td.type),
-            detailController: TextEditingController(text: td.detail),
-            language: td.language.code.isEmpty ? 'en' : td.language.code,
-          );
-        }).toList() ??
-        [
-          _TemplateDataEntry(
-            typeController: TextEditingController(),
-            detailController: TextEditingController(),
-            language: 'en',
-          ),
-        ];
+    _variants = t == null ? <notif.TemplateData>[] : List.of(t.data);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    for (final entry in _dataEntries) {
-      entry.typeController.dispose();
-      entry.detailController.dispose();
-    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final asyncLanguages = ref.watch(languageSearchProvider(''));
+
+    final availableLanguages = asyncLanguages.maybeWhen(
+      data: (langs) => langs.isEmpty
+          ? const ['en']
+          : langs.map((l) => l.code).toList(),
+      orElse: () => const ['en'],
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -84,15 +77,13 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
         ),
         actions: [
           FilledButton.icon(
+            key: const Key('template-save-button'),
             onPressed: _saving ? null : _save,
             icon: _saving
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.save, size: 18),
             label: Text(_saving ? 'Saving...' : 'Save'),
@@ -107,12 +98,12 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Template name
               FormFieldCard(
                 label: 'Template Name',
                 description: 'A unique identifier for this template.',
                 isRequired: true,
                 child: TextFormField(
+                  key: const Key('template-name-field'),
                   controller: _nameController,
                   decoration: InputDecoration(
                     hintText: 'e.g., welcome_sms',
@@ -125,10 +116,8 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
                       (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
               ),
-
-              // Template data variants
               Text(
-                'Template Variants',
+                'Variants',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.primary,
@@ -136,130 +125,24 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Add content variants for different channels and languages.',
+                'Click a cell to edit content for that channel + language.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 16),
-
-              for (var i = 0; i < _dataEntries.length; i++) ...[
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: theme.colorScheme.outlineVariant),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Variant ${i + 1}',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const Spacer(),
-                            if (_dataEntries.length > 1)
-                              IconButton(
-                                icon: Icon(
-                                  Icons.delete_outline,
-                                  size: 20,
-                                  color: theme.colorScheme.error,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _dataEntries[i]
-                                        .typeController
-                                        .dispose();
-                                    _dataEntries[i]
-                                        .detailController
-                                        .dispose();
-                                    _dataEntries.removeAt(i);
-                                  });
-                                },
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Type (channel type)
-                        TextFormField(
-                          controller: _dataEntries[i].typeController,
-                          decoration: InputDecoration(
-                            labelText: 'Type (e.g., SMS, EMAIL)',
-                            prefixIcon: const Icon(Icons.category_outlined),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty)
-                                  ? 'Required'
-                                  : null,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Language
-                        LanguageSelector(
-                          selectedLanguage: _dataEntries[i].language,
-                          onChanged: (lang) {
-                            setState(() {
-                              _dataEntries[i].language = lang;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Detail (content)
-                        TextFormField(
-                          controller: _dataEntries[i].detailController,
-                          maxLines: 6,
-                          minLines: 3,
-                          decoration: InputDecoration(
-                            labelText: 'Content',
-                            alignLabelWithHint: true,
-                            hintText:
-                                'Hello {{name}}, your code is {{code}}.',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty)
-                                  ? 'Required'
-                                  : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-
-              // Add variant button
-              Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _dataEntries.add(_TemplateDataEntry(
-                        typeController: TextEditingController(),
-                        detailController: TextEditingController(),
-                        language: 'en',
-                      ));
-                    });
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Variant'),
-                ),
+              TemplateVariantMatrix(
+                variants: _variants,
+                onChanged: (next) => setState(() => _variants = next),
+                availableLanguages: availableLanguages,
               ),
-
-              // Error display
+              const SizedBox(height: 24),
+              if (_variants.isNotEmpty)
+                TemplatePreview(
+                  template: notif.Template()
+                    ..name = _nameController.text
+                    ..data.addAll(_variants),
+                ),
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -270,11 +153,9 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 20,
-                        color: theme.colorScheme.onErrorContainer,
-                      ),
+                      Icon(Icons.error_outline,
+                          size: 20,
+                          color: theme.colorScheme.onErrorContainer),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -297,27 +178,15 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       _saving = true;
       _error = null;
     });
-
     try {
-      final notifier = ref.read(templateNotifierProvider.notifier);
-
-      final variants = _dataEntries.map((entry) {
-        return TemplateData()
-          ..type = entry.typeController.text.trim()
-          ..detail = entry.detailController.text.trim()
-          ..language = (Language()..code = entry.language);
-      }).toList();
-
-      await notifier.save(
-        name: _nameController.text.trim(),
-        variants: variants,
-      );
-
+      await ref.read(templateNotifierProvider.notifier).save(
+            name: _nameController.text.trim(),
+            variants: _variants,
+          );
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -341,17 +210,4 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
       }
     }
   }
-}
-
-/// Internal helper for template data entries in the form.
-class _TemplateDataEntry {
-  _TemplateDataEntry({
-    required this.typeController,
-    required this.detailController,
-    required this.language,
-  });
-
-  final TextEditingController typeController;
-  final TextEditingController detailController;
-  String language;
 }
