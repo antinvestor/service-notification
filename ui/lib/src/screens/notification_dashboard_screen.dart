@@ -61,7 +61,7 @@ class NotificationDashboardScreen extends ConsumerWidget {
       kpis: kpis,
       chartTitle: 'Channel mix',
       chartSubtitle: 'Distribution of recent notifications by channel',
-      chartWidget: _ChannelMixDonut(channelMix: stats.channelMix),
+      chartWidget: _ChannelMixBars(channelMix: stats.channelMix),
       events: events,
     );
   }
@@ -69,8 +69,8 @@ class NotificationDashboardScreen extends ConsumerWidget {
 
 /// Horizontal-bar visualization of channel mix. Avoids pulling in a
 /// chart dep; uses LinearProgressIndicator per channel.
-class _ChannelMixDonut extends StatelessWidget {
-  const _ChannelMixDonut({required this.channelMix});
+class _ChannelMixBars extends StatelessWidget {
+  const _ChannelMixBars({required this.channelMix});
   final Map<String, int> channelMix;
 
   @override
@@ -113,7 +113,7 @@ class _ChannelMixDonut extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
-                      value: total == 0 ? 0 : e.value / total,
+                      value: e.value / total,
                       minHeight: 10,
                       backgroundColor:
                           theme.colorScheme.surfaceContainerHighest,
