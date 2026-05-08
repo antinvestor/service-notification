@@ -71,6 +71,8 @@ class TemplateNotifier extends Notifier<AsyncValue<void>> {
         variantStruct.fields['type'] = notif.Value()..stringValue = td.type;
         variantStruct.fields['language'] = notif.Value()
           ..stringValue = td.language.code;
+        variantStruct.fields['languageName'] = notif.Value()
+          ..stringValue = td.language.name;
         variantStruct.fields['detail'] = notif.Value()..stringValue = td.detail;
         return notif.Value()..structValue = variantStruct;
       }).toList();
@@ -118,10 +120,13 @@ List<notif.TemplateData> decodeTemplateVariants(notif.Template template) {
     final s = v.structValue;
     final type = s.fields['type']?.stringValue ?? '';
     final language = s.fields['language']?.stringValue ?? '';
+    final languageName = s.fields['languageName']?.stringValue ?? '';
     final detail = s.fields['detail']?.stringValue ?? '';
     return notif.TemplateData()
       ..type = type
       ..detail = detail
-      ..language = (notif.Language()..code = language);
+      ..language = (notif.Language()
+        ..code = language
+        ..name = languageName);
   }).toList();
 }

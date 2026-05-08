@@ -58,4 +58,27 @@ void main() {
     final french = await container.read(languageSearchProvider('french').future);
     expect(french.map((l) => l.code), ['fr']);
   });
+
+  test('LanguageNotifier.save preserves the name through the placeholder',
+      () async {
+    final fake = FakeNotificationClient()
+      ..nextSavedTemplate = (notif.Template()
+        ..id = 't1'
+        ..name = '_lang_pt');
+    final container = _container(fake);
+    addTearDown(container.dispose);
+
+    await container.read(languageNotifierProvider.notifier).save(
+          code: 'pt',
+          name: 'Portuguese',
+        );
+
+    expect(fake.templateSaveRequests, hasLength(1));
+    final req = fake.templateSaveRequests.single;
+    expect(req.name, '_lang_pt');
+    final variant = req.data.fields['variants']
+        ?.listValue.values.single.structValue;
+    expect(variant?.fields['language']?.stringValue, 'pt');
+    expect(variant?.fields['languageName']?.stringValue, 'Portuguese');
+  });
 }

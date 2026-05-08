@@ -48,7 +48,9 @@ void main() {
       notif.TemplateData()
         ..type = 'SMS'
         ..detail = 'Hi {{name}}'
-        ..language = (notif.Language()..code = 'en'),
+        ..language = (notif.Language()
+          ..code = 'en'
+          ..name = 'English'),
       notif.TemplateData()
         ..type = 'EMAIL'
         ..detail = 'Hello {{name}}'
@@ -69,6 +71,7 @@ void main() {
     expect(list, hasLength(2));
     expect(list[0].structValue.fields['type']?.stringValue, 'SMS');
     expect(list[0].structValue.fields['language']?.stringValue, 'en');
+    expect(list[0].structValue.fields['languageName']?.stringValue, 'English');
     expect(list[0].structValue.fields['detail']?.stringValue, 'Hi {{name}}');
     expect(list[1].structValue.fields['type']?.stringValue, 'EMAIL');
   });
@@ -79,6 +82,7 @@ void main() {
     final variantStruct = notif.Struct()
       ..fields['type'] = (notif.Value()..stringValue = 'SMS')
       ..fields['language'] = (notif.Value()..stringValue = 'en')
+      ..fields['languageName'] = (notif.Value()..stringValue = 'English')
       ..fields['detail'] = (notif.Value()..stringValue = 'Hi {{name}}');
     final extra = notif.Struct()
       ..fields['variants'] = (notif.Value()
@@ -92,6 +96,7 @@ void main() {
     expect(variants, hasLength(1));
     expect(variants.single.type, 'SMS');
     expect(variants.single.language.code, 'en');
+    expect(variants.single.language.name, 'English');
     expect(variants.single.detail, 'Hi {{name}}');
   });
 
