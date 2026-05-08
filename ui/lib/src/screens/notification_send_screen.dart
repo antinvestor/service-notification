@@ -28,7 +28,7 @@ class _NotificationSendScreenState
   final _templateController = TextEditingController();
 
   String _selectedLanguage = 'en';
-  Set<String> _selectedChannels = {'SMS'};
+  String _selectedChannel = 'SMS';
   notif.PRIORITY _selectedPriority = notif.PRIORITY.LOW;
   bool _autoRelease = true;
   bool _outBound = true;
@@ -129,13 +129,14 @@ class _NotificationSendScreenState
 
               // Channel selector
               FormFieldCard(
-                label: 'Channels',
-                description: 'Select one or more delivery channels.',
+                label: 'Channel',
+                description: 'Select the delivery channel.',
                 isRequired: true,
                 child: ChannelSelector(
-                  selectedChannels: _selectedChannels,
+                  selectedChannels: {_selectedChannel},
                   onChanged: (channels) {
-                    setState(() => _selectedChannels = channels);
+                    setState(() => _selectedChannel =
+                        channels.isNotEmpty ? channels.first : _selectedChannel);
                   },
                 ),
               ),
@@ -357,10 +358,6 @@ class _NotificationSendScreenState
 
   Future<void> _send() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedChannels.isEmpty) {
-      setState(() => _error = 'Please select at least one channel.');
-      return;
-    }
 
     setState(() {
       _sending = true;
@@ -373,7 +370,7 @@ class _NotificationSendScreenState
       final notification = notif.Notification()
         ..recipient = (notif.ContactLink()..detail = _recipientController.text.trim())
         ..source = (notif.ContactLink()..detail = _sourceController.text.trim())
-        ..type = _selectedChannels.first
+        ..type = _selectedChannel
         ..template = _templateController.text.trim()
         ..language = _selectedLanguage
         ..priority = _selectedPriority
