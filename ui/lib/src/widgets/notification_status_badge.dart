@@ -1,37 +1,28 @@
-import 'package:antinvestor_ui_core/widgets/status_badge.dart';
+import 'package:antinvestor_ui_core/antinvestor_ui_core.dart';
 import 'package:flutter/material.dart';
 
-/// A badge that displays the current status of a notification.
-///
-/// Maps common notification status strings to appropriate colors:
-/// - SENT / DELIVERED: green
-/// - PENDING / QUEUED: orange
-/// - FAILED / BOUNCED: red
-/// - DRAFT: grey
+/// Thin wrapper around `StatusBadge.fromEnum` that maps notification status
+/// strings to a label/color/icon. Centralizes the mapping in one place so
+/// tiles, lists, and detail screens all render badges identically.
 class NotificationStatusBadge extends StatelessWidget {
-  const NotificationStatusBadge({
-    super.key,
-    required this.status,
-  });
+  const NotificationStatusBadge({super.key, required this.status});
 
   final String status;
 
   @override
   Widget build(BuildContext context) {
-    final upper = status.toUpperCase();
-    final (Color color, IconData? icon) = switch (upper) {
-      'SENT' || 'DELIVERED' => (Colors.green, Icons.check_circle_outline),
-      'PENDING' || 'QUEUED' => (Colors.orange, Icons.schedule),
-      'FAILED' || 'BOUNCED' => (Colors.red, Icons.error_outline),
-      'RELEASED' => (Colors.teal, Icons.send),
-      'DRAFT' => (Colors.grey, Icons.edit_outlined),
-      _ => (Colors.blueGrey, null),
-    };
-
-    return StatusBadge(
-      label: upper,
-      color: color,
-      icon: icon,
+    return StatusBadge.fromEnum<String>(
+      value: status,
+      mapper: (s) => switch (s) {
+        'ACTIVE' || 'DELIVERED' => ('Active', Colors.green, null),
+        'CREATED' || 'QUEUED' => ('Queued', Colors.blue, Icons.schedule),
+        'CHECKED' => ('Checked', Colors.orange, null),
+        'INACTIVE' || 'FAILED' =>
+          ('Failed', Colors.red, Icons.error_outline),
+        'DELETED' => ('Deleted', Colors.grey, null),
+        '' => ('Unknown', Colors.grey, null),
+        _ => (s, Colors.grey, null),
+      },
     );
   }
 }
