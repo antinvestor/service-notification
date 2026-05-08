@@ -1,16 +1,34 @@
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     as notif;
+import 'package:antinvestor_ui_core/api/stream_helpers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'template_providers.dart';
+import 'notification_transport_provider.dart';
+import 'tenancy_aware_providers.dart';
+import 'template_providers.dart' show templateNotifierProvider;
 
 /// Returns the union of all `Language` records found across templates,
 /// deduped by `code`. Optionally filtered by a case-insensitive substring
 /// match against either `code` or `name`.
+///
+/// Reads the unfiltered template stream (including `_lang_*` placeholders)
+/// directly so that language registrations made via [LanguageNotifier] are
+/// always visible here, even though [templateSearchProvider] hides them from
+/// the user-facing template list.
 final languageSearchProvider = FutureProvider.autoDispose
     .family<List<notif.Language>, String>((ref, query) async {
-  final templates = await ref.watch(
-      templateSearchProvider(const TemplateSearchParams()).future);
+  ref.watch(tenancyScopeProvider);
+  final client = ref.watch(notificationServiceClientProvider);
+  // Read the unfiltered template stream (including _lang_* placeholders) so
+  // we can union all known languages.
+  final request = notif.TemplateSearchRequest()..query = '';
+  final stream = client.templateSearch(request);
+  final templates =
+      await collectStream<notif.TemplateSearchResponse, notif.Template>(
+    stream,
+    extract: (r) => r.data,
+  );
+
   final byCode = <String, notif.Language>{};
   for (final t in templates) {
     for (final td in t.data) {

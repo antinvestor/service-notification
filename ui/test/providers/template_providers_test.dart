@@ -147,6 +147,28 @@ void main() {
     expect(req.data.fields['variants']?.listValue.values, isEmpty);
   });
 
+  test('templateSearchProvider hides _lang_* placeholders', () async {
+    final fake = FakeNotificationClient()
+      ..nextTemplateResults = [
+        notif.Template()
+          ..id = 't1'
+          ..name = 'welcome',
+        notif.Template()
+          ..id = 't2'
+          ..name = '_lang_pt',
+        notif.Template()
+          ..id = 't3'
+          ..name = 'reset',
+      ];
+    final container = _container(fake);
+    addTearDown(container.dispose);
+
+    final results = await container.read(
+      templateSearchProvider(const TemplateSearchParams()).future,
+    );
+    expect(results.map((t) => t.name), unorderedEquals(['welcome', 'reset']));
+  });
+
   test('switching partition invalidates templateSearchProvider', () async {
     final fake = FakeNotificationClient();
     final tenancy = TenancyContext()

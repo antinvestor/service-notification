@@ -42,10 +42,13 @@ final templateSearchProvider = FutureProvider.autoDispose
     ..query = params.query
     ..languageCode = params.languageCode;
   final stream = client.templateSearch(request);
-  return collectStream<notif.TemplateSearchResponse, notif.Template>(
+  final all = await collectStream<notif.TemplateSearchResponse, notif.Template>(
     stream,
     extract: (r) => r.data,
   );
+  // Hide language-registration placeholders from the user-facing template list.
+  // They're consumed by `languageSearchProvider` (which has its own derivation).
+  return all.where((t) => !t.name.startsWith('_lang_')).toList();
 });
 
 /// Notifier for template mutations.
