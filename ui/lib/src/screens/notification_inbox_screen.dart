@@ -23,10 +23,12 @@ class _NotificationInboxScreenState
     extends ConsumerState<NotificationInboxScreen> {
   String _searchQuery = '';
   String _typeFilter = '';
+  String _languageFilter = '';
 
   NotificationSearchParams get _searchParams => NotificationSearchParams(
         query: _searchQuery,
         type: _typeFilter,
+        language: _languageFilter,
       );
 
   @override
@@ -54,6 +56,24 @@ class _NotificationInboxScreenState
                 _filterChip(theme, 'PUSH', 'Push'),
                 const SizedBox(width: 8),
                 _filterChip(theme, 'WHATSAPP', 'WhatsApp'),
+              ],
+            ),
+          ),
+        ),
+        // Language filter chips
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _langChip(theme, '', 'All', keySuffix: 'all'),
+                const SizedBox(width: 8),
+                _langChip(theme, 'en', 'English'),
+                const SizedBox(width: 8),
+                _langChip(theme, 'sw', 'Swahili'),
+                const SizedBox(width: 8),
+                _langChip(theme, 'fr', 'French'),
               ],
             ),
           ),
@@ -138,6 +158,19 @@ class _NotificationInboxScreenState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _langChip(ThemeData theme, String value, String label,
+      {String? keySuffix}) {
+    final isSelected = _languageFilter == value;
+    return FilterChip(
+      key: Key('inbox-lang-${keySuffix ?? value}'),
+      selected: isSelected,
+      label: Text(label),
+      selectedColor: theme.colorScheme.secondaryContainer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      onSelected: (_) => setState(() => _languageFilter = value),
     );
   }
 
