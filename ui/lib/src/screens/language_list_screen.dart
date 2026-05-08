@@ -29,11 +29,25 @@ class _LanguageListScreenState extends ConsumerState<LanguageListScreen> {
       error: (e, _) => Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(
-            '$e',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.error,
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline,
+                  size: 48, color: theme.colorScheme.error),
+              const SizedBox(height: 16),
+              Text(
+                '$e',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton.tonal(
+                onPressed: () => ref.invalidate(languageSearchProvider(_query)),
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       ),
