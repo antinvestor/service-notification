@@ -20,6 +20,7 @@ export 'src/widgets/template_preview.dart';
 export 'src/widgets/channel_selector.dart';
 export 'src/widgets/language_selector.dart';
 export 'src/widgets/notification_badge.dart';
+export 'src/widgets/template_variant_matrix.dart';
 
 // Screens
 export 'src/screens/notification_dashboard_screen.dart';
