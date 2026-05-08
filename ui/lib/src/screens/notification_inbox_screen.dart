@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/language_providers.dart';
 import '../providers/notification_providers.dart';
 import '../widgets/notification_status_badge.dart';
 import '../widgets/priority_badge.dart';
@@ -36,6 +37,11 @@ class _NotificationInboxScreenState
     final theme = Theme.of(context);
     final asyncNotifications =
         ref.watch(notificationSearchProvider(_searchParams));
+    final asyncLangs = ref.watch(languageSearchProvider(''));
+    final langs = asyncLangs.maybeWhen(
+      data: (l) => l,
+      orElse: () => const <notif.Language>[],
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -60,7 +66,7 @@ class _NotificationInboxScreenState
             ),
           ),
         ),
-        // Language filter chips
+        // Language filter chips (populated from languageSearchProvider)
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
           child: SingleChildScrollView(
@@ -68,12 +74,10 @@ class _NotificationInboxScreenState
             child: Row(
               children: [
                 _langChip(theme, '', 'All', keySuffix: 'all'),
-                const SizedBox(width: 8),
-                _langChip(theme, 'en', 'English'),
-                const SizedBox(width: 8),
-                _langChip(theme, 'sw', 'Swahili'),
-                const SizedBox(width: 8),
-                _langChip(theme, 'fr', 'French'),
+                for (final l in langs) ...[
+                  const SizedBox(width: 8),
+                  _langChip(theme, l.code, l.name.isEmpty ? l.code : l.name),
+                ],
               ],
             ),
           ),

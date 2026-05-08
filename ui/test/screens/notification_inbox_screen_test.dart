@@ -1,3 +1,5 @@
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    as notif;
 import 'package:antinvestor_ui_core/antinvestor_ui_core.dart';
 import 'package:antinvestor_ui_notification/antinvestor_ui_notification.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +12,20 @@ import '../_helpers/fake_notification_client.dart';
 void main() {
   testWidgets('language filter chip pushes language: into search',
       (tester) async {
-    final fake = FakeNotificationClient()..nextSearchResults = [];
+    // Seed a template with an English variant so languageSearchProvider
+    // resolves the 'en' chip.
+    final fake = FakeNotificationClient()
+      ..nextSearchResults = []
+      ..nextTemplateResults = [
+        notif.Template()
+          ..name = 'welcome'
+          ..data.add(notif.TemplateData()
+            ..type = 'SMS'
+            ..detail = '...'
+            ..language = (notif.Language()
+              ..code = 'en'
+              ..name = 'English')),
+      ];
     final tenancy = TenancyContext()
       ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
 
