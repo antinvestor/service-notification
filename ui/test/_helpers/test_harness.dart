@@ -19,15 +19,15 @@ class TestHarness extends StatelessWidget {
     required this.child,
     this.client,
     this.partitionId = 'part-test',
-    this.organizationId = '',
-    this.branchId = '',
+    this.organizationId,
+    this.branchId,
   });
 
   final Widget child;
   final FakeNotificationClient? client;
   final String partitionId;
-  final String organizationId;
-  final String branchId;
+  final String? organizationId;
+  final String? branchId;
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +36,9 @@ class TestHarness extends StatelessWidget {
         LoginLevel.root,
         partitionId: partitionId,
         partitionName: 'Test Partition',
-        orgId: organizationId.isEmpty ? null : organizationId,
+        orgId: organizationId,
         orgName: 'Test Org',
-        branchId: branchId.isEmpty ? null : branchId,
+        branchId: branchId,
         branchName: 'Test Branch',
       );
 

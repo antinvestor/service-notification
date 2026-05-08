@@ -4,10 +4,6 @@ import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     as notif;
 import 'package:connectrpc/connect.dart';
 
-// SearchRequest comes from the common package, re-exported by
-// antinvestor_api_notification.
-typedef SearchRequest = notif.SearchRequest;
-
 /// Hand-rolled fake of [notif.NotificationServiceClient] for tests.
 ///
 /// Because [notif.NotificationServiceClient] is a Dart *extension type*
@@ -45,9 +41,11 @@ class FakeNotificationClient {
   final List<notif.SendRequest> sendRequests = [];
   final List<notif.ReleaseRequest> releaseRequests = [];
   final List<notif.ReceiveRequest> receiveRequests = [];
-  final List<SearchRequest> searchRequests = [];
+  final List<notif.SearchRequest> searchRequests = [];
   final List<notif.TemplateSearchRequest> templateSearchRequests = [];
   final List<notif.TemplateSaveRequest> templateSaveRequests = [];
+  final List<notif.StatusRequest> statusRequests = [];
+  final List<notif.StatusUpdateRequest> statusUpdateRequests = [];
 
   // ── canned responses ──────────────────────────────────────────────────────
 
@@ -59,6 +57,13 @@ class FakeNotificationClient {
 
   /// Template returned from the next [notif.NotificationServiceClient.templateSave] call.
   notif.Template nextSavedTemplate = notif.Template();
+
+  /// Status returned from the next [notif.NotificationServiceClient.status] call.
+  notif.StatusResponse nextStatusResult = notif.StatusResponse();
+
+  /// StatusUpdate response returned from the next [notif.NotificationServiceClient.statusUpdate] call.
+  notif.StatusUpdateResponse nextStatusUpdateResult =
+      notif.StatusUpdateResponse();
 }
 
 // ── Internal fake transport ───────────────────────────────────────────────────
@@ -86,10 +91,15 @@ class _FakeTransport implements Transport {
       final saved = notif.TemplateSaveResponse()
         ..data = _fake.nextSavedTemplate;
       response = saved as O;
+    } else if (procedure == '${_svcPrefix}Status') {
+      _fake.statusRequests.add(input as notif.StatusRequest);
+      response = _fake.nextStatusResult as O;
+    } else if (procedure == '${_svcPrefix}StatusUpdate') {
+      _fake.statusUpdateRequests.add(input as notif.StatusUpdateRequest);
+      response = _fake.nextStatusUpdateResult as O;
     } else {
-      // Status / StatusUpdate — return empty output; tests that need these
-      // can override the provider more specifically.
-      response = spec.outputFactory();
+      throw UnimplementedError(
+          'FakeNotificationClient: unhandled procedure ${spec.procedure}');
     }
 
     return UnaryResponse<I, O>(
@@ -134,7 +144,8 @@ class _FakeTransport implements Transport {
         ..data.addAll(_fake.nextTemplateResults);
       responseStream = Stream.value(resp as O);
     } else {
-      responseStream = Stream.value(spec.outputFactory());
+      throw UnimplementedError(
+          'FakeNotificationClient: unhandled procedure ${spec.procedure}');
     }
 
     return StreamResponse<I, O>(
