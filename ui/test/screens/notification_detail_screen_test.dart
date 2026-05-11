@@ -12,10 +12,10 @@ import '../_helpers/test_harness.dart';
 
 GoRouter _routerFor(Widget screen) {
   return GoRouter(routes: [
-    GoRoute(path: '/', builder: (_, __) => screen),
+    GoRoute(path: '/', builder: (_, _) => screen),
     GoRoute(
       path: '/notifications',
-      builder: (_, __) => const Scaffold(body: SizedBox.shrink()),
+      builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
     ),
   ]);
 }

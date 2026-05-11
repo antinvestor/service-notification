@@ -42,7 +42,7 @@ void main() {
     NotificationStats? observed;
     await tester.pumpWidget(TestHarness(
       client: fake,
-      child: Consumer(builder: (_, ref, __) {
+      child: Consumer(builder: (_, ref, _) {
         ref.watch(notificationSearchProvider(
             const NotificationSearchParams()));
         observed = ref.watch(notificationStatsProvider);

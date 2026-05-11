@@ -32,11 +32,11 @@ Widget _buildApp(FakeNotificationClient fake) {
     routes: [
       GoRoute(
         path: '/edit',
-        builder: (_, __) => const TemplateEditScreen(),
+        builder: (_, _) => const TemplateEditScreen(),
       ),
       GoRoute(
         path: '/notifications/templates',
-        builder: (_, __) => const Scaffold(body: Text('Templates')),
+        builder: (_, _) => const Scaffold(body: Text('Templates')),
       ),
     ],
   );
@@ -155,14 +155,14 @@ void main() {
       routes: [
         GoRoute(
           path: '/edit',
-          builder: (_, __) => TemplateEditScreen(
+          builder: (_, _) => TemplateEditScreen(
             templateId: 'tmpl-fallback',
             initialTemplate: template,
           ),
         ),
         GoRoute(
           path: '/notifications/templates',
-          builder: (_, __) => const Scaffold(body: Text('Templates')),
+          builder: (_, _) => const Scaffold(body: Text('Templates')),
         ),
       ],
     );
@@ -220,14 +220,14 @@ void main() {
       routes: [
         GoRoute(
           path: '/edit',
-          builder: (_, __) => TemplateEditScreen(
+          builder: (_, _) => TemplateEditScreen(
             templateId: 'tmpl-1',
             initialTemplate: template,
           ),
         ),
         GoRoute(
           path: '/notifications/templates',
-          builder: (_, __) => const Scaffold(body: Text('Templates')),
+          builder: (_, _) => const Scaffold(body: Text('Templates')),
         ),
       ],
     );

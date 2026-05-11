@@ -1,7 +1,6 @@
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     as notif;
 import 'package:antinvestor_ui_notification/antinvestor_ui_notification.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../_helpers/fake_notification_client.dart';

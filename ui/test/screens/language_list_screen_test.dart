@@ -39,12 +39,12 @@ void main() {
     final router = GoRouter(routes: [
       GoRoute(
         path: '/',
-        builder: (_, __) =>
+        builder: (_, _) =>
             const Scaffold(body: LanguageListScreen()),
       ),
       GoRoute(
         path: '/notifications/languages/edit',
-        builder: (_, __) => const Scaffold(body: SizedBox.shrink()),
+        builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
       ),
     ]);
 

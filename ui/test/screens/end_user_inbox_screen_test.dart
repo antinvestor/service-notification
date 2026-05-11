@@ -21,12 +21,12 @@ void main() {
     final router = GoRouter(routes: [
       GoRoute(
         path: '/',
-        builder: (_, __) =>
+        builder: (_, _) =>
             const Scaffold(body: EndUserInboxScreen(profileId: 'profile-1')),
       ),
       GoRoute(
         path: '/notifications/detail/:id',
-        builder: (_, __) => const Scaffold(body: SizedBox.shrink()),
+        builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
       ),
     ]);
 

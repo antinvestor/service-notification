@@ -15,10 +15,10 @@ void main() {
       ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
 
     final router = GoRouter(routes: [
-      GoRoute(path: '/', builder: (_, __) => const LanguageEditScreen()),
+      GoRoute(path: '/', builder: (_, _) => const LanguageEditScreen()),
       GoRoute(
         path: '/notifications/languages',
-        builder: (_, __) => const Scaffold(body: SizedBox.shrink()),
+        builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
       ),
     ]);
 

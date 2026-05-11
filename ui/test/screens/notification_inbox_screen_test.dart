@@ -32,16 +32,16 @@ void main() {
     final router = GoRouter(routes: [
       GoRoute(
         path: '/',
-        builder: (_, __) =>
+        builder: (_, _) =>
             const Scaffold(body: NotificationInboxScreen()),
       ),
       GoRoute(
         path: '/notifications/send',
-        builder: (_, __) => const Scaffold(body: SizedBox.shrink()),
+        builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
       ),
       GoRoute(
         path: '/notifications/detail/:id',
-        builder: (_, __) => const Scaffold(body: SizedBox.shrink()),
+        builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
       ),
     ]);
 
