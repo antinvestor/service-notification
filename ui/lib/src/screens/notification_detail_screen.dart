@@ -1,6 +1,6 @@
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     as notif;
-import 'package:antinvestor_ui_core/widgets/error_helpers.dart';
+import 'package:antinvestor_ui_core/antinvestor_ui_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,12 +33,22 @@ class _NotificationDetailScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final notification = widget.initialNotification;
-
-    if (notification == null) {
-      return _buildNotFound(theme);
+    final initial = widget.initialNotification;
+    if (initial != null) {
+      return _buildScreen(theme, initial);
     }
 
+    // Deep-link path: fetch by ID.
+    final asyncN = ref.watch(notificationByIdProvider(widget.notificationId));
+    return asyncN.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => _buildNotFound(theme),
+      data: (n) => n == null ? _buildNotFound(theme) : _buildScreen(theme, n),
+    );
+  }
+
+  Widget _buildScreen(ThemeData theme, notif.Notification notification) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -56,18 +66,18 @@ class _NotificationDetailScreenState
           ),
         ),
         actions: [
-          if (!notification.autoRelease && notification.status.state.name != 'RELEASED')
-            FilledButton.icon(
-              onPressed: _releasing ? null : () => _release(notification),
-              icon: _releasing
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.send, size: 18),
-              label: Text(_releasing ? 'Releasing...' : 'Release'),
-            ),
+          FilledButton.icon(
+            key: const Key('detail-retry-button'),
+            onPressed: _releasing ? null : () => _release(notification),
+            icon: _releasing
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh, size: 18),
+            label: Text(_releasing ? 'Retrying...' : 'Retry / Release'),
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -104,6 +114,10 @@ class _NotificationDetailScreenState
               ],
             ),
             const SizedBox(height: 24),
+
+            // Lifecycle card
+            _buildLifecycleCard(theme, notification),
+            const SizedBox(height: 16),
 
             // Metadata card
             _buildMetadataCard(theme, notification),
@@ -184,16 +198,19 @@ class _NotificationDetailScreenState
               ),
             ),
             const SizedBox(height: 12),
-            _metadataRow(theme, 'ID', notification.id),
+            MetadataRow(label: 'ID', value: notification.id, copiable: true),
             if (notification.parentId.isNotEmpty)
-              _metadataRow(theme, 'Parent ID', notification.parentId),
-            _metadataRow(theme, 'Type', notification.type),
-            _metadataRow(theme, 'Template', notification.template),
-            _metadataRow(theme, 'Language', notification.language),
-            _metadataRow(
-              theme,
-              'Auto Release',
-              notification.autoRelease ? 'Yes' : 'No',
+              MetadataRow(
+                label: 'Parent ID',
+                value: notification.parentId,
+                copiable: true,
+              ),
+            MetadataRow(label: 'Type', value: notification.type),
+            MetadataRow(label: 'Template', value: notification.template),
+            MetadataRow(label: 'Language', value: notification.language),
+            MetadataRow(
+              label: 'Auto Release',
+              value: notification.autoRelease ? 'Yes' : 'No',
             ),
           ],
         ),
@@ -221,10 +238,13 @@ class _NotificationDetailScreenState
               ),
             ),
             const SizedBox(height: 12),
-            _metadataRow(theme, 'Source', notification.source.detail),
-            _metadataRow(theme, 'Recipient', notification.recipient.detail),
+            MetadataRow(label: 'Source', value: notification.source.detail),
+            MetadataRow(
+              label: 'Recipient',
+              value: notification.recipient.detail,
+            ),
             if (notification.routeId.isNotEmpty)
-              _metadataRow(theme, 'Route ID', notification.routeId),
+              MetadataRow(label: 'Route ID', value: notification.routeId),
           ],
         ),
       ),
@@ -326,39 +346,51 @@ class _NotificationDetailScreenState
             ),
             const SizedBox(height: 12),
             for (final entry in notification.extras.fields.entries)
-              _metadataRow(theme, entry.key, entry.value.toString()),
+              MetadataRow(label: entry.key, value: entry.value.toString()),
           ],
         ),
       ),
     );
   }
 
-  Widget _metadataRow(ThemeData theme, String label, String value) {
-    if (value.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
+  Widget _buildLifecycleCard(ThemeData theme, notif.Notification n) {
+    final state = n.status.state.name;
+    final (action, color, icon) = switch (state) {
+      'ACTIVE' => ('Delivered', Colors.green, Icons.check_circle_outline),
+      'INACTIVE' => ('Failed', Colors.red, Icons.error_outline),
+      'CREATED' || 'CHECKED' => ('Queued', Colors.blue, Icons.schedule),
+      _ => ('Status: $state', Colors.grey, Icons.info_outline),
+    };
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Lifecycle',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
               ),
             ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+            const SizedBox(height: 12),
+            AuditTrailEntry(
+              action: action,
+              // Backend does not currently surface a delivery timestamp;
+              // AuditTrailEntry handles empty.
+              timestamp: '',
+              performedBy: 'system',
+              icon: icon,
+              color: color,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

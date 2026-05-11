@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/language_providers.dart';
 import '../providers/notification_providers.dart';
 import '../widgets/notification_status_badge.dart';
 import '../widgets/priority_badge.dart';
@@ -23,10 +24,12 @@ class _NotificationInboxScreenState
     extends ConsumerState<NotificationInboxScreen> {
   String _searchQuery = '';
   String _typeFilter = '';
+  String _languageFilter = '';
 
   NotificationSearchParams get _searchParams => NotificationSearchParams(
         query: _searchQuery,
         type: _typeFilter,
+        language: _languageFilter,
       );
 
   @override
@@ -34,6 +37,11 @@ class _NotificationInboxScreenState
     final theme = Theme.of(context);
     final asyncNotifications =
         ref.watch(notificationSearchProvider(_searchParams));
+    final asyncLangs = ref.watch(languageSearchProvider(''));
+    final langs = asyncLangs.maybeWhen(
+      data: (l) => l,
+      orElse: () => const <notif.Language>[],
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -54,6 +62,22 @@ class _NotificationInboxScreenState
                 _filterChip(theme, 'PUSH', 'Push'),
                 const SizedBox(width: 8),
                 _filterChip(theme, 'WHATSAPP', 'WhatsApp'),
+              ],
+            ),
+          ),
+        ),
+        // Language filter chips (populated from languageSearchProvider)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _langChip(theme, '', 'All', keySuffix: 'all'),
+                for (final l in langs) ...[
+                  const SizedBox(width: 8),
+                  _langChip(theme, l.code, l.name.isEmpty ? l.code : l.name),
+                ],
               ],
             ),
           ),
@@ -89,7 +113,6 @@ class _NotificationInboxScreenState
                 DataColumn(label: Text('Recipient')),
                 DataColumn(label: Text('Priority')),
                 DataColumn(label: Text('Status')),
-                DataColumn(label: Text('Date')),
               ],
               items: notifications,
               onSearch: (query) {
@@ -117,7 +140,6 @@ class _NotificationInboxScreenState
                     DataCell(NotificationStatusBadge(
                       status: notification.status.state.name,
                     )),
-                    DataCell(Text(notification.status.id)),
                   ],
                 );
               },
@@ -128,7 +150,6 @@ class _NotificationInboxScreenState
                 notification.recipient.detail,
                 notification.priority.name,
                 notification.status.state.name,
-                notification.status.id,
               ],
               onExport: (format, count) {
                 debugPrint(
@@ -138,6 +159,19 @@ class _NotificationInboxScreenState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _langChip(ThemeData theme, String value, String label,
+      {String? keySuffix}) {
+    final isSelected = _languageFilter == value;
+    return FilterChip(
+      key: Key('inbox-lang-${keySuffix ?? value}'),
+      selected: isSelected,
+      label: Text(label),
+      selectedColor: theme.colorScheme.secondaryContainer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      onSelected: (_) => setState(() => _languageFilter = value),
     );
   }
 
