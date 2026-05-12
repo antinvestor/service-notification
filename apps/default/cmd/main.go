@@ -22,7 +22,6 @@ import (
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/config"
 	"github.com/pitabwire/frame/datastore"
-	"github.com/pitabwire/frame/datastore/pool"
 	"github.com/pitabwire/frame/security"
 	"github.com/pitabwire/frame/security/authorizer"
 	connectInterceptors "github.com/pitabwire/frame/security/interceptors/connect"
@@ -97,7 +96,7 @@ func main() {
 		notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)
 
 	// Setup Connect server
-	connectHandler := setupConnectServer(ctx, sm, dbPool, workMan, notificationBusiness)
+	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
 
 	// Register permission manifest for the notification service namespace.
 	notificationSD := notificationpb.File_notification_v1_notification_proto.Services().ByName("NotificationService")
@@ -166,7 +165,7 @@ func setupTenancyClient(
 }
 
 // setupConnectServer initialises and configures the Connect RPC server.
-func setupConnectServer(ctx context.Context, sm security.Manager, dbPool pool.Pool, workMan workerpool.Manager, notificationBusiness business.NotificationBusiness) http.Handler {
+func setupConnectServer(ctx context.Context, sm security.Manager, workMan workerpool.Manager, notificationBusiness business.NotificationBusiness) http.Handler {
 
 	// Create handler with injected dependencies
 	implementation := handlers.NewNotificationServer(workMan, notificationBusiness)
@@ -183,17 +182,9 @@ func setupConnectServer(ctx context.Context, sm security.Manager, dbPool pool.Po
 	functionChecker := authorizer.NewFunctionChecker(auth, permissions.ForService(sd).Namespace)
 	functionAccessInterceptor := connectInterceptors.NewFunctionAccessInterceptor(functionChecker, procMap)
 
-	// Layer 3: TenancyTxInterceptor opens a request-scoped transaction
-	// after auth has populated the claims, publishes app.tenant_id +
-	// app.partition_id from the claims via set_config, and binds the
-	// transaction to the request context. Repository code then calls
-	// pool.DB(ctx, _) and gets the bound tx transparently; tenancy is
-	// enforced by Row-Level Security at the database layer.
-	tenancyTxInterceptor := connectInterceptors.NewTenancyTxInterceptor(dbPool)
-
 	defaultInterceptorList, err := connectInterceptors.DefaultList(
 		ctx, sm.GetAuthenticator(ctx),
-		tenancyAccessInterceptor, functionAccessInterceptor, tenancyTxInterceptor)
+		tenancyAccessInterceptor, functionAccessInterceptor)
 	if err != nil {
 		util.Log(ctx).WithError(err).Fatal("main -- Could not create default interceptors")
 	}
