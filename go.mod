@@ -6,13 +6,13 @@ toolchain go1.26.1
 
 require (
 	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.11-20260509050709-3f270876dbf3.1
-	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.19.2-20260511135618-9b1ea0d95bd7.1
+	buf.build/gen/go/antinvestor/notification/connectrpc/go v1.20.0-20260511135618-9b1ea0d95bd7.1
 	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.11-20260511135618-9b1ea0d95bd7.1
-	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.19.2-20260511135702-c54f3e4a0a91.1
+	buf.build/gen/go/antinvestor/profile/connectrpc/go v1.20.0-20260511135702-c54f3e4a0a91.1
 	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.11-20260511135702-c54f3e4a0a91.1
-	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.19.2-20260511135702-ef4900faa6be.1
+	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.20.0-20260511135702-ef4900faa6be.1
 	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.11-20260511135702-ef4900faa6be.1
-	buf.build/gen/go/antinvestor/tenancy/connectrpc/go v1.19.2-20260510082433-f63874a7edbf.1
+	buf.build/gen/go/antinvestor/tenancy/connectrpc/go v1.20.0-20260510082433-f63874a7edbf.1
 	buf.build/gen/go/antinvestor/tenancy/protocolbuffers/go v1.36.11-20260510082433-f63874a7edbf.1
 	connectrpc.com/connect v1.20.0
 	github.com/antinvestor/common v1.5.0
@@ -144,12 +144,12 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	gocloud.dev v0.45.0 // indirect
-	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/net v0.54.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.280.0 // indirect
