@@ -18,8 +18,8 @@ require (
 	github.com/antinvestor/common v1.5.0
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
-	github.com/pitabwire/frame v1.98.0
-	github.com/pitabwire/util v0.9.0
+	github.com/pitabwire/frame v1.98.1
+	github.com/pitabwire/util v0.9.1
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/wneessen/go-mail v0.7.3
