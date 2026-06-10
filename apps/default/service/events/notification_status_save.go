@@ -55,9 +55,11 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error
 	defer logger.Release()
 	logger.Debug("event handler started")
 
+	isDuplicate := false
 	err := e.notificationStatusRepo.Create(ctx, nStatus)
 	if err != nil {
 		if data.ErrorIsDuplicateKey(err) {
+			isDuplicate = true
 			logger.Debug("notification status already exists, skipping duplicate")
 		} else {
 			logger.WithError(err).Error("could not save notification status to db")
@@ -81,6 +83,10 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error
 	if err != nil {
 		logger.WithError(err).Error("could not save notification update to db")
 		return err
+	}
+
+	if !isDuplicate {
+		recordStatusMetrics(ctx, n, nStatus)
 	}
 
 	logger.Debug("event handler completed successfully")
