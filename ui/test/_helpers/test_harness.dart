@@ -47,6 +47,9 @@ class TestHarness extends StatelessWidget {
       );
 
     return ProviderScope(
+      // Disable Riverpod's automatic retry so failed gate queries settle
+      // in their error state instead of flipping back to loading.
+      retry: (retryCount, error) => null,
       overrides: [
         tenancyContextProvider.overrideWithValue(tenancy),
         if (client != null)
