@@ -4,6 +4,9 @@
 /// receiving, searching notifications, and managing templates.
 library;
 
+// Analytics
+export 'src/analytics/notification_analytics.dart';
+
 // Providers
 export 'src/providers/notification_transport_provider.dart';
 export 'src/providers/tenancy_aware_providers.dart';

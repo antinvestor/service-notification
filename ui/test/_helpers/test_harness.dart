@@ -8,16 +8,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'fake_notification_client.dart';
 
 /// Builds a [ProviderScope] wrapping [child] with an overridden
-/// [tenancyContextProvider] and, optionally, an overridden
-/// [notificationServiceClientProvider].
+/// [tenancyContextProvider] and, optionally, overridden
+/// [notificationServiceClientProvider] / [analyticsDataSourceProvider].
 ///
 /// Use [FakeNotificationClient] via the [client] parameter to inject canned
-/// responses in tests without network access.
+/// responses in tests without network access, and pass an
+/// [AnalyticsDataSource] (e.g. a `ThesaAnalyticsDataSource` over a
+/// `FakeAnalyticsTransport`) via [analytics] for gate-backed widgets.
 class TestHarness extends StatelessWidget {
   const TestHarness({
     super.key,
     required this.child,
     this.client,
+    this.analytics,
     this.partitionId = 'part-test',
     this.organizationId,
     this.branchId,
@@ -25,6 +28,7 @@ class TestHarness extends StatelessWidget {
 
   final Widget child;
   final FakeNotificationClient? client;
+  final AnalyticsDataSource? analytics;
   final String partitionId;
   final String? organizationId;
   final String? branchId;
@@ -47,6 +51,8 @@ class TestHarness extends StatelessWidget {
         tenancyContextProvider.overrideWithValue(tenancy),
         if (client != null)
           notificationServiceClientProvider.overrideWithValue(client!.client),
+        if (analytics != null)
+          analyticsDataSourceProvider.overrideWithValue(analytics!),
       ],
       child: MaterialApp(home: Scaffold(body: child)),
     );

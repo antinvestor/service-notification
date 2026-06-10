@@ -27,3 +27,6 @@ coverage.html
 .tmp/
 WORK_STATE.md
 .claude/
+
+# Local-only pub dependency overrides (path overrides for unpublished packages)
+pubspec_overrides.yaml

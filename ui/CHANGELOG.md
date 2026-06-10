@@ -1,3 +1,17 @@
+## 0.3.0
+
+- `NotificationDashboardScreen` now sources KPIs (sent, delivered, failed,
+  queued, avg send time), the sent trend, and the channel mix from the thesa
+  analytics gate via `antinvestor_ui_core`'s `analyticsDataSourceProvider`,
+  using the `notifications_*` business metrics. The top failing templates
+  panel stays derived from the notification search snapshot.
+- Added `notificationAnalyticsSpec` (a `ServiceAnalyticsSpec`) for host apps
+  to register on their `ThesaAnalyticsDataSource`, plus
+  `analyticsGateMessage` for friendly gate error states (400 allowlist,
+  403 unscoped, 5xx backend down).
+- Requires `antinvestor_ui_core` >= 0.5.0 (unpublished; use a local path
+  override during development).
+
 ## 0.2.0
 
 - Added `NotificationDashboardScreen` (KPIs, channel mix, top failing
