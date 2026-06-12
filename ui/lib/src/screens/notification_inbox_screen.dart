@@ -43,69 +43,65 @@ class _NotificationInboxScreenState
       orElse: () => const <notif.Language>[],
     );
 
-    return Column(
+    // Channel + language filter chips, passed to AdminEntityListPage's
+    // filters slot so they render below the breadcrumb instead of above it.
+    final filtersBar = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Type filter chips
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _filterChip(theme, '', 'All'),
-                const SizedBox(width: 8),
-                _filterChip(theme, 'SMS', 'SMS'),
-                const SizedBox(width: 8),
-                _filterChip(theme, 'EMAIL', 'Email'),
-                const SizedBox(width: 8),
-                _filterChip(theme, 'PUSH', 'Push'),
-                const SizedBox(width: 8),
-                _filterChip(theme, 'WHATSAPP', 'WhatsApp'),
-              ],
-            ),
-          ),
-        ),
-        // Language filter chips (populated from languageSearchProvider)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _langChip(theme, '', 'All', keySuffix: 'all'),
-                for (final l in langs) ...[
-                  const SizedBox(width: 8),
-                  _langChip(theme, l.code, l.name.isEmpty ? l.code : l.name),
-                ],
-              ],
-            ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _filterChip(theme, '', 'All'),
+              const SizedBox(width: 8),
+              _filterChip(theme, 'SMS', 'SMS'),
+              const SizedBox(width: 8),
+              _filterChip(theme, 'EMAIL', 'Email'),
+              const SizedBox(width: 8),
+              _filterChip(theme, 'PUSH', 'Push'),
+              const SizedBox(width: 8),
+              _filterChip(theme, 'WHATSAPP', 'WhatsApp'),
+            ],
           ),
         ),
         const SizedBox(height: 8),
-        // Main list
-        Expanded(
-          child: asyncNotifications.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.error_outline,
-                      size: 48, color: theme.colorScheme.error),
-                  const SizedBox(height: 16),
-                  Text('$error', style: theme.textTheme.bodyLarge),
-                  const SizedBox(height: 16),
-                  FilledButton.tonal(
-                    onPressed: _refresh,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _langChip(theme, '', 'All', keySuffix: 'all'),
+              for (final l in langs) ...[
+                const SizedBox(width: 8),
+                _langChip(theme, l.code, l.name.isEmpty ? l.code : l.name),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+
+    return asyncNotifications.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline,
+                size: 48, color: theme.colorScheme.error),
+            const SizedBox(height: 16),
+            Text('$error', style: theme.textTheme.bodyLarge),
+            const SizedBox(height: 16),
+            FilledButton.tonal(
+              onPressed: _refresh,
+              child: const Text('Retry'),
             ),
-            data: (notifications) => AdminEntityListPage<notif.Notification>(
-              title: 'Notifications',
-              breadcrumbs: const ['Home', 'Notifications'],
+          ],
+        ),
+      ),
+      data: (notifications) => AdminEntityListPage<notif.Notification>(
+        title: 'Notifications',
+        breadcrumbs: const ['Home', 'Notifications'],
+        filters: filtersBar,
               columns: const [
                 DataColumn(label: Text('Type')),
                 DataColumn(label: Text('Template')),
@@ -155,10 +151,7 @@ class _NotificationInboxScreenState
                 debugPrint(
                     '[AUDIT] Exported $count Notifications as $format');
               },
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 

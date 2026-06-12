@@ -54,10 +54,22 @@ void main() {
     ));
     // AdminEntityListPage uses a DropdownButton in its pagination footer that
     // keeps the animation system busy; pump a fixed duration instead.
+    // The filter chips now live in the list page's filters slot (rendered
+    // below the breadcrumb), which only appears once the notification list
+    // resolves — pump until the chip exists rather than a single fixed wait.
+    // The filter chips now live in the list page's filters slot, which
+    // renders once the stream-backed notification + language providers
+    // resolve. Flush those async gaps with runAsync, then pump frames.
+    final langChip = find.byKey(const Key('inbox-lang-en'));
+    for (var i = 0; i < 30 && langChip.evaluate().isEmpty; i++) {
+      await tester.runAsync(() => Future<void>.delayed(
+          const Duration(milliseconds: 20)));
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    await tester.ensureVisible(langChip);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
 
-    await tester.tap(find.byKey(const Key('inbox-lang-en')));
+    await tester.tap(langChip);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
