@@ -1,3 +1,10 @@
+## 0.3.3
+
+- `NotificationSendScreen` now surfaces failures that previously looked
+  like a dead Send button: a snackbar appears when form validation fails
+  (the invalid field may be scrolled out of view) and when the send RPC
+  errors (mirroring the inline banner).
+
 ## 0.3.2
 
 - Fix: the channel selector on `NotificationSendScreen` could never change
