@@ -1,3 +1,9 @@
+## 0.3.4
+
+- Inbox channel/language filter chips now render in AdminEntityListPage's
+  `filters` slot (requires antinvestor_ui_core ^0.5.1), so they sit below
+  the breadcrumb instead of floating above the page header.
+
 ## 0.3.3
 
 - `NotificationSendScreen` now surfaces failures that previously looked
