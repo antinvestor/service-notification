@@ -135,8 +135,16 @@ class _NotificationSendScreenState
                 child: ChannelSelector(
                   selectedChannels: {_selectedChannel},
                   onChanged: (channels) {
-                    setState(() => _selectedChannel =
-                        channels.isNotEmpty ? channels.first : _selectedChannel);
+                    // Single-select semantics over a multi-select widget:
+                    // the set still contains the previous channel, so pick
+                    // the newly tapped one — `channels.first` would always
+                    // return the old selection (insertion order) and the
+                    // channel could never change.
+                    final next = channels.firstWhere(
+                      (c) => c != _selectedChannel,
+                      orElse: () => _selectedChannel,
+                    );
+                    setState(() => _selectedChannel = next);
                   },
                 ),
               ),

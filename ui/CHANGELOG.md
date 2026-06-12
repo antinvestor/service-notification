@@ -1,3 +1,10 @@
+## 0.3.2
+
+- Fix: the channel selector on `NotificationSendScreen` could never change
+  selection — `channels.first` returned the previously selected channel
+  (set insertion order), so taps on other chips were no-ops. The newly
+  tapped channel is now selected.
+
 ## 0.3.0
 
 - `NotificationDashboardScreen` now sources KPIs (sent, delivered, failed,
