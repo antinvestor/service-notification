@@ -49,7 +49,12 @@ func (repo *languageRepository) GetOrCreateByCode(ctx context.Context, languageC
 
 	lang, err := repo.GetByCode(ctx, languageCode)
 	if err != nil {
-		if data.ErrorIsNoRows(err) {
+		// Only "no rows" should trigger auto-creation — any other error is
+		// a real failure. The previous logic was inverted (it returned on
+		// no-rows and created on real errors), so the first notification in
+		// a partition that had no language row yet failed with "record not
+		// found" instead of provisioning the language.
+		if !data.ErrorIsNoRows(err) {
 			return nil, err
 		}
 
@@ -60,9 +65,8 @@ func (repo *languageRepository) GetOrCreateByCode(ctx context.Context, languageC
 		}
 		lang.GenID(ctx)
 
-		err = repo.Create(ctx, lang)
-		if err != nil {
-			return nil, err
+		if createErr := repo.Create(ctx, lang); createErr != nil {
+			return nil, createErr
 		}
 	}
 
