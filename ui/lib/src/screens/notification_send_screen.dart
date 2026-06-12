@@ -365,7 +365,17 @@ class _NotificationSendScreenState
   }
 
   Future<void> _send() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      // The invalid field may be scrolled out of view — without this the
+      // Send button appears to do nothing.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fix the highlighted fields before sending'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _sending = true;
@@ -424,6 +434,14 @@ class _NotificationSendScreenState
           _sending = false;
           _error = friendlyError(e);
         });
+        // Mirror the inline banner with a snackbar so the failure is
+        // visible even when the banner is scrolled out of view.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(friendlyError(e)),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
