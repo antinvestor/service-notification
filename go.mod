@@ -13,7 +13,7 @@ require (
 	buf.build/gen/go/antinvestor/settingz/connectrpc/go v1.20.0-20260612021939-e3b9c0882723.1
 	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.11-20260612021939-e3b9c0882723.1
 	buf.build/gen/go/antinvestor/tenancy/connectrpc/go v1.20.0-20260510082433-f63874a7edbf.1
-	buf.build/gen/go/antinvestor/tenancy/protocolbuffers/go v1.36.11-20260510082433-f63874a7edbf.1
+	buf.build/gen/go/antinvestor/tenancy/protocolbuffers/go v1.36.11-20260629054636-19bb401b07c4.1
 	connectrpc.com/connect v1.20.0
 	github.com/antinvestor/common v1.5.2
 	github.com/gorilla/mux v1.8.1
