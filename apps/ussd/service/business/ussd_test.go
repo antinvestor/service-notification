@@ -6,7 +6,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/ussd/service/engine"
 	"github.com/antinvestor/service-notification/apps/ussd/service/models"
 	"github.com/antinvestor/service-notification/apps/ussd/tests"
-	"github.com/pitabwire/frame/frametests/definition"
+	"github.com/pitabwire/frame/v2/frametests/definition"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

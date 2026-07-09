@@ -8,10 +8,10 @@ import (
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame"
-	"github.com/pitabwire/frame/data"
-	"github.com/pitabwire/frame/events"
-	"github.com/pitabwire/frame/queue"
+	"github.com/pitabwire/frame/v2"
+	"github.com/pitabwire/frame/v2/data"
+	"github.com/pitabwire/frame/v2/events"
+	"github.com/pitabwire/frame/v2/queue"
 	"github.com/pitabwire/util"
 )
 

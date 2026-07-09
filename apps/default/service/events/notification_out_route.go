@@ -11,9 +11,9 @@ import (
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame"
-	"github.com/pitabwire/frame/data"
-	"github.com/pitabwire/frame/events"
+	"github.com/pitabwire/frame/v2"
+	"github.com/pitabwire/frame/v2/data"
+	"github.com/pitabwire/frame/v2/events"
 	"github.com/pitabwire/util"
 )
 

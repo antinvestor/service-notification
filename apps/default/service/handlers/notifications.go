@@ -9,7 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	"github.com/antinvestor/service-notification/pkg/apperrors"
-	"github.com/pitabwire/frame/workerpool"
+	"github.com/pitabwire/frame/v2/workerpool"
 	"github.com/pitabwire/util"
 )
 

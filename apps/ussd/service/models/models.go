@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/pitabwire/frame/data"
+	"github.com/pitabwire/frame/v2/data"
 )
 
 // Action types define what happens at each menu node.

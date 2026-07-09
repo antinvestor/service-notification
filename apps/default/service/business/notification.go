@@ -13,9 +13,9 @@ import (
 	"github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame/data"
-	fevents "github.com/pitabwire/frame/events"
-	"github.com/pitabwire/frame/workerpool"
+	"github.com/pitabwire/frame/v2/data"
+	fevents "github.com/pitabwire/frame/v2/events"
+	"github.com/pitabwire/frame/v2/workerpool"
 	"github.com/pitabwire/util"
 )
 
