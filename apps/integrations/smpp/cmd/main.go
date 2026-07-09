@@ -6,15 +6,16 @@ import (
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
-	apis "github.com/antinvestor/common"
-	"github.com/antinvestor/common/connection"
+	apis "github.com/antinvestor/common/v2"
+	"github.com/antinvestor/common/v2/connection"
+	"github.com/antinvestor/common/v2/servicecatalog"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/events"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/models"
-	"github.com/pitabwire/frame"
-	fconfig "github.com/pitabwire/frame/config"
-	"github.com/pitabwire/frame/datastore"
+	"github.com/pitabwire/frame/v2"
+	fconfig "github.com/pitabwire/frame/v2/config"
+	"github.com/pitabwire/frame/v2/datastore"
 	"github.com/pitabwire/util"
 )
 
@@ -55,19 +56,17 @@ func main() {
 		return
 	}
 
-	audienceList := cfg.GetOauth2ServiceAudience()
-
-	profileCli, err := setupProfileClient(ctx, cfg, audienceList)
+	profileCli, err := setupProfileClient(ctx, cfg)
 	if err != nil {
 		log.WithError(err).Fatal("could not setup profile client")
 	}
 
-	tenancyCli, err := setupTenancyClient(ctx, cfg, audienceList)
+	tenancyCli, err := setupTenancyClient(ctx, cfg)
 	if err != nil {
 		log.WithError(err).Fatal("could not setup partition client")
 	}
 
-	notificationCli, err := setupNotificationClient(ctx, cfg, audienceList)
+	notificationCli, err := setupNotificationClient(ctx, cfg)
 	if err != nil {
 		log.WithError(err).Fatal("could not setup notification client")
 	}
@@ -104,35 +103,32 @@ func main() {
 func setupProfileClient(
 	ctx context.Context,
 	cfg config.TemplateConfig,
-	audiences []string,
 ) (profilev1connect.ProfileServiceClient, error) {
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.ProfileServiceURI,
 		WorkloadAPITargetPath: cfg.ProfileServiceWorkloadAPITargetPath,
-		Audiences:             audiences,
+		ServiceID:             servicecatalog.ServiceProfile,
 	}, profilev1connect.NewProfileServiceClient)
 }
 
 func setupTenancyClient(
 	ctx context.Context,
 	cfg config.TemplateConfig,
-	audiences []string,
 ) (tenancyv1connect.TenancyServiceClient, error) {
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.TenancyServiceURI,
 		WorkloadAPITargetPath: cfg.TenancyServiceWorkloadAPITargetPath,
-		Audiences:             audiences,
+		ServiceID:             servicecatalog.ServiceTenancy,
 	}, tenancyv1connect.NewTenancyServiceClient)
 }
 
 func setupNotificationClient(
 	ctx context.Context,
 	cfg config.TemplateConfig,
-	audiences []string,
 ) (notificationv1connect.NotificationServiceClient, error) {
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.NotificationServiceURI,
 		WorkloadAPITargetPath: cfg.NotificationServiceWorkloadAPITargetPath,
-		Audiences:             audiences,
+		ServiceID:             servicecatalog.ServiceNotification,
 	}, notificationv1connect.NewNotificationServiceClient)
 }

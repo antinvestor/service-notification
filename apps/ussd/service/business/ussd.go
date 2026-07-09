@@ -12,8 +12,8 @@ import (
 	ussdEvents "github.com/antinvestor/service-notification/apps/ussd/service/events"
 	"github.com/antinvestor/service-notification/apps/ussd/service/models"
 	"github.com/antinvestor/service-notification/apps/ussd/service/repository"
-	"github.com/pitabwire/frame/data"
-	fevents "github.com/pitabwire/frame/events"
+	"github.com/pitabwire/frame/v2/data"
+	fevents "github.com/pitabwire/frame/v2/events"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/types/known/structpb"
 )

@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/models"
-	"github.com/pitabwire/frame/datastore/pool"
+	"github.com/pitabwire/frame/v2/datastore/pool"
 	"github.com/pitabwire/util"
 	"gorm.io/gorm/clause"
 )

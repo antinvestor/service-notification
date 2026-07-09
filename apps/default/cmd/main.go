@@ -10,22 +10,23 @@ import (
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
 	"connectrpc.com/connect"
-	apis "github.com/antinvestor/common"
-	"github.com/antinvestor/common/connection"
-	"github.com/antinvestor/common/permissions"
+	apis "github.com/antinvestor/common/v2"
+	"github.com/antinvestor/common/v2/connection"
+	"github.com/antinvestor/common/v2/permissions"
+	"github.com/antinvestor/common/v2/servicecatalog"
 	aconfig "github.com/antinvestor/service-notification/apps/default/config"
 	"github.com/antinvestor/service-notification/apps/default/service/authz"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/handlers"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame"
-	"github.com/pitabwire/frame/config"
-	"github.com/pitabwire/frame/datastore"
-	"github.com/pitabwire/frame/security"
-	"github.com/pitabwire/frame/security/authorizer"
-	connectInterceptors "github.com/pitabwire/frame/security/interceptors/connect"
-	"github.com/pitabwire/frame/workerpool"
+	"github.com/pitabwire/frame/v2"
+	"github.com/pitabwire/frame/v2/config"
+	"github.com/pitabwire/frame/v2/datastore"
+	"github.com/pitabwire/frame/v2/security"
+	"github.com/pitabwire/frame/v2/security/authorizer"
+	connectInterceptors "github.com/pitabwire/frame/v2/security/interceptors/connect"
+	"github.com/pitabwire/frame/v2/workerpool"
 	"github.com/pitabwire/util"
 )
 
@@ -149,7 +150,7 @@ func setupProfileClient(
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.ProfileServiceURI,
 		WorkloadAPITargetPath: cfg.ProfileServiceWorkloadAPITargetPath,
-		Audiences:             []string{"service_profile"},
+		ServiceID:             servicecatalog.ServiceProfile,
 	}, profilev1connect.NewProfileServiceClient)
 }
 
@@ -160,7 +161,7 @@ func setupTenancyClient(
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.TenancyServiceURI,
 		WorkloadAPITargetPath: cfg.TenancyServiceWorkloadAPITargetPath,
-		Audiences:             []string{"service_tenancy"},
+		ServiceID:             servicecatalog.ServiceTenancy,
 	}, tenancyv1connect.NewTenancyServiceClient)
 }
 

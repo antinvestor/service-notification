@@ -12,7 +12,7 @@ import (
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/handlers"
 	"github.com/gorilla/mux"
-	"github.com/pitabwire/frame"
+	"github.com/pitabwire/frame/v2"
 	"github.com/pitabwire/util"
 )
 

@@ -8,9 +8,9 @@ import (
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/events"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/models"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/repository"
-	"github.com/pitabwire/frame/datastore/pool"
-	fevents "github.com/pitabwire/frame/events"
-	"github.com/pitabwire/frame/security"
+	"github.com/pitabwire/frame/v2/datastore/pool"
+	fevents "github.com/pitabwire/frame/v2/events"
+	"github.com/pitabwire/frame/v2/security"
 )
 
 type TemplateBusiness interface {

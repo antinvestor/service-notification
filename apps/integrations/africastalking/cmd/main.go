@@ -6,15 +6,16 @@ import (
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
-	apis "github.com/antinvestor/common"
-	"github.com/antinvestor/common/connection"
+	apis "github.com/antinvestor/common/v2"
+	"github.com/antinvestor/common/v2/connection"
+	"github.com/antinvestor/common/v2/servicecatalog"
 	aconfig "github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/handlers"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/queue"
 	"github.com/antinvestor/service-notification/pkg/events"
-	"github.com/pitabwire/frame"
-	"github.com/pitabwire/frame/config"
+	"github.com/pitabwire/frame/v2"
+	"github.com/pitabwire/frame/v2/config"
 	"github.com/pitabwire/util"
 )
 
@@ -85,7 +86,7 @@ func setupProfileClient(
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.ProfileServiceURI,
 		WorkloadAPITargetPath: cfg.ProfileServiceWorkloadAPITargetPath,
-		Audiences:             []string{"service_profile"},
+		ServiceID:             servicecatalog.ServiceProfile,
 	}, profilev1connect.NewProfileServiceClient)
 }
 
@@ -96,7 +97,7 @@ func setupNotificationClient(
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.NotificationServiceURI,
 		WorkloadAPITargetPath: cfg.NotificationServiceWorkloadAPITargetPath,
-		Audiences:             []string{"service_notification"},
+		ServiceID:             servicecatalog.ServiceNotification,
 	}, notificationv1connect.NewNotificationServiceClient)
 }
 
@@ -107,6 +108,6 @@ func setupSettingsClient(
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.SettingsServiceURI,
 		WorkloadAPITargetPath: cfg.SettingsServiceWorkloadAPITargetPath,
-		Audiences:             []string{"service_setting"},
+		ServiceID:             servicecatalog.ServiceSettings,
 	}, settingsv1connect.NewSettingsServiceClient)
 }

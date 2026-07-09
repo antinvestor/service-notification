@@ -6,17 +6,18 @@ import (
 
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	apis "github.com/antinvestor/common"
-	"github.com/antinvestor/common/connection"
+	apis "github.com/antinvestor/common/v2"
+	"github.com/antinvestor/common/v2/connection"
+	"github.com/antinvestor/common/v2/servicecatalog"
 	aconfig "github.com/antinvestor/service-notification/apps/ussd/config"
 	"github.com/antinvestor/service-notification/apps/ussd/service/business"
 	ussdEvents "github.com/antinvestor/service-notification/apps/ussd/service/events"
 	"github.com/antinvestor/service-notification/apps/ussd/service/handlers"
 	"github.com/antinvestor/service-notification/apps/ussd/service/repository"
 	"github.com/antinvestor/service-notification/pkg/events"
-	"github.com/pitabwire/frame"
-	"github.com/pitabwire/frame/config"
-	"github.com/pitabwire/frame/datastore"
+	"github.com/pitabwire/frame/v2"
+	"github.com/pitabwire/frame/v2/config"
+	"github.com/pitabwire/frame/v2/datastore"
 	"github.com/pitabwire/util"
 )
 
@@ -131,7 +132,7 @@ func setupNotificationClient(
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.NotificationServiceURI,
 		WorkloadAPITargetPath: cfg.NotificationServiceWorkloadAPITargetPath,
-		Audiences:             []string{"service_notification"},
+		ServiceID:             servicecatalog.ServiceNotification,
 	}, notificationv1connect.NewNotificationServiceClient)
 }
 
@@ -142,6 +143,6 @@ func setupProfileClient(
 	return connection.NewServiceClient(ctx, &cfg, apis.ServiceTarget{
 		Endpoint:              cfg.ProfileServiceURI,
 		WorkloadAPITargetPath: cfg.ProfileServiceWorkloadAPITargetPath,
-		Audiences:             []string{"service_profile"},
+		ServiceID:             servicecatalog.ServiceProfile,
 	}, profilev1connect.NewProfileServiceClient)
 }
