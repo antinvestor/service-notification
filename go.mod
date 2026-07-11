@@ -18,7 +18,7 @@ require (
 	github.com/antinvestor/common/v2 v2.0.0
 	github.com/gorilla/mux v1.8.1
 	github.com/linxGnu/gosmpp v0.3.1
-	github.com/pitabwire/frame/v2 v2.0.3
+	github.com/pitabwire/frame/v2 v2.0.5
 	github.com/pitabwire/util v0.9.1
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.43.0
