@@ -26,6 +26,7 @@ import (
 	"github.com/pitabwire/frame/v2/security"
 	"github.com/pitabwire/frame/v2/security/authorizer"
 	connectInterceptors "github.com/pitabwire/frame/v2/security/interceptors/connect"
+	"github.com/pitabwire/frame/v2/setup"
 	"github.com/pitabwire/frame/v2/workerpool"
 	"github.com/pitabwire/util"
 )
@@ -53,6 +54,10 @@ func main() {
 		frame.WithConfig(&cfg),
 		frame.WithDatastore(),
 	)
+
+	svc.Setup().RegisterFunc(setup.NameMigrate, func(ctx context.Context) error {
+		return repository.Migrate(ctx, svc.DatastoreManager(), cfg.GetDatabaseMigrationPath())
+	})
 	defer svc.Stop(ctx)
 	log := util.Log(ctx)
 
@@ -63,10 +68,6 @@ func main() {
 	qMan := svc.QueueManager()
 
 	// Handle database migration if requested
-	if handleDatabaseMigration(ctx, dbManager, cfg) {
-		return
-	}
-
 	// Setup clients
 	profileCli, err := setupProfileClient(ctx, cfg)
 	if err != nil {
@@ -118,6 +119,13 @@ func main() {
 
 	svc.Init(ctx, serviceOptions...)
 
+	if frame.ShouldRunSetup(&cfg) {
+		if setupErr := svc.RunSetupForProcess(ctx, &cfg); setupErr != nil {
+			util.Log(ctx).WithError(setupErr).Fatal("setup plan failed")
+		}
+		return
+	}
+
 	// Start the service
 	err = svc.Run(ctx, "")
 	if err != nil {
@@ -125,23 +133,6 @@ func main() {
 	}
 }
 
-// handleDatabaseMigration performs database migration if configured to do so.
-func handleDatabaseMigration(
-	ctx context.Context,
-	dbManager datastore.Manager,
-	cfg aconfig.NotificationConfig,
-) bool {
-
-	if cfg.DoDatabaseMigrate() {
-
-		err := repository.Migrate(ctx, dbManager, cfg.GetDatabaseMigrationPath())
-		if err != nil {
-			util.Log(ctx).WithError(err).Fatal("main -- Could not migrate successfully")
-		}
-		return true
-	}
-	return false
-}
 
 // setupProfileClient creates and configures the profile client.
 func setupProfileClient(
