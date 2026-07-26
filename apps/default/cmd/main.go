@@ -37,10 +37,10 @@ var notificationAPISpecFile []byte
 func main() {
 	tmpCtx := context.Background()
 
-	// Initialise configuration
-	cfg, err := config.LoadWithOIDC[aconfig.NotificationConfig](tmpCtx)
+	// Migration/setup jobs must not require OIDC or peer service clients.
+	cfg, err := config.FromEnv[aconfig.NotificationConfig]()
 	if err != nil {
-		util.Log(tmpCtx).With("err", err).Error("could not process configs")
+		util.Log(tmpCtx).WithError(err).Fatal("could not process configs")
 		return
 	}
 
@@ -61,14 +61,30 @@ func main() {
 	defer svc.Stop(ctx)
 	log := util.Log(ctx)
 
+	// Register permission manifest for the notification service namespace.
+	notificationSD := notificationpb.File_notification_v1_notification_proto.Services().ByName("NotificationService")
+
+	if frame.ShouldRunSetup(&cfg) {
+		svc.Init(ctx, frame.WithPermissionRegistration(notificationSD))
+		if setupErr := svc.RunSetupForProcess(ctx, &cfg); setupErr != nil {
+			log.WithError(setupErr).Fatal("setup plan failed")
+		}
+		log.Info("setup plan complete — exiting")
+		return
+	}
+
+	if err = cfg.LoadOauth2Config(ctx); err != nil {
+		log.WithError(err).Fatal("could not load oauth2/oidc config")
+		return
+	}
+
 	sm := svc.SecurityManager()
 	dbManager := svc.DatastoreManager()
 	workMan := svc.WorkManager()
 	evtsMan := svc.EventsManager()
 	qMan := svc.QueueManager()
 
-	// Handle database migration if requested
-	// Setup clients
+	// Setup clients (runtime only)
 	profileCli, err := setupProfileClient(ctx, cfg)
 	if err != nil {
 		log.WithError(err).Fatal("main -- Could not setup profile client")
@@ -100,9 +116,6 @@ func main() {
 	// Setup Connect server
 	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
 
-	// Register permission manifest for the notification service namespace.
-	notificationSD := notificationpb.File_notification_v1_notification_proto.Services().ByName("NotificationService")
-
 	// Initialise the service with all options
 	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(connectHandler),
@@ -119,20 +132,12 @@ func main() {
 
 	svc.Init(ctx, serviceOptions...)
 
-	if frame.ShouldRunSetup(&cfg) {
-		if setupErr := svc.RunSetupForProcess(ctx, &cfg); setupErr != nil {
-			util.Log(ctx).WithError(setupErr).Fatal("setup plan failed")
-		}
-		return
-	}
-
 	// Start the service
 	err = svc.Run(ctx, "")
 	if err != nil {
 		log.WithError(err).Fatal("could not run Server")
 	}
 }
-
 
 // setupProfileClient creates and configures the profile client.
 func setupProfileClient(
