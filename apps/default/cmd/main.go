@@ -116,10 +116,9 @@ func main() {
 	// Setup Connect server
 	connectHandler := setupConnectServer(ctx, sm, workMan, notificationBusiness)
 
-	// Initialise the service with all options
+	// Runtime only — permission manifests publish on the setup Job path above.
 	serviceOptions := []frame.Option{
 		frame.WithHTTPHandler(connectHandler),
-		frame.WithPermissionRegistration(notificationSD),
 		frame.WithRegisterEvents(
 			events2.NewNotificationSave(ctx, evtsMan, notificationRepo),
 			events2.NewNotificationStatusSave(ctx, notificationRepo, notificationStatusRepo),
