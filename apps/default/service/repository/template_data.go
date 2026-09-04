@@ -13,6 +13,9 @@ type TemplateDataRepository interface {
 	datastore.BaseRepository[*models.TemplateData]
 	GetByTemplateID(ctx context.Context, templateId ...string) ([]*models.TemplateData, error)
 	GetByTemplateIDAndLanguage(ctx context.Context, languageId string, templateId ...string) ([]*models.TemplateData, error)
+	// GetByTemplateLanguageAndType returns the single data row for a (template, language, channel type).
+	// Returns gorm.ErrRecordNotFound when it does not exist.
+	GetByTemplateLanguageAndType(ctx context.Context, templateId, languageId, dataType string) (*models.TemplateData, error)
 }
 
 type templateDataRepository struct {
@@ -43,4 +46,15 @@ func (tr *templateDataRepository) GetByTemplateIDAndLanguage(ctx context.Context
 		return nil, err
 	}
 	return templateDataList, nil
+}
+
+func (tr *templateDataRepository) GetByTemplateLanguageAndType(ctx context.Context, templateId, languageId, dataType string) (*models.TemplateData, error) {
+	templateData := models.TemplateData{}
+	err := tr.Pool().DB(ctx, true).
+		Order("modified_at DESC").
+		First(&templateData, "template_id = ? AND language_id = ? AND type = ?", templateId, languageId, dataType).Error
+	if err != nil {
+		return nil, err
+	}
+	return &templateData, nil
 }

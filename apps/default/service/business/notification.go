@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -10,6 +11,7 @@ import (
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
+	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
@@ -561,41 +563,148 @@ func (nb *notificationBusiness) TemplateSearch(ctx context.Context, searchQuery 
 	}
 }
 
+// templateSubjectKey is the reserved key in TemplateSaveRequest.data carrying the
+// message subject (used by email integrations). It is not a channel type.
+const templateSubjectKey = "subject"
+
+// templateDataTypeMaxLen mirrors the varchar(10) width of template_data.type.
+const templateDataTypeMaxLen = 10
+
+// parseTemplateSaveData splits the request data map into channel bodies and the optional subject,
+// validating that every value is a string.
+func parseTemplateSaveData(input map[string]any) (channels map[string]string, subject string, err error) {
+	channels = make(map[string]string, len(input))
+	for key, val := range input {
+		str, ok := val.(string)
+		if !ok {
+			return nil, "", connect.NewError(connect.CodeInvalidArgument,
+				fmt.Errorf("template data value for %q must be a string, got %T", key, val))
+		}
+
+		if key == templateSubjectKey {
+			subject = str
+			continue
+		}
+
+		if key == "" || len(key) > templateDataTypeMaxLen {
+			return nil, "", connect.NewError(connect.CodeInvalidArgument,
+				fmt.Errorf("template data key %q must be a channel type of 1-%d characters", key, templateDataTypeMaxLen))
+		}
+
+		channels[key] = str
+	}
+	return channels, subject, nil
+}
+
+// upsertTemplate returns the template with the given name, creating it if absent. When it already
+// exists, extra is merged over the stored extra map. The returned bool is true if the row was created.
+func (nb *notificationBusiness) upsertTemplate(ctx context.Context, name string, extra map[string]any) (*models.Template, bool, error) {
+	template, err := nb.templateRepo.GetByName(ctx, name)
+	if err != nil {
+		if !data.ErrorIsNoRows(err) {
+			return nil, false, err
+		}
+
+		template = &models.Template{Name: name, Extra: extra}
+		if err = nb.templateRepo.Create(ctx, template); err != nil {
+			return nil, false, err
+		}
+		return template, true, nil
+	}
+
+	if len(extra) == 0 {
+		return template, false, nil
+	}
+
+	if template.Extra == nil {
+		template.Extra = data.JSONMap{}
+	}
+	for k, v := range extra {
+		template.Extra[k] = v
+	}
+
+	rows, err := nb.templateRepo.Update(ctx, template, "extra")
+	if err != nil {
+		return nil, false, err
+	}
+	if rows == 0 {
+		return nil, false, connect.NewError(connect.CodeAborted,
+			fmt.Errorf("template %s was modified concurrently, retry", name))
+	}
+	return template, false, nil
+}
+
+// upsertTemplateData writes the body (and subject) for one (template, language, channel type).
+func (nb *notificationBusiness) upsertTemplateData(ctx context.Context, templateID, languageID, dataType, detail, subject string) error {
+	templateData, err := nb.templateDataRepo.GetByTemplateLanguageAndType(ctx, templateID, languageID, dataType)
+	if err != nil {
+		if !data.ErrorIsNoRows(err) {
+			return err
+		}
+
+		return nb.templateDataRepo.Create(ctx, &models.TemplateData{
+			TemplateID: templateID,
+			LanguageID: languageID,
+			Type:       dataType,
+			Detail:     detail,
+			Subject:    subject,
+		})
+	}
+
+	templateData.Detail = detail
+	templateData.Subject = subject
+
+	rows, err := nb.templateDataRepo.Update(ctx, templateData, "detail", "subject")
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return connect.NewError(connect.CodeAborted,
+			fmt.Errorf("template data %s/%s was modified concurrently, retry", templateID, dataType))
+	}
+	return nil
+}
+
+// TemplateSave registers a template by name. It is idempotent: repeated calls with the same name
+// update the existing template's extra map and the per-channel bodies for the given language instead
+// of creating duplicates, so consumer services can call it on every deploy.
 func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.Template, error) {
 	logger := util.Log(ctx).WithField("template_name", req.GetName())
 
 	logger.Debug("handling template save request")
 
-	language, err := nb.languageRepo.GetOrCreateByCode(ctx, req.GetLanguageCode())
+	if req.GetName() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("template name is required"))
+	}
 
+	channels, subject, err := parseTemplateSaveData(req.GetData().AsMap())
+	if err != nil {
+		return nil, err
+	}
+
+	language, err := nb.languageRepo.GetOrCreateByCode(ctx, req.GetLanguageCode())
 	if err != nil {
 		logger.WithError(err).Debug("language for template is required")
 		return nil, err
 	}
 
-	template := &models.Template{
-		Name:  req.GetName(),
-		Extra: req.GetExtra().AsMap(),
-	}
-
-	err = nb.templateRepo.Create(ctx, template)
+	template, created, err := nb.upsertTemplate(ctx, req.GetName(), req.GetExtra().AsMap())
 	if err != nil {
 		return nil, err
 	}
 
-	for key, val := range req.GetData().AsMap() {
-		templateData := &models.TemplateData{
-			TemplateID: template.GetID(),
-			LanguageID: language.GetID(),
-			Type:       key,
-			Detail:     val.(string),
-		}
-
-		err = nb.templateDataRepo.Create(ctx, templateData)
+	for dataType, detail := range channels {
+		err = nb.upsertTemplateData(ctx, template.GetID(), language.GetID(), dataType, detail, subject)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	logger.WithField("template_id", template.GetID()).
+		WithField("language_code", language.Code).
+		WithField("created", created).
+		WithField("channels", len(channels)).
+		Info("template saved")
 
 	template, err = nb.templateRepo.GetByID(ctx, template.GetID())
 	if err != nil {

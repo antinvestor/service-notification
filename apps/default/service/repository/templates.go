@@ -11,6 +11,8 @@ import (
 
 type TemplateRepository interface {
 	datastore.BaseRepository[*models.Template]
+	// GetByName returns the template with the given name within the caller's tenancy.
+	// Returns gorm.ErrRecordNotFound when no such template exists.
 	GetByName(ctx context.Context, name string) (*models.Template, error)
 }
 
@@ -29,7 +31,8 @@ func NewTemplateRepository(ctx context.Context, dbPool pool.Pool, workMan worker
 func (tr *templateRepository) GetByName(ctx context.Context, name string) (*models.Template, error) {
 	template := models.Template{}
 
-	err := tr.Pool().DB(ctx, true).Find(&template, "name = ?", name).Error
+	// Oldest row wins so that any legacy duplicates resolve to a stable template id.
+	err := tr.Pool().DB(ctx, true).Order("created_at ASC").First(&template, "name = ?", name).Error
 	if err != nil {
 		return nil, err
 	}
