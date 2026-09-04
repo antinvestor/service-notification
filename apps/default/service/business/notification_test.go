@@ -7,8 +7,10 @@ import (
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/tests"
+	"github.com/pitabwire/frame/v2/data"
 	"github.com/pitabwire/frame/v2/frametests"
 	"github.com/pitabwire/frame/v2/frametests/definition"
 	"github.com/stretchr/testify/require"
@@ -691,3 +693,122 @@ func (nts *NotificationTestSuite) Test_notificationBusiness_StatusUpdate() {
 //		})
 //	}
 // }
+
+func (nts *NotificationTestSuite) Test_notificationBusiness_TemplateSave() {
+
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
+
+		_, ctx, resources := nts.CreateService(t, dep)
+
+		const name = "template.test.upsert"
+
+		save := func(t *testing.T, lang string, payload map[string]any, extra map[string]any) (*notificationv1.Template, error) {
+			t.Helper()
+			dataStruct, err := structpb.NewStruct(payload)
+			require.NoError(t, err)
+			req := &notificationv1.TemplateSaveRequest{Name: name, LanguageCode: lang, Data: dataStruct}
+			if extra != nil {
+				req.Extra, err = structpb.NewStruct(extra)
+				require.NoError(t, err)
+			}
+			return resources.NotificationBusiness.TemplateSave(ctx, req)
+		}
+
+		templateCount := func(t *testing.T) int64 {
+			t.Helper()
+			count, err := resources.TemplateRepo.CountBy(ctx, map[string]any{"name": name})
+			require.NoError(t, err)
+			return count
+		}
+
+		var templateID string
+
+		t.Run("first save creates template and data rows", func(t *testing.T) {
+			tmpl, err := save(t, "en", map[string]any{
+				"email":   "Hello {{.name}}",
+				"sms":     "Hi {{.name}}",
+				"subject": "Welcome aboard",
+			}, map[string]any{"owner": "tests"})
+			require.NoError(t, err)
+			require.NotEmpty(t, tmpl.GetId())
+			templateID = tmpl.GetId()
+
+			require.EqualValues(t, 1, templateCount(t))
+			require.Len(t, tmpl.GetData(), 2, "subject must not be stored as a channel")
+
+			rows, err := resources.TemplateDataRepo.GetByTemplateID(ctx, templateID)
+			require.NoError(t, err)
+			require.Len(t, rows, 2)
+			for _, row := range rows {
+				require.NotEqual(t, "subject", row.Type)
+				require.Equal(t, "Welcome aboard", row.Subject)
+			}
+		})
+
+		t.Run("second save updates body in place", func(t *testing.T) {
+			tmpl, err := save(t, "en", map[string]any{
+				"email":   "Hello again {{.name}}",
+				"subject": "Welcome back",
+			}, map[string]any{"version": "2"})
+			require.NoError(t, err)
+			require.Equal(t, templateID, tmpl.GetId(), "template id must be stable across saves")
+			require.EqualValues(t, 1, templateCount(t))
+			require.Len(t, tmpl.GetData(), 2, "sms row from first save must be retained")
+
+			langs, err := resources.LanguageRepo.GetByCode(ctx, "en")
+			require.NoError(t, err)
+			email, err := resources.TemplateDataRepo.GetByTemplateLanguageAndType(ctx, templateID, langs.GetID(), "email")
+			require.NoError(t, err)
+			require.Equal(t, "Hello again {{.name}}", email.Detail)
+			require.Equal(t, "Welcome back", email.Subject)
+
+			extra := tmpl.GetExtra().AsMap()
+			require.Equal(t, "tests", extra["owner"], "existing extra keys are kept")
+			require.Equal(t, "2", extra["version"], "new extra keys are merged")
+		})
+
+		t.Run("second language adds data rows without duplicating template", func(t *testing.T) {
+			tmpl, err := save(t, "sw", map[string]any{"email": "Habari {{.name}}"}, nil)
+			require.NoError(t, err)
+			require.Equal(t, templateID, tmpl.GetId())
+			require.EqualValues(t, 1, templateCount(t))
+			require.Len(t, tmpl.GetData(), 3)
+
+			codes := map[string]int{}
+			for _, d := range tmpl.GetData() {
+				codes[d.GetLanguage().GetCode()]++
+			}
+			require.Equal(t, 2, codes["en"])
+			require.Equal(t, 1, codes["sw"])
+		})
+
+		t.Run("non string data value is rejected", func(t *testing.T) {
+			_, err := save(t, "en", map[string]any{"email": 42}, nil)
+			require.Error(t, err)
+			require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+			require.EqualValues(t, 1, templateCount(t))
+		})
+
+		t.Run("missing name is rejected", func(t *testing.T) {
+			_, err := resources.NotificationBusiness.TemplateSave(ctx, &notificationv1.TemplateSaveRequest{LanguageCode: "en"})
+			require.Error(t, err)
+			require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+		})
+	})
+}
+
+func (nts *NotificationTestSuite) Test_notificationBusiness_QueueOut_UnknownTemplate() {
+
+	nts.WithTestDependancies(nts.T(), func(t *testing.T, dep *definition.DependencyOption) {
+
+		_, ctx, resources := nts.CreateService(t, dep)
+
+		_, err := resources.NotificationBusiness.QueueOut(ctx, &notificationv1.Notification{
+			Language:  "en",
+			Template:  "template.does.not.exist",
+			Recipient: &commonv1.ContactLink{ContactId: "epochTesting"},
+		})
+		require.Error(t, err)
+		require.True(t, data.ErrorIsNoRows(err), "missing template must surface as not found, got: %v", err)
+	})
+}
