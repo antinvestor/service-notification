@@ -166,9 +166,39 @@ func (s *RobustnessTestSuite) TestFailedStatusWithFallbackSpawnsChild() {
 		require.True(t, child.IsReleased())
 		require.True(t, child.OutBound)
 
+		// A duplicate provider webhook reports the same failure again: still one child.
+		fail(parent.GetID())
+		time.Sleep(time.Second)
+		require.Equal(t, child.GetID(), findChild(t, resources, parent.GetID()).GetID())
+		require.Equal(t, 1, countChildren(t, resources, parent.GetID()), "duplicate failures must not spawn a second child")
+
 		// The child failing again with a fallback request must not create a grandchild.
 		fail(child.GetID())
 		time.Sleep(time.Second)
 		require.Nil(t, findChild(t, resources, child.GetID()), "fallback is one hop only")
+	})
+}
+
+// A notification whose release was persisted but whose routing emit failed must be routed
+// by the next Release call rather than reported as already handled.
+func (s *RobustnessTestSuite) TestReleaseReroutesStuckNotification() {
+	s.WithTestDependancies(s.T(), func(t *testing.T, dep *definition.DependencyOption) {
+		_, ctx, resources := s.CreateService(t, dep)
+
+		released := time.Now()
+		n := storedNotification(t, resources, func(n *models.Notification) {
+			n.ReleasedAt = &released
+			n.State = int32(commonv1.STATE_CHECKED)
+		})
+
+		pipe, err := resources.NotificationBusiness.Release(ctx, &notificationv1.ReleaseRequest{Id: []string{n.GetID()}})
+		require.NoError(t, err)
+		require.NoError(t, workerpool.ConsumeResultStream(ctx, pipe, func(*notificationv1.ReleaseResponse) error { return nil }))
+
+		// The test partition has no routes, so routing runs and terminates the notification.
+		require.Eventually(t, func() bool {
+			stored, getErr := resources.NotificationRepo.GetByID(ctx, n.GetID())
+			return getErr == nil && commonv1.STATE(stored.State) == commonv1.STATE_INACTIVE
+		}, 10*time.Second, 100*time.Millisecond, "stuck released notification must be re-routed")
 	})
 }

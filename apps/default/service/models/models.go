@@ -6,6 +6,7 @@ import (
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	"github.com/antinvestor/service-notification/pkg/utility"
 	"github.com/pitabwire/frame/v2/data"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -338,6 +339,10 @@ func NewFallbackNotification(ctx context.Context, parent *Notification, channel 
 	child.TenantID = parent.TenantID
 	child.PartitionID = parent.PartitionID
 	child.AccessID = parent.AccessID
+	// One fallback per parent, ever: a deterministic id makes redelivered status events and
+	// duplicate provider webhooks collapse onto the same child through the save handler's
+	// duplicate-key guard.
+	child.ID = utility.DeterministicID("fb", parent.GetID())
 	child.GenID(ctx)
 	return child
 }

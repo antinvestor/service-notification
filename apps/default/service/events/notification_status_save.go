@@ -92,13 +92,13 @@ func (e *NotificationStatusSave) Execute(ctx context.Context, payload any) error
 		return err
 	}
 
-	if isDuplicate {
-		logger.Debug("event handler completed successfully")
-		return nil
+	if !isDuplicate {
+		recordStatusMetrics(ctx, n, nStatus)
 	}
 
-	recordStatusMetrics(ctx, n, nStatus)
-
+	// Runs on redelivery too: if the first attempt persisted the status but failed to emit
+	// the fallback, the retry must still schedule it. The child's deterministic id keeps
+	// this idempotent.
 	if err = e.scheduleFallback(ctx, logger, n, nStatus); err != nil {
 		return err
 	}

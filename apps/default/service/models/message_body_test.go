@@ -83,6 +83,9 @@ func TestNewFallbackNotification(t *testing.T) {
 	if child.GetID() == "" || child.GetID() == parent.GetID() {
 		t.Fatalf("child must get its own id, got %q", child.GetID())
 	}
+	if again := NewFallbackNotification(context.Background(), parent, RouteTypeSMSForm); again.GetID() != child.GetID() {
+		t.Fatalf("fallback id must be deterministic per parent: %q vs %q", again.GetID(), child.GetID())
+	}
 	if child.ParentID != "parent-1" || child.NotificationType != RouteTypeSMSForm {
 		t.Fatalf("child lineage/type wrong: %+v", child)
 	}

@@ -34,3 +34,20 @@ func findChild(t *testing.T, resources *tests.ServiceResources, parentID string)
 		}
 	}
 }
+
+// countChildren counts notifications whose ParentID is parentID.
+func countChildren(t *testing.T, resources *tests.ServiceResources, parentID string) int {
+	t.Helper()
+	query := data.NewSearchQuery(data.WithSearchFiltersAndByValue(map[string]any{"parent_id = ?": parentID}))
+	results, err := resources.NotificationRepo.Search(t.Context(), query)
+	require.NoError(t, err)
+	count := 0
+	for {
+		res, ok := results.ReadResult(t.Context())
+		if !ok {
+			return count
+		}
+		require.False(t, res.IsError(), "search failed: %v", res.Error())
+		count += len(res.Item())
+	}
+}

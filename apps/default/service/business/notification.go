@@ -259,6 +259,16 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 				if n.StatusID != "" {
 					releasedStatusIDs = append(releasedStatusIDs, n.StatusID)
 				}
+
+				// Released but never handed to routing (the emit after persisting released_at
+				// failed): re-emit instead of leaving it stuck forever.
+				if n.RouteID == "" && commonv1.STATE(n.State) != commonv1.STATE_ACTIVE && commonv1.STATE(n.State) != commonv1.STATE_INACTIVE {
+					if err = nb.eventsMan.Emit(ctx, events.NotificationOutRouteEvent, n.GetID()); err != nil {
+						logger.WithError(err).WithField("notification_id", n.GetID()).Warn("could not re-emit notification out route")
+						return err
+					}
+					logger.WithField("notification_id", n.GetID()).Info("re-routing released notification that was never dispatched")
+				}
 			} else {
 				n.ReleasedAt = &releaseDate
 				notificationsToUpdate = append(notificationsToUpdate, n)
