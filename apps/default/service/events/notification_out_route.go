@@ -3,7 +3,6 @@ package events
 import (
 	"context"
 	"errors"
-	"strings"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
@@ -146,20 +145,12 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 		contactType = contact.Type
 	}
 
-	switch contactType {
-	case profilev1.ContactType_MSISDN:
-		n.NotificationType = models.RouteTypeSMSForm
-	case profilev1.ContactType_EMAIL:
-		n.NotificationType = models.RouteTypeEmailForm
-	default:
-		n.NotificationType = models.RouteTypeAny
-	}
-
-	route, err := routeNotification(ctx, event.routeRepo, models.RouteModeTransmit, n)
+	route, channel, fallback, err := routeWithChannelPreference(ctx, event.routeRepo, models.RouteModeTransmit, n,
+		channelTypesForContact(contactType))
 	if err != nil {
 		logger.WithError(err).Error("could not route notification")
 
-		if strings.Contains(err.Error(), "no routes matched for notification") {
+		if errors.Is(err, ErrNoRouteMatched) {
 			nStatus := models.NotificationStatus{
 				NotificationID: n.GetID(),
 				State:          int32(commonv1.STATE_INACTIVE),
@@ -186,7 +177,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 	}
 
 	n.RouteID = route.ID
-	_, err = event.notificationRepo.Update(ctx, n, "route_id")
+	_, err = event.notificationRepo.Update(ctx, n, "route_id", "notification_type")
 	if err != nil {
 		logger.WithError(err).Error("could not save routed notification to db")
 		return err
@@ -198,13 +189,21 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 		return err
 	}
 
+	statusExtra := data.JSONMap{
+		"step":    "routed_for_queue",
+		"channel": channel,
+	}
+	if fallback {
+		statusExtra["channel_fallback"] = true
+		logger.WithFields(map[string]any{"channel": channel, "route_id": route.ID}).
+			Info("preferred channel has no route in partition, using fallback channel")
+	}
+
 	nStatus := models.NotificationStatus{
 		NotificationID: n.GetID(),
 		State:          int32(commonv1.STATE_ACTIVE),
 		Status:         int32(commonv1.STATUS_QUEUED),
-		Extra: data.JSONMap{
-			"step": "routed_for_queue",
-		},
+		Extra:          statusExtra,
 	}
 
 	nStatus.GenID(ctx)

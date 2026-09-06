@@ -12,6 +12,7 @@ import (
 type NotificationRepository interface {
 	datastore.BaseRepository[*models.Notification]
 	GetByIDList(ctx context.Context, id ...string) ([]*models.Notification, error)
+	GetByExternalID(ctx context.Context, externalID string) (*models.Notification, error)
 }
 
 type notificationRepository struct {
@@ -42,4 +43,17 @@ func (repo *notificationRepository) GetByIDList(ctx context.Context, id ...strin
 		return nil, err
 	}
 	return notifications, nil
+}
+
+// GetByExternalID resolves a notification from the provider-assigned message id recorded
+// when it was dispatched. Delivery reports only carry this id.
+func (repo *notificationRepository) GetByExternalID(ctx context.Context, externalID string) (*models.Notification, error) {
+	notification := models.Notification{}
+	err := repo.Pool().DB(ctx, true).
+		Order("created_at DESC").
+		First(&notification, "external_id = ?", externalID).Error
+	if err != nil {
+		return nil, err
+	}
+	return &notification, nil
 }

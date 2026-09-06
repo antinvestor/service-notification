@@ -134,11 +134,11 @@ func (bs *BaseTestSuite) CreateService(
 	// Register event handlers with proper dependencies (same as main.go lines 92-98)
 	svc.Init(ctx, frame.WithRegisterEvents(
 		events.NewNotificationSave(ctx, evtsMan, notificationRepo),
-		events.NewNotificationStatusSave(ctx, notificationRepo, notificationStatusRepo),
+		events.NewNotificationStatusSave(ctx, evtsMan, notificationRepo, notificationStatusRepo),
 		events.NewNotificationInRoute(ctx, qMan, evtsMan, notificationRepo, routeRepo),
-		events.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, routeRepo, profileCli),
+		events.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, languageRepo, routeRepo, profileCli),
 		events.NewNotificationOutRoute(ctx, evtsMan, profileCli, notificationRepo, routeRepo),
-		events.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, tenancyCli, notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)))
+		events.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, tenancyCli, notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)))
 
 	// Get absolute path to migrations directory using source file location
 	// This file is in apps/default/service/tests, so migrations are at ../../migrations/0001

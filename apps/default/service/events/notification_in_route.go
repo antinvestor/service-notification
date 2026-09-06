@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
@@ -78,11 +77,16 @@ func (e *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 		return err
 	}
 
-	route, err := routeNotification(ctx, e.routeRepo, models.RouteModeReceive, n)
+	channelTypes := []string{models.RouteTypeAny}
+	if n.NotificationType != "" {
+		channelTypes = []string{n.NotificationType}
+	}
+
+	route, _, _, err := routeWithChannelPreference(ctx, e.routeRepo, models.RouteModeReceive, n, channelTypes)
 	if err != nil {
 		logger.WithError(err).Error("could not route notification")
 
-		if strings.Contains(err.Error(), "no routes matched for notification") {
+		if errors.Is(err, ErrNoRouteMatched) {
 			nStatus := models.NotificationStatus{
 				NotificationID: n.GetID(),
 				State:          int32(commonv1.STATE_INACTIVE),
@@ -109,7 +113,7 @@ func (e *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 
 	n.RouteID = route.ID
 
-	_, err = e.notificationRepo.Update(ctx, n, "route_id")
+	_, err = e.notificationRepo.Update(ctx, n, "route_id", "notification_type")
 	if err != nil {
 		logger.WithError(err).Error("could not save routed notification to database")
 		return err
@@ -143,38 +147,6 @@ func (e *NotificationInRoute) Execute(ctx context.Context, payload any) error {
 	return nil
 }
 
-func routeNotification(ctx context.Context, routeRepository repository.RouteRepository, routeMode string, notification *models.Notification) (*models.Route, error) {
-
-	if notification.RouteID != "" {
-		route, err := routeRepository.GetByID(ctx, notification.RouteID)
-		if err != nil {
-			return nil, err
-		}
-		return route, nil
-	}
-
-	routes, err := routeRepository.GetByModeTypeAndPartitionID(ctx,
-		routeMode, notification.NotificationType, notification.PartitionID)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(routes) == 0 {
-		return nil, fmt.Errorf("no routes matched for notification : %s", notification.GetID())
-	}
-
-	route := routes[0]
-	if len(routes) > 1 {
-		route, err = selectRoute(ctx, routes)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return route, nil
-
-}
-
 func loadRoute(ctx context.Context, qMan queue.Manager, routeRepository repository.RouteRepository, routeId string) (*models.Route, error) {
 
 	if routeId == "" {
@@ -193,13 +165,4 @@ func loadRoute(ctx context.Context, qMan queue.Manager, routeRepository reposito
 
 	return route, nil
 
-}
-
-func selectRoute(_ context.Context, routes []*models.Route) (*models.Route, error) {
-	// TODO: find a simple way of routing message mostly by settings
-	// or contact and profile preferences
-	if len(routes) == 0 {
-		return nil, errors.New("no routes matched for notification")
-	}
-	return routes[0], nil
 }
