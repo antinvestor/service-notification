@@ -1,6 +1,6 @@
 # Notification robustness and WhatsApp channel — design
 
-**Status:** approved for implementation (autonomous session, assumptions flagged in §8)
+**Status:** implemented on branch `feat/whatsapp-channel` (autonomous session, assumptions flagged in §8)
 **Date:** 2026-09-06
 **Author:** Peter Bwire (with Claude Code)
 **Scope:** `apps/default` (core pipeline), `apps/integrations/africastalking`, new `apps/integrations/whatsapp`, `client/templates`

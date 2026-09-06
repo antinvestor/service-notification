@@ -7,83 +7,73 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
-	settingsv1 "buf.build/gen/go/antinvestor/settingz/protocolbuffers/go/settings/v1"
-	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
 	"github.com/antinvestor/service-notification/pkg/constants"
+	"github.com/antinvestor/service-notification/pkg/integration/credentials"
 	"github.com/antinvestor/service-notification/pkg/utility"
 )
+
+// requestTimeout bounds one Africa's Talking API call so a stalled provider cannot pin a
+// queue worker indefinitely.
+const requestTimeout = 30 * time.Second
 
 type Client struct {
 	cfg        *config.AfricasTalkingConfig
 	httpClient http.Client
 
 	profileCli  profilev1connect.ProfileServiceClient
-	settingsCli settingsv1connect.SettingsServiceClient
+	credentials *credentials.Resolver
 }
 
 func NewClient(cfg *config.AfricasTalkingConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli settingsv1connect.SettingsServiceClient) (*Client, error) {
 
 	return &Client{
 		cfg:         cfg,
-		httpClient:  http.Client{},
+		httpClient:  http.Client{Timeout: requestTimeout},
 		profileCli:  profileCli,
-		settingsCli: settingsCli,
+		credentials: credentials.New(settingsCli, cfg.SettingsIntegrationName, cfg.SettingsIntegrationID),
 	}, nil
 }
 
+// extractCredentials returns the Africa's Talking credentials for a queued message.
+// Explicit key headers win; otherwise the connection (or route) named in the headers is
+// resolved from the settings service.
 func (ms *Client) extractCredentials(ctx context.Context, headers map[string]string) (map[string]string, error) {
-	var credentials map[string]string
-	connection, ok := headers[constants.APIConnectionCredentialsHeaderName]
-	if !ok {
-		apiKey, ok0 := headers[constants.APIKeyHeaderName]
-		if !ok0 {
-			return nil, fmt.Errorf("no api key exists")
-		}
-		apiSenderID, ok0 := headers[constants.APISenderIDHeaderName]
-		if !ok0 {
+	apiKey, hasKey := headers[constants.APIKeyHeaderName]
+	if hasKey {
+		apiSenderID, ok := headers[constants.APISenderIDHeaderName]
+		if !ok {
 			return nil, fmt.Errorf("no api sender id specified for message")
 		}
-		apiUserName, ok0 := headers[constants.APIKeyHeaderName]
-		if !ok0 {
+		apiUserName, ok := headers[constants.APIUserNameHeaderName]
+		if !ok {
 			return nil, fmt.Errorf("no api username has been specified")
 		}
 
-		credentials = map[string]string{
+		return map[string]string{
 			constants.APIKeyHeaderName:      apiKey,
 			constants.APISenderIDHeaderName: apiSenderID,
 			constants.APIUserNameHeaderName: apiUserName,
+		}, nil
+	}
+
+	values, err := ms.credentials.Resolve(ctx, headers)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, required := range []string{constants.APIKeyHeaderName, constants.APIUserNameHeaderName, constants.APISenderIDHeaderName} {
+		if values[required] == "" {
+			return nil, fmt.Errorf("connection %q credentials are missing %s", credentials.ConnectionName(headers), required)
 		}
-
-		return credentials, nil
 	}
-
-	settingReq := &settingsv1.GetRequest{
-		Key: &settingsv1.Setting{
-			Name:     connection,
-			Object:   ms.cfg.SettingsIntegrationName,
-			ObjectId: ms.cfg.SettingsIntegrationID,
-			Lang:     "",
-			Module:   ms.cfg.SettingsIntegrationName,
-		},
-	}
-
-	settingResp, err := ms.settingsCli.Get(ctx, connect.NewRequest(settingReq))
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal([]byte(settingResp.Msg.GetData().GetValue()), &credentials)
-	if err != nil {
-		return nil, err
-	}
-
-	return credentials, nil
+	return values, nil
 }
 
 func (ms *Client) Send(ctx context.Context, headers map[string]string, notification *notificationv1.Notification) (*ResponsePayload, error) {
@@ -153,7 +143,7 @@ func (ms *Client) SendBulkSMS(ctx context.Context, apiKey, idempotencyKey string
 	}
 
 	//    The bytes.NewBuffer function creates a reader from the byte slice.
-	req, err := http.NewRequest("POST", ms.cfg.ATServerURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ms.cfg.ATServerURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("error creating new request: %w", err)
 	}

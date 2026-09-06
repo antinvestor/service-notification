@@ -97,3 +97,53 @@ func (s *NotificationOutQueueTestSuite) Test_formatOutboundNotification_Template
 		require.Equal(t, "Your contact verification code is : 1234 and will expire at tomorrow", messageMap["text"])
 	})
 }
+
+func (s *NotificationOutQueueTestSuite) Test_formatOutboundNotification_WhatsAppTemplateExtra() {
+	s.WithTestDependancies(s.T(), func(t *testing.T, dep *definition.DependencyOption) {
+		ctx, templateDataRepo, templateRepo := s.createServiceWithTemplates(t, dep)
+
+		tmpl := &models.Template{Name: "template.test.whatsapp.otp", Extra: data.JSONMap{
+			"whatsapp": map[string]any{"name": "otp_code", "language": "en_US", "params": []any{"code"}},
+		}}
+		require.NoError(t, templateRepo.Create(ctx, tmpl))
+		require.NoError(t, templateDataRepo.Create(ctx, &models.TemplateData{
+			TemplateID: tmpl.GetID(), LanguageID: "9bsv0s23l8og00vgjqa0", Type: models.RouteTypeWhatsAppForm,
+			Detail: "Code {{.code}}", Subject: "Code for {{.code}}",
+		}))
+
+		event := &NotificationOutQueue{templateDataRepo: templateDataRepo, templateRepo: templateRepo}
+
+		n := &models.Notification{TemplateID: tmpl.GetID(), LanguageID: "9bsv0s23l8og00vgjqa0",
+			NotificationType: models.RouteTypeWhatsAppForm, Payload: data.JSONMap{"code": "9876"}}
+		messageMap, err := event.formatOutboundNotification(ctx, util.Log(ctx), n, nil)
+		require.NoError(t, err)
+		require.Equal(t, "Code 9876", messageMap[models.RouteTypeWhatsAppForm])
+		require.Equal(t, "Code for 9876", messageMap[models.ExtraKeySubject])
+		require.JSONEq(t, `{"name":"otp_code","language":"en_US","params":["code"]}`, messageMap[models.ExtraKeyWhatsAppTemplate])
+
+		// SMS on the same template carries no WhatsApp definition.
+		n.NotificationType = models.RouteTypeSMSForm
+		messageMap, err = event.formatOutboundNotification(ctx, util.Log(ctx), n, nil)
+		require.NoError(t, err)
+		require.NotContains(t, messageMap, models.ExtraKeyWhatsAppTemplate)
+
+		// A pre-rendered message short-circuits templating.
+		n.Message = "prerendered"
+		messageMap, err = event.formatOutboundNotification(ctx, util.Log(ctx), n, nil)
+		require.NoError(t, err)
+		require.Equal(t, "prerendered", messageMap[models.MessageBodyDefaultKey])
+
+		// Missing template content is an error, not an empty message.
+		n.Message = ""
+		n.LanguageID = "no-such-language"
+		_, err = event.formatOutboundNotification(ctx, util.Log(ctx), n, nil)
+		require.ErrorContains(t, err, "no content")
+	})
+}
+
+func (s *NotificationOutQueueTestSuite) createServiceWithTemplates(t *testing.T, depOpts *definition.DependencyOption) (context.Context, repository.TemplateDataRepository, repository.TemplateRepository) {
+	ctx, templateDataRepo := s.createService(t, depOpts)
+	svc := frame.FromContext(ctx)
+	dbPool := svc.DatastoreManager().GetPool(ctx, datastore.DefaultPoolName)
+	return ctx, templateDataRepo, repository.NewTemplateRepository(ctx, dbPool, svc.WorkManager())
+}

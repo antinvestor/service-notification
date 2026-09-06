@@ -114,8 +114,7 @@ func (bs *BaseTestSuite) CreateService(
 		frame.WithDatastore(),
 		frametests.WithNoopDriver())
 
-	profileCli := bs.GetProfileCli(ctx)
-	tenancyCli := bs.GetTenancyCli(ctx)
+	profileCli, tenancyCli := NewPeerClients(t)
 
 	// Get managers from service (similar to main.go pattern)
 	workMan := svc.WorkManager()

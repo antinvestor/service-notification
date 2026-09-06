@@ -1,6 +1,6 @@
 # Service-specific configuration
 SERVICE_NAME := notification
-APP_DIRS     := apps/default apps/ussd apps/integrations/africastalking apps/integrations/emailsmtp apps/integrations/smpp
+APP_DIRS     := apps/default apps/ussd apps/integrations/africastalking apps/integrations/emailsmtp apps/integrations/smpp apps/integrations/whatsapp
 
 # Bootstrap: download shared Makefile.common if missing
 ifeq (,$(wildcard .tmp/Makefile.common))

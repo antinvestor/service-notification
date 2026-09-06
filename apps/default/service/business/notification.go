@@ -248,14 +248,17 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		}
 
 		var releasedStatusIDs []string
-		var notificationsToUpdate []*models.Notification
+		var alreadyReleased, notificationsToUpdate []*models.Notification
 
 		releaseDate := time.Now()
 
 		for _, n := range notificationList {
 
 			if n.IsReleased() {
-				releasedStatusIDs = append(releasedStatusIDs, n.StatusID)
+				alreadyReleased = append(alreadyReleased, n)
+				if n.StatusID != "" {
+					releasedStatusIDs = append(releasedStatusIDs, n.StatusID)
+				}
 			} else {
 				n.ReleasedAt = &releaseDate
 				notificationsToUpdate = append(notificationsToUpdate, n)
@@ -306,16 +309,25 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		}
 
 		statusesToRelease = nil
-		var notificationStatusList []*models.NotificationStatus
 		if len(releasedStatusIDs) > 0 {
-			notificationStatusList, err = nb.notificationStatusRepo.GetByIDList(ctx, releasedStatusIDs...)
-			if err != nil {
-				logger.WithError(err).Warn("could not get notification status")
-				return err
+			notificationStatusList, listErr := nb.notificationStatusRepo.GetByIDList(ctx, releasedStatusIDs...)
+			if listErr != nil {
+				logger.WithError(listErr).Warn("could not get notification status")
+				return listErr
 			}
 
 			for _, nStatus := range notificationStatusList {
 				statusesToRelease = append(statusesToRelease, nStatus.ToAPI())
+			}
+		}
+
+		// Already-released notifications whose status row has not landed yet still get a
+		// response, so callers see one entry per requested id.
+		for _, n := range alreadyReleased {
+			if n.StatusID == "" {
+				statusesToRelease = append(statusesToRelease, &commonv1.StatusResponse{
+					Id: n.GetID(), State: commonv1.STATE(n.State), Status: commonv1.STATUS_QUEUED, ExternalId: n.ExternalID,
+				})
 			}
 		}
 
