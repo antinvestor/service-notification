@@ -29,8 +29,14 @@ import (
 )
 
 const (
-	ChannelSMS   = "sms"
-	ChannelEmail = "email"
+	ChannelSMS      = "sms"
+	ChannelEmail    = "email"
+	ChannelWhatsApp = "whatsapp"
+
+	// ExtraWhatsAppKey is the Template.Extra key holding the Meta-approved template
+	// definition used for business-initiated WhatsApp messages:
+	// {"name": "otp_code", "language": "en_US", "params": ["code", "expiryDate"]}.
+	ExtraWhatsAppKey = "whatsapp"
 
 	// SubjectKey is the reserved data key that carries the subject.
 	SubjectKey = "subject"

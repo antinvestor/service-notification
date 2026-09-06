@@ -8,10 +8,12 @@ import (
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/pkg/apperrors"
+	"github.com/antinvestor/service-notification/pkg/utility"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -62,10 +64,8 @@ func (ps *ATServer) ReceiveNotification(rw http.ResponseWriter, req *http.Reques
 	routeID := req.PathValue("routeID")
 
 	if routeID == "" {
-		// Mostly this is not valid
-		rw.Header().Set("Content-Type", "application/json")
-		rw.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(rw).Encode("successfully handled")
+		ps.writeError(ctx, rw, apperrors.ErrMissingRequiredData.Extend("route id is required"), http.StatusBadRequest)
+		return
 	}
 
 	var payload map[string]any
@@ -131,43 +131,56 @@ func (ps *ATServer) ReceiveNotification(rw http.ResponseWriter, req *http.Reques
 
 func (ps *ATServer) handleDeliveryReport(ctx context.Context, routeID, ip string, payload map[string]any) *apperrors.Error {
 
-	internalStatus := commonv1.STATUS_UNKNOWN
+	externalID := utility.PayloadString(payload, "id")
+	if externalID == "" {
+		return apperrors.ErrMissingRequiredData.Extend("delivery report has no message id")
+	}
 
-	externalID := payload["id"].(string)
-	status := payload["status"]
-	switch status.(string) {
+	internalStatus := commonv1.STATUS_UNKNOWN
+	internalState := commonv1.STATE_ACTIVE
+	switch utility.PayloadString(payload, "status") {
 	case "Success":
 		internalStatus = commonv1.STATUS_SUCCESSFUL
+		internalState = commonv1.STATE_INACTIVE
 	case "Submitted", "Buffered", "AbsentSubscriber", "Sent":
 		internalStatus = commonv1.STATUS_QUEUED
 	case "Expired", "Failed", "Rejected":
 		internalStatus = commonv1.STATUS_FAILED
+		internalState = commonv1.STATE_INACTIVE
 	}
 
-	extraData := map[string]any{}
-	for k, v := range payload {
-		extraData[k] = fmt.Sprintf("%v", v)
-	}
+	extraData := utility.PayloadStrings(payload)
 	extraData["route"] = routeID
 	extraData["ip"] = ip
-	networkCode, ok := payload["networkCode"]
-	if ok {
-		extraData["network"] = client.SupportedNetworksMap[networkCode.(int)]
+	if networkCode, ok := utility.PayloadInt(payload, "networkCode"); ok {
+		if network, known := client.SupportedNetworksMap[networkCode]; known {
+			extraData["network"] = network
+		}
 	}
-	failureReason, ok := payload["failureReason"]
-	if ok {
-		extraData["failureReasonDetail"] = client.FailureReasonOnRejectedOrFailedMap[failureReason.(string)]
+	if failureReason := utility.PayloadString(payload, "failureReason"); failureReason != "" {
+		if detail, known := client.FailureReasonOnRejectedOrFailedMap[failureReason]; known {
+			extraData["failureReasonDetail"] = detail
+		}
 	}
 
-	extra, _ := structpb.NewStruct(extraData)
-	_, err := ps.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
-		Id:         "",
-		State:      commonv1.STATE_INACTIVE,
+	extra, err := structpb.NewStruct(extraData)
+	if err != nil {
+		return apperrors.ErrInvalidFormat.Extend(err.Error())
+	}
+
+	// The notification service resolves the notification through the external id the
+	// send step recorded, so no internal id is needed here.
+	_, err = ps.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
+		State:      internalState,
 		Status:     internalStatus,
 		ExternalId: externalID,
 		Extras:     extra,
 	}))
 	if err != nil {
+		if connect.CodeOf(err) == connect.CodeNotFound {
+			util.Log(ctx).WithField("external_id", externalID).Warn("delivery report for unknown message, ignoring")
+			return nil
+		}
 		return apperrors.ErrSystemFailure.Extend(err.Error())
 	}
 	return nil
@@ -246,7 +259,63 @@ func (ps *ATServer) handleSubscriptionNotifications(ctx context.Context, routeID
 //
 // networkCode String
 // A unique identifier for the telco that handled the message.
-func (ps *ATServer) handleIncomingMessages(ctx context.Context, routeID, ip string, payload map[string]any) *apperrors.Error {
+func (ps *ATServer) handleIncomingMessages(ctx context.Context, ip, routeID string, payload map[string]any) *apperrors.Error {
 
+	from := utility.PayloadString(payload, "from")
+	text := utility.PayloadString(payload, "text")
+	if from == "" {
+		return apperrors.ErrMissingRequiredData.Extend("incoming message has no sender")
+	}
+
+	extraData := utility.PayloadStrings(payload)
+	extraData["route"] = routeID
+	extraData["ip"] = ip
+	extra, err := structpb.NewStruct(extraData)
+	if err != nil {
+		return apperrors.ErrInvalidFormat.Extend(err.Error())
+	}
+
+	notification := &notificationv1.Notification{
+		Id:        inboundNotificationID(utility.PayloadString(payload, "id")),
+		Source:    &commonv1.ContactLink{Detail: from},
+		Recipient: &commonv1.ContactLink{Detail: utility.PayloadString(payload, "to")},
+		Type:      channelSMS,
+		Data:      text,
+		RouteId:   routeID,
+		Extras:    extra,
+	}
+
+	stream, err := ps.NotificationCli.Receive(ctx, connect.NewRequest(&notificationv1.ReceiveRequest{
+		Data: []*notificationv1.Notification{notification},
+	}))
+	if err != nil {
+		return apperrors.ErrSystemFailure.Extend(err.Error())
+	}
+	defer func() { _ = stream.Close() }()
+
+	for stream.Receive() {
+		// Drain acknowledgements; the provider only needs a 200.
+	}
+	if err = stream.Err(); err != nil {
+		return apperrors.ErrSystemFailure.Extend(err.Error())
+	}
+
+	util.Log(ctx).WithFields(map[string]any{
+		"route_id": routeID,
+		"from":     from,
+		"length":   len(text),
+	}).Info("incoming SMS forwarded to notification service")
 	return nil
+}
+
+// channelSMS is the notification type incoming SMS are recorded under.
+const channelSMS = "sms"
+
+// inboundNotificationID derives a stable notification id from the provider message id so a
+// redelivered webhook is deduplicated by the notification service instead of stored twice.
+func inboundNotificationID(providerMessageID string) string {
+	if providerMessageID == "" {
+		return ""
+	}
+	return utility.DeterministicID("at", providerMessageID)
 }

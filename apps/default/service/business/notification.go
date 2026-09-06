@@ -190,12 +190,15 @@ func (nb *notificationBusiness) Status(ctx context.Context, statusReq *commonv1.
 }
 
 func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *commonv1.StatusUpdateRequest) (*commonv1.StatusResponse, error) {
-	logger := util.Log(ctx).WithField("notification_id", statusReq.GetId())
+	logger := util.Log(ctx).WithFields(map[string]any{
+		"notification_id": statusReq.GetId(),
+		"external_id":     statusReq.GetExternalId(),
+	})
 	logger.Debug("handling status update request")
 
-	n, err := nb.notificationRepo.GetByID(ctx, statusReq.GetId())
+	n, err := nb.resolveNotification(ctx, statusReq.GetId(), statusReq.GetExternalId())
 	if err != nil {
-		logger.WithError(err).Warn("could not get by id")
+		logger.WithError(err).Warn("could not resolve notification for status update")
 		return nil, err
 	}
 
@@ -219,6 +222,18 @@ func (nb *notificationBusiness) StatusUpdate(ctx context.Context, statusReq *com
 	return nStatus.ToAPI(), nil
 }
 
+// resolveNotification loads a notification by id, or by the provider-assigned external id
+// when no id is given (delivery reports only know the provider's message id).
+func (nb *notificationBusiness) resolveNotification(ctx context.Context, id, externalID string) (*models.Notification, error) {
+	if id != "" {
+		return nb.notificationRepo.GetByID(ctx, id)
+	}
+	if externalID != "" {
+		return nb.notificationRepo.GetByExternalID(ctx, externalID)
+	}
+	return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("notification id or external id is required"))
+}
+
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationv1.ReleaseRequest) (workerpool.JobResultPipe[*notificationv1.ReleaseResponse], error) {
 
 	job := workerpool.NewJob(func(ctx context.Context, resultPipe workerpool.JobResultPipe[*notificationv1.ReleaseResponse]) error {
@@ -233,14 +248,27 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		}
 
 		var releasedStatusIDs []string
-		var notificationsToUpdate []*models.Notification
+		var alreadyReleased, notificationsToUpdate []*models.Notification
 
 		releaseDate := time.Now()
 
 		for _, n := range notificationList {
 
 			if n.IsReleased() {
-				releasedStatusIDs = append(releasedStatusIDs, n.StatusID)
+				alreadyReleased = append(alreadyReleased, n)
+				if n.StatusID != "" {
+					releasedStatusIDs = append(releasedStatusIDs, n.StatusID)
+				}
+
+				// Released but never handed to routing (the emit after persisting released_at
+				// failed): re-emit instead of leaving it stuck forever.
+				if n.RouteID == "" && commonv1.STATE(n.State) != commonv1.STATE_ACTIVE && commonv1.STATE(n.State) != commonv1.STATE_INACTIVE {
+					if err = nb.eventsMan.Emit(ctx, events.NotificationOutRouteEvent, n.GetID()); err != nil {
+						logger.WithError(err).WithField("notification_id", n.GetID()).Warn("could not re-emit notification out route")
+						return err
+					}
+					logger.WithField("notification_id", n.GetID()).Info("re-routing released notification that was never dispatched")
+				}
 			} else {
 				n.ReleasedAt = &releaseDate
 				notificationsToUpdate = append(notificationsToUpdate, n)
@@ -251,9 +279,17 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		var statusesToRelease []*commonv1.StatusResponse
 		for _, n := range notificationsToUpdate {
 
-			err = nb.eventsMan.Emit(ctx, events.NotificationSaveEvent, n)
+			// The row already exists, so re-emitting notification.save would be dropped as a
+			// duplicate. Persist the release directly and hand off to routing.
+			_, err = nb.notificationRepo.Update(ctx, n, "released_at")
 			if err != nil {
-				logger.WithError(err).Warn("could not emit notification save")
+				logger.WithError(err).WithField("notification_id", n.GetID()).Warn("could not persist release")
+				return err
+			}
+
+			err = nb.eventsMan.Emit(ctx, events.NotificationOutRouteEvent, n.GetID())
+			if err != nil {
+				logger.WithError(err).WithField("notification_id", n.GetID()).Warn("could not emit notification out route")
 				return err
 			}
 
@@ -283,16 +319,25 @@ func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notific
 		}
 
 		statusesToRelease = nil
-		var notificationStatusList []*models.NotificationStatus
 		if len(releasedStatusIDs) > 0 {
-			notificationStatusList, err = nb.notificationStatusRepo.GetByIDList(ctx, releasedStatusIDs...)
-			if err != nil {
-				logger.WithError(err).Warn("could not get notification status")
-				return err
+			notificationStatusList, listErr := nb.notificationStatusRepo.GetByIDList(ctx, releasedStatusIDs...)
+			if listErr != nil {
+				logger.WithError(listErr).Warn("could not get notification status")
+				return listErr
 			}
 
 			for _, nStatus := range notificationStatusList {
 				statusesToRelease = append(statusesToRelease, nStatus.ToAPI())
+			}
+		}
+
+		// Already-released notifications whose status row has not landed yet still get a
+		// response, so callers see one entry per requested id.
+		for _, n := range alreadyReleased {
+			if n.StatusID == "" {
+				statusesToRelease = append(statusesToRelease, &commonv1.StatusResponse{
+					Id: n.GetID(), State: commonv1.STATE(n.State), Status: commonv1.STATUS_QUEUED, ExternalId: n.ExternalID,
+				})
 			}
 		}
 
@@ -324,9 +369,12 @@ func (nb *notificationBusiness) convertNotificationsToAPI(
 	languageIDMap := map[string]struct{}{}
 
 	for _, p := range notificationList {
-		statusIDList = append(statusIDList, p.StatusID)
-
-		languageIDMap[p.LanguageID] = struct{}{}
+		if p.StatusID != "" {
+			statusIDList = append(statusIDList, p.StatusID)
+		}
+		if p.LanguageID != "" {
+			languageIDMap[p.LanguageID] = struct{}{}
+		}
 	}
 
 	languageIDList := make([]string, 0, len(languageIDMap))
@@ -355,7 +403,7 @@ func (nb *notificationBusiness) convertNotificationsToAPI(
 	}
 
 	for _, not := range notificationList {
-		status := statusMap[not.ID]
+		status := statusMap[not.StatusID]
 		language := languageMap[not.LanguageID]
 
 		// Convert the payment model to the API response format
@@ -716,20 +764,20 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 
 	var apiTemplateDataList []*notificationv1.TemplateData
 
-	templateDataList, err0 := nb.templateDataRepo.GetByTemplateID(ctx, template.GetID())
-	if err0 != nil {
-		logger.WithError(err0).Debug("could not get existing template tData")
+	templateDataList, err := nb.templateDataRepo.GetByTemplateID(ctx, template.GetID())
+	if err != nil {
+		logger.WithError(err).Debug("could not get existing template tData")
 		return nil, err
 	}
 	for _, tData := range templateDataList {
 
 		lang, ok := languageMap[tData.LanguageID]
 		if !ok {
-
 			lang, err = nb.languageRepo.GetByID(ctx, tData.LanguageID)
 			if err != nil {
 				return nil, err
 			}
+			languageMap[tData.LanguageID] = lang
 		}
 
 		apiTemplateDataList = append(apiTemplateDataList, tData.ToApi(lang.ToApi()))

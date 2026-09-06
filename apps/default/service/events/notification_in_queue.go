@@ -8,11 +8,13 @@ import (
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
+	"github.com/antinvestor/service-notification/pkg/constants"
 	"github.com/pitabwire/frame/v2"
 	"github.com/pitabwire/frame/v2/data"
 	"github.com/pitabwire/frame/v2/events"
 	"github.com/pitabwire/frame/v2/queue"
 	"github.com/pitabwire/util"
+	"google.golang.org/protobuf/proto"
 )
 
 // NotificationInQueueEvent is the event name for queuing incoming notifications
@@ -23,17 +25,21 @@ type NotificationInQueue struct {
 	eventMan         events.Manager
 	profileCli       profilev1connect.ProfileServiceClient
 	notificationRepo repository.NotificationRepository
+	languageRepo     repository.LanguageRepository
 	routeRepo        repository.RouteRepository
 }
 
 // NewNotificationInQueue creates a new NotificationInQueue event handler
-func NewNotificationInQueue(_ context.Context, qMan queue.Manager, eventMan events.Manager, notificationRepo repository.NotificationRepository, routeRepo repository.RouteRepository, profileCli profilev1connect.ProfileServiceClient) *NotificationInQueue {
+func NewNotificationInQueue(_ context.Context, qMan queue.Manager, eventMan events.Manager,
+	notificationRepo repository.NotificationRepository, languageRepo repository.LanguageRepository,
+	routeRepo repository.RouteRepository, profileCli profilev1connect.ProfileServiceClient) *NotificationInQueue {
 
 	return &NotificationInQueue{
 		qMan:             qMan,
 		eventMan:         eventMan,
 		profileCli:       profileCli,
 		notificationRepo: notificationRepo,
+		languageRepo:     languageRepo,
 		routeRepo:        routeRepo,
 	}
 }
@@ -67,8 +73,41 @@ func (e *NotificationInQueue) Execute(ctx context.Context, payload any) error {
 		return err
 	}
 
+	// Inbound consumers receive the same wire format integrations do for outbound:
+	// the public proto encoding plus tenancy/route headers.
+	var language *models.Language
+	if n.LanguageID != "" {
+		language, err = e.languageRepo.GetByID(ctx, n.LanguageID)
+		if err != nil {
+			logger.WithError(err).WithField("language_id", n.LanguageID).Warn("could not get language, publishing without it")
+			language = nil
+		}
+	}
+
+	binaryProto, err := proto.Marshal(n.ToAPI(nil, language, nil))
+	if err != nil {
+		logger.WithError(err).Error("could not marshal notification")
+		nStatus := models.NotificationStatus{
+			NotificationID: n.GetID(),
+			State:          int32(commonv1.STATE_INACTIVE),
+			Status:         int32(commonv1.STATUS_FAILED),
+			Extra: data.JSONMap{
+				"error": err.Error(),
+				"step":  "marshal_notification",
+			},
+		}
+		nStatus.GenID(ctx)
+		return e.eventMan.Emit(ctx, NotificationStatusSaveEvent, &nStatus)
+	}
+
+	metadata := map[string]string{
+		constants.TenantIDHeaderName:    n.TenantID,
+		constants.PartitionIDHeaderName: n.PartitionID,
+		constants.RouteIDHeaderName:     n.RouteID,
+	}
+
 	// Queue a message for further processing by peripheral services
-	err = e.qMan.Publish(ctx, n.RouteID, n)
+	err = e.qMan.Publish(ctx, n.RouteID, binaryProto, metadata)
 	if err != nil {
 
 		logger.WithError(err).Error("could not publish to internal queue")
@@ -112,7 +151,7 @@ func (e *NotificationInQueue) Execute(ctx context.Context, payload any) error {
 			Debug("successfully loaded a route to use")
 
 		// Retry publish after loading the route
-		err = e.qMan.Publish(ctx, n.RouteID, n)
+		err = e.qMan.Publish(ctx, n.RouteID, binaryProto, metadata)
 		if err != nil {
 			logger.WithError(err).Error("could not publish to internal queue after route load")
 			nStatus := models.NotificationStatus{

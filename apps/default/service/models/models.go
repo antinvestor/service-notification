@@ -6,6 +6,7 @@ import (
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
+	"github.com/antinvestor/service-notification/pkg/utility"
 	"github.com/pitabwire/frame/v2/data"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -15,10 +16,50 @@ const (
 	RouteModeReceive    = "rx"
 	RouteModeTransceive = "trx"
 
-	RouteTypeAny       = "any"
-	RouteTypeEmailForm = "email"
-	RouteTypeSMSForm   = "sms"
+	RouteTypeAny          = "any"
+	RouteTypeEmailForm    = "email"
+	RouteTypeSMSForm      = "sms"
+	RouteTypeWhatsAppForm = "whatsapp"
+
+	// MessageBodyTextKey and MessageBodyDefaultKey are channel-agnostic template body types.
+	MessageBodyTextKey    = "text"
+	MessageBodyDefaultKey = "default"
+
+	// ExtraKeyWhatsAppTemplate carries the JSON-encoded WhatsApp template definition
+	// (template.extra["whatsapp"]) to the WhatsApp integration.
+	ExtraKeyWhatsAppTemplate = "whatsapp_template"
+	// ExtraKeySubject carries the rendered subject for channels that use one.
+	ExtraKeySubject = "subject"
+	// ExtraKeySupportPrefix prefixes partition support contacts merged into the message map.
+	ExtraKeySupportPrefix = "support_"
 )
+
+// messageBodyFallbackOrder lists channel-agnostic body types tried after the exact
+// notification type, in order, before any remaining channel body is used.
+var messageBodyFallbackOrder = []string{MessageBodyTextKey, MessageBodyDefaultKey, RouteTypeSMSForm}
+
+// SelectMessageBody picks the rendered body for a notification type from the
+// rendered message map: exact type, then text, default, sms, then any channel body.
+// Keys that are not channel bodies (subject, support contacts, template metadata) are ignored.
+func SelectMessageBody(notificationType string, message map[string]string) string {
+	if len(message) == 0 {
+		return ""
+	}
+	if body, ok := message[notificationType]; ok && notificationType != "" {
+		return body
+	}
+	for _, key := range messageBodyFallbackOrder {
+		if body, ok := message[key]; ok {
+			return body
+		}
+	}
+	for _, key := range []string{RouteTypeWhatsAppForm, RouteTypeEmailForm, RouteTypeAny} {
+		if body, ok := message[key]; ok {
+			return body
+		}
+	}
+	return ""
+}
 
 // Language Our simple table holding all the supported languages
 type Language struct {
@@ -172,23 +213,18 @@ func (model *Notification) ToAPI(status *NotificationStatus, language *Language,
 	}
 
 	if len(message) != 0 {
-
 		if model.Message == "" {
-			formattedData, ok := message[model.NotificationType]
-			if ok {
-				model.Message = formattedData
-			} else {
-
-				formattedData, ok = message[RouteTypeSMSForm]
-				if ok {
-					model.Message = formattedData
-				}
-			}
+			model.Message = SelectMessageBody(model.NotificationType, message)
 		}
 
 		for key, val := range message {
 			extra[key] = val
 		}
+	}
+
+	languageCode := ""
+	if language != nil {
+		languageCode = language.Code
 	}
 
 	source := &commonv1.ContactLink{
@@ -211,7 +247,7 @@ func (model *Notification) ToAPI(status *NotificationStatus, language *Language,
 		Template:    model.TemplateID,
 		Payload:     model.Payload.ToProtoStruct(),
 		Data:        model.Message,
-		Language:    language.Code,
+		Language:    languageCode,
 		OutBound:    model.OutBound,
 		AutoRelease: model.IsReleased(),
 		RouteId:     model.RouteID,
@@ -268,4 +304,45 @@ type Route struct {
 	RouteType   string `gorm:"type:varchar(10)"`
 	Mode        string `gorm:"type:varchar(10)"`
 	Uri         string `gorm:"type:varchar(255)"`
+}
+
+// StatusExtraFallbackChannel is the status extra key an integration sets, together with
+// STATUS_FAILED, to request one more delivery attempt on a different channel.
+const StatusExtraFallbackChannel = "fallback_channel"
+
+// StatusExtraFallbackNotificationID records on the failed parent's status the id of the
+// child notification created for the fallback channel.
+const StatusExtraFallbackNotificationID = "fallback_notification_id"
+
+// NewFallbackNotification builds the child notification that retries a failed outbound
+// parent on the given channel. It copies the parties, content and partition scope, links
+// back through ParentID and is released immediately so it routes without another release.
+func NewFallbackNotification(ctx context.Context, parent *Notification, channel string) *Notification {
+	now := time.Now()
+	child := &Notification{
+		ParentID:             parent.GetID(),
+		SenderProfileID:      parent.SenderProfileID,
+		SenderProfileType:    parent.SenderProfileType,
+		SenderContactID:      parent.SenderContactID,
+		RecipientProfileID:   parent.RecipientProfileID,
+		RecipientProfileType: parent.RecipientProfileType,
+		RecipientContactID:   parent.RecipientContactID,
+		OutBound:             true,
+		LanguageID:           parent.LanguageID,
+		TemplateID:           parent.TemplateID,
+		NotificationType:     channel,
+		Message:              parent.Message,
+		Payload:              parent.Payload.Copy(),
+		ReleasedAt:           &now,
+		Priority:             parent.Priority,
+	}
+	child.TenantID = parent.TenantID
+	child.PartitionID = parent.PartitionID
+	child.AccessID = parent.AccessID
+	// One fallback per parent, ever: a deterministic id makes redelivered status events and
+	// duplicate provider webhooks collapse onto the same child through the save handler's
+	// duplicate-key guard.
+	child.ID = utility.DeterministicID("fb", parent.GetID())
+	child.GenID(ctx)
+	return child
 }

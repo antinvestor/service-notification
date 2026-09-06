@@ -3,7 +3,9 @@ package events
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"text/template"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
@@ -35,6 +37,7 @@ type NotificationOutQueue struct {
 	notificationRepo       repository.NotificationRepository
 	notificationStatusRepo repository.NotificationStatusRepository
 	languageRepo           repository.LanguageRepository
+	templateRepo           repository.TemplateRepository
 	templateDataRepo       repository.TemplateDataRepository
 	routeRepo              repository.RouteRepository
 }
@@ -43,8 +46,8 @@ type NotificationOutQueue struct {
 func NewNotificationOutQueue(ctx context.Context, qMan queue.Manager, eventMan events.Manager,
 	profileCli profilev1connect.ProfileServiceClient, tenancyCli tenancyv1connect.TenancyServiceClient,
 	notificationRepo repository.NotificationRepository, notificationStatusRepo repository.NotificationStatusRepository,
-	languageRepo repository.LanguageRepository, templateDataRepo repository.TemplateDataRepository,
-	routeRepo repository.RouteRepository) *NotificationOutQueue {
+	languageRepo repository.LanguageRepository, templateRepo repository.TemplateRepository,
+	templateDataRepo repository.TemplateDataRepository, routeRepo repository.RouteRepository) *NotificationOutQueue {
 
 	return &NotificationOutQueue{
 		qMan:                   qMan,
@@ -54,6 +57,7 @@ func NewNotificationOutQueue(ctx context.Context, qMan queue.Manager, eventMan e
 		notificationRepo:       notificationRepo,
 		notificationStatusRepo: notificationStatusRepo,
 		languageRepo:           languageRepo,
+		templateRepo:           templateRepo,
 		templateDataRepo:       templateDataRepo,
 		routeRepo:              routeRepo,
 	}
@@ -254,44 +258,82 @@ func (event *NotificationOutQueue) Execute(ctx context.Context, payload any) err
 
 func (event *NotificationOutQueue) formatOutboundNotification(ctx context.Context, logger *util.LogEntry, n *models.Notification, templateMap map[string]string) (map[string]string, error) {
 
+	if templateMap == nil {
+		templateMap = map[string]string{}
+	}
+
 	if n.Message != "" {
-		templateMap = map[string]string{"default": n.Message}
+		templateMap[models.MessageBodyDefaultKey] = n.Message
 		return templateMap, nil
 	}
 
 	if n.TemplateID == "" {
-		return nil, errors.New("no template id specified")
+		return nil, errors.New("no template id specified and no message body supplied")
 	}
 
-	tmplDataList, err0 := event.templateDataRepo.GetByTemplateIDAndLanguage(ctx, n.LanguageID, n.TemplateID)
-	if err0 != nil {
-		logger.WithError(err0).WithFields(map[string]any{
+	tmplDataList, err := event.templateDataRepo.GetByTemplateIDAndLanguage(ctx, n.LanguageID, n.TemplateID)
+	if err != nil {
+		logger.WithError(err).WithFields(map[string]any{
 			"template_id": n.TemplateID,
 			"language_id": n.LanguageID,
 		}).Error("could not get template data")
-		tmplDataList = []*models.TemplateData{}
+		return nil, err
 	}
 
-	payload := n.Payload
+	if len(tmplDataList) == 0 {
+		return nil, fmt.Errorf("template %s has no content for language %s", n.TemplateID, n.LanguageID)
+	}
 
 	for _, templateData := range tmplDataList {
-
-		tmpl, err := template.New("message_out").Parse(templateData.Detail)
-		if err != nil {
-			return nil, err
+		body, renderErr := renderTemplate(templateData.Type, templateData.Detail, n.Payload)
+		if renderErr != nil {
+			return nil, renderErr
 		}
+		templateMap[templateData.Type] = body
 
-		var tmplBytes bytes.Buffer
-		err = tmpl.Execute(&tmplBytes, payload)
-		if err != nil {
-			return nil, err
+		if templateData.Subject != "" {
+			subject, subjectErr := renderTemplate(models.ExtraKeySubject, templateData.Subject, n.Payload)
+			if subjectErr != nil {
+				return nil, subjectErr
+			}
+			templateMap[models.ExtraKeySubject] = subject
 		}
-		templateMap[templateData.Type] = tmplBytes.String()
-		templateMap["subject"] = templateData.Subject
+	}
+
+	if n.NotificationType != models.RouteTypeWhatsAppForm {
+		return templateMap, nil
+	}
+
+	// WhatsApp business-initiated messages need a Meta-approved template; carry its
+	// definition (template.extra["whatsapp"]) to the integration so it can send one.
+	tmpl, err := event.templateRepo.GetByID(ctx, n.TemplateID)
+	if err != nil {
+		logger.WithError(err).WithField("template_id", n.TemplateID).Error("could not get template")
+		return nil, err
+	}
+	if waDef, ok := tmpl.Extra[models.RouteTypeWhatsAppForm]; ok && waDef != nil {
+		encoded, encErr := json.Marshal(waDef)
+		if encErr != nil {
+			return nil, fmt.Errorf("template %s has an invalid whatsapp definition: %w", tmpl.Name, encErr)
+		}
+		templateMap[models.ExtraKeyWhatsAppTemplate] = string(encoded)
 	}
 
 	return templateMap, nil
+}
 
+// renderTemplate executes one template body against the notification payload.
+func renderTemplate(name, body string, payload data.JSONMap) (string, error) {
+	tmpl, err := template.New(name).Parse(body)
+	if err != nil {
+		return "", fmt.Errorf("template %s: %w", name, err)
+	}
+
+	var out bytes.Buffer
+	if err = tmpl.Execute(&out, map[string]any(payload)); err != nil {
+		return "", fmt.Errorf("template %s: %w", name, err)
+	}
+	return out.String(), nil
 }
 
 func (event *NotificationOutQueue) extendWithSupportContacts(ctx context.Context, n *models.Notification) (map[string]string, error) {

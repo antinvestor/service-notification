@@ -121,12 +121,12 @@ func main() {
 		frame.WithHTTPHandler(connectHandler),
 		frame.WithRegisterEvents(
 			events2.NewNotificationSave(ctx, evtsMan, notificationRepo),
-			events2.NewNotificationStatusSave(ctx, notificationRepo, notificationStatusRepo),
+			events2.NewNotificationStatusSave(ctx, evtsMan, notificationRepo, notificationStatusRepo),
 			events2.NewNotificationInRoute(ctx, qMan, evtsMan, notificationRepo, routeRepo),
-			events2.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, routeRepo, profileCli),
+			events2.NewNotificationInQueue(ctx, qMan, evtsMan, notificationRepo, languageRepo, routeRepo, profileCli),
 			events2.NewNotificationOutRoute(ctx, evtsMan, profileCli, notificationRepo, routeRepo),
 			events2.NewNotificationOutQueue(ctx, qMan, evtsMan, profileCli, tenancyCli,
-				notificationRepo, notificationStatusRepo, languageRepo, templateDataRepo, routeRepo)),
+				notificationRepo, notificationStatusRepo, languageRepo, templateRepo, templateDataRepo, routeRepo)),
 	}
 
 	svc.Init(ctx, serviceOptions...)
