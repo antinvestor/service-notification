@@ -5,7 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
+	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
+	"github.com/stretchr/testify/require"
 )
 
 func notificationWithPartition() *models.Notification {
@@ -148,4 +151,30 @@ func TestRouteWithChannelPreference(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestReachableContactsAndChannels(t *testing.T) {
+	t.Parallel()
+
+	profile := &profilev1.ProfileObject{Contacts: []*profilev1.ContactObject{
+		{Id: "mail-unverified", Type: profilev1.ContactType_EMAIL},
+		{Id: "phone-deleted", Type: profilev1.ContactType_MSISDN, Verified: true, State: commonv1.STATE_DELETED},
+		{Id: "phone-optout", Type: profilev1.ContactType_MSISDN, Verified: true, CommunicationLevel: profilev1.CommunicationLevel_NO_CONTACT},
+		{Id: "phone", Type: profilev1.ContactType_MSISDN, Verified: true},
+		{Id: ""},
+	}}
+
+	contacts := reachableContacts(profile)
+	require.Len(t, contacts, 2)
+	require.Equal(t, "phone", contacts[0].GetId(), "verified contacts come first")
+	require.Equal(t, "mail-unverified", contacts[1].GetId())
+
+	require.Equal(t,
+		[]string{models.RouteTypeWhatsAppForm, models.RouteTypeSMSForm, models.RouteTypeEmailForm},
+		channelTypesForContacts(contacts))
+
+	require.Equal(t, "phone", contactForChannel(contacts, models.RouteTypeSMSForm).GetId())
+	require.Equal(t, "mail-unverified", contactForChannel(contacts, models.RouteTypeEmailForm).GetId())
+	require.Nil(t, contactForChannel(contacts, "push"))
+	require.Empty(t, channelTypesForContacts(nil))
 }
