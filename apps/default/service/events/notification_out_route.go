@@ -137,28 +137,46 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 		profileObj = p.Msg.GetData()
 	}
 
-	contact := filterContactFromProfileByID(profileObj, n.RecipientContactID)
+	var channelTypes []string
+	// Profile-addressed notifications without a contact are routed by the profile's reachable
+	// contacts (verified first); the chosen contact is pinned on the notification so the
+	// integration delivers to exactly that contact.
+	var profileContacts []*profilev1.ContactObject
+	resolveProfileContact := n.RecipientContactID == "" && n.RouteID == ""
 
-	var contactType profilev1.ContactType
+	if resolveProfileContact {
+		profileContacts = reachableContacts(profileObj)
+		channelTypes = channelTypesForContacts(profileContacts)
+	} else {
+		contact := filterContactFromProfileByID(profileObj, n.RecipientContactID)
 
-	if contact != nil {
-		contactType = contact.Type
+		var contactType profilev1.ContactType
+		if contact != nil {
+			contactType = contact.Type
+		}
+		channelTypes = channelTypesForContact(contactType)
 	}
 
 	route, channel, fallback, err := routeWithChannelPreference(ctx, event.routeRepo, models.RouteModeTransmit, n,
-		channelTypesForContact(contactType))
+		channelTypes)
 	if err != nil {
 		logger.WithError(err).Error("could not route notification")
 
 		if errors.Is(err, ErrNoRouteMatched) {
+			extra := data.JSONMap{
+				"error": err.Error(),
+				"step":  "route_notification",
+			}
+			if resolveProfileContact && len(profileContacts) == 0 {
+				extra["error"] = "recipient profile has no reachable contact"
+				extra["step"] = "resolve_recipient_contact"
+				extra["cause"] = err.Error()
+			}
 			nStatus := models.NotificationStatus{
 				NotificationID: n.GetID(),
 				State:          int32(commonv1.STATE_INACTIVE),
 				Status:         int32(commonv1.STATUS_FAILED),
-				Extra: data.JSONMap{
-					"error": err.Error(),
-					"step":  "route_notification",
-				},
+				Extra:          extra,
 			}
 
 			nStatus.GenID(ctx)
@@ -177,7 +195,14 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 	}
 
 	n.RouteID = route.ID
-	_, err = event.notificationRepo.Update(ctx, n, "route_id", "notification_type")
+	updateColumns := []string{"route_id", "notification_type"}
+	if resolveProfileContact {
+		if contact := contactForChannel(profileContacts, channel); contact != nil {
+			n.RecipientContactID = contact.GetId()
+			updateColumns = append(updateColumns, "recipient_contact_id")
+		}
+	}
+	_, err = event.notificationRepo.Update(ctx, n, updateColumns...)
 	if err != nil {
 		logger.WithError(err).Error("could not save routed notification to db")
 		return err
