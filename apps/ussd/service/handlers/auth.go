@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/pitabwire/frame/v2/security"
+	"github.com/pitabwire/frame/v3/security"
 )
 
 type contextKey string

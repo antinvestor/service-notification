@@ -11,9 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
+	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/v2/settings/v1/settingsv1connect"
 	settingsv1 "buf.build/gen/go/antinvestor/settingz/protocolbuffers/go/settings/v1"
-	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/pkg/constants"
 )
 
@@ -85,19 +84,19 @@ func (r *Resolver) ResolveByName(ctx context.Context, name string) (map[string]s
 		return values, nil
 	}
 
-	resp, err := r.settingsCli.Get(ctx, connect.NewRequest(&settingsv1.GetRequest{
+	resp, err := r.settingsCli.Get(ctx, &settingsv1.GetRequest{
 		Key: &settingsv1.Setting{
 			Name:     name,
 			Object:   r.object,
 			ObjectId: r.objectID,
 			Module:   r.object,
 		},
-	}))
+	})
 	if err != nil {
 		return nil, fmt.Errorf("credentials for connection %q: %w", name, err)
 	}
 
-	raw := resp.Msg.GetData().GetValue()
+	raw := resp.GetData().GetValue()
 	if raw == "" {
 		return nil, fmt.Errorf("credentials for connection %q: setting has no value", name)
 	}

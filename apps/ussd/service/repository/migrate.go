@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/antinvestor/service-notification/apps/ussd/service/models"
-	"github.com/pitabwire/frame/v2/datastore"
+	"github.com/pitabwire/frame/v3/datastore"
 )
 
 func Migrate(ctx context.Context, dbManager datastore.Manager, migrationPath string) error {

@@ -2,22 +2,21 @@ package business
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
-	"connectrpc.com/connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/v2/tenancy/v1/tenancyv1connect"
+	"connectrpc.com/connect/v2"
 	"github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame/v2/data"
-	fevents "github.com/pitabwire/frame/v2/events"
-	"github.com/pitabwire/frame/v2/workerpool"
+	"github.com/pitabwire/frame/v3/data"
+	fevents "github.com/pitabwire/frame/v3/events"
+	"github.com/pitabwire/frame/v3/workerpool"
 	"github.com/pitabwire/util"
 )
 
@@ -231,7 +230,7 @@ func (nb *notificationBusiness) resolveNotification(ctx context.Context, id, ext
 	if externalID != "" {
 		return nb.notificationRepo.GetByExternalID(ctx, externalID)
 	}
-	return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("notification id or external id is required"))
+	return nil, connect.NewError(connect.CodeInvalidArgument, "notification id or external id is required")
 }
 
 func (nb *notificationBusiness) Release(ctx context.Context, releaseReq *notificationv1.ReleaseRequest) (workerpool.JobResultPipe[*notificationv1.ReleaseResponse], error) {
@@ -625,8 +624,8 @@ func parseTemplateSaveData(input map[string]any) (channels map[string]string, su
 	for key, val := range input {
 		str, ok := val.(string)
 		if !ok {
-			return nil, "", connect.NewError(connect.CodeInvalidArgument,
-				fmt.Errorf("template data value for %q must be a string, got %T", key, val))
+			return nil, "", connect.Errorf(connect.CodeInvalidArgument,
+				"template data value for %q must be a string, got %T", key, val)
 		}
 
 		if key == templateSubjectKey {
@@ -635,8 +634,8 @@ func parseTemplateSaveData(input map[string]any) (channels map[string]string, su
 		}
 
 		if key == "" || len(key) > templateDataTypeMaxLen {
-			return nil, "", connect.NewError(connect.CodeInvalidArgument,
-				fmt.Errorf("template data key %q must be a channel type of 1-%d characters", key, templateDataTypeMaxLen))
+			return nil, "", connect.Errorf(connect.CodeInvalidArgument,
+				"template data key %q must be a channel type of 1-%d characters", key, templateDataTypeMaxLen)
 		}
 
 		channels[key] = str
@@ -676,8 +675,8 @@ func (nb *notificationBusiness) upsertTemplate(ctx context.Context, name string,
 		return nil, false, err
 	}
 	if rows == 0 {
-		return nil, false, connect.NewError(connect.CodeAborted,
-			fmt.Errorf("template %s was modified concurrently, retry", name))
+		return nil, false, connect.Errorf(connect.CodeAborted,
+			"template %s was modified concurrently, retry", name)
 	}
 	return template, false, nil
 }
@@ -707,8 +706,8 @@ func (nb *notificationBusiness) upsertTemplateData(ctx context.Context, template
 		return err
 	}
 	if rows == 0 {
-		return connect.NewError(connect.CodeAborted,
-			fmt.Errorf("template data %s/%s was modified concurrently, retry", templateID, dataType))
+		return connect.Errorf(connect.CodeAborted,
+			"template data %s/%s was modified concurrently, retry", templateID, dataType)
 	}
 	return nil
 }
@@ -722,7 +721,7 @@ func (nb *notificationBusiness) TemplateSave(ctx context.Context, req *notificat
 	logger.Debug("handling template save request")
 
 	if req.GetName() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("template name is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, "template name is required")
 	}
 
 	channels, subject, err := parseTemplateSaveData(req.GetData().AsMap())

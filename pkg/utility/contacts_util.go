@@ -4,9 +4,8 @@ import (
 	"context"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
-	"connectrpc.com/connect"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -48,12 +47,12 @@ func PopulateContactLink(
 	}
 
 	if contact.GetContactId() != "" {
-		result, err := profileCli.GetByContact(ctx, connect.NewRequest(&profilev1.GetByContactRequest{Contact: contact.GetContactId()}))
+		result, err := profileCli.GetByContact(ctx, &profilev1.GetByContactRequest{Contact: contact.GetContactId()})
 		if err != nil {
 			return nil, err
 		}
 
-		profile := result.Msg.GetData()
+		profile := result.GetData()
 
 		for _, c := range profile.GetContacts() {
 			if c.GetType() == contactType {
@@ -74,12 +73,12 @@ func PopulateContactLink(
 	}
 
 	if contact.GetProfileId() != "" {
-		result, err := profileCli.GetById(ctx, connect.NewRequest(&profilev1.GetByIdRequest{Id: contact.GetProfileId()}))
+		result, err := profileCli.GetById(ctx, &profilev1.GetByIdRequest{Id: contact.GetProfileId()})
 		if err != nil {
 			return nil, err
 		}
 
-		profile := result.Msg.GetData()
+		profile := result.GetData()
 
 		for _, c := range profile.GetContacts() {
 			if c.GetType() == contactType {

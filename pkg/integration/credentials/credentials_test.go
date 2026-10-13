@@ -2,16 +2,16 @@ package credentials
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
+	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/v2/settings/v1/settingsv1connect"
 	settingsv1 "buf.build/gen/go/antinvestor/settingz/protocolbuffers/go/settings/v1"
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 	"github.com/antinvestor/service-notification/pkg/constants"
 	"github.com/stretchr/testify/require"
 )
@@ -24,25 +24,27 @@ type settingsStub struct {
 	lastKey *settingsv1.Setting
 }
 
-func (s *settingsStub) Get(_ context.Context, req *connect.Request[settingsv1.GetRequest]) (*connect.Response[settingsv1.GetResponse], error) {
+func (s *settingsStub) Get(_ context.Context, req *settingsv1.GetRequest) (*settingsv1.GetResponse, error) {
 	s.calls.Add(1)
-	s.lastKey = req.Msg.GetKey()
-	value, ok := s.values[req.Msg.GetKey().GetName()]
+	s.lastKey = req.GetKey()
+	value, ok := s.values[req.GetKey().GetName()]
 	if !ok {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such setting"))
+		return nil, connect.NewError(connect.CodeNotFound, "no such setting")
 	}
-	return connect.NewResponse(&settingsv1.GetResponse{
-		Data: &settingsv1.SettingObject{Key: req.Msg.GetKey(), Value: value},
-	}), nil
+	return &settingsv1.GetResponse{
+		Data: &settingsv1.SettingObject{Key: req.GetKey(), Value: value},
+	}, nil
 }
 
 func newResolver(t *testing.T, stub *settingsStub, ttl time.Duration) *Resolver {
 	t.Helper()
 	mux := http.NewServeMux()
-	mux.Handle(settingsv1connect.NewSettingsServiceHandler(stub))
+	server := connect.NewServer()
+	settingsv1connect.RegisterSettingsServiceHandler(server, stub)
+	connecthttp.Mount(mux, server)
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	cli := settingsv1connect.NewSettingsServiceClient(srv.Client(), srv.URL)
+	cli := settingsv1connect.NewSettingsServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
 	return New(cli, "WhatsApp", "notification.whatsapp").WithTTL(ttl)
 }
 

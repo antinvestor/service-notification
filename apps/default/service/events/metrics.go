@@ -6,7 +6,7 @@ import (
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
-	"github.com/pitabwire/frame/v2/telemetry"
+	"github.com/pitabwire/frame/v3/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 )
 

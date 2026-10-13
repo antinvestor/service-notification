@@ -9,17 +9,16 @@ import (
 	"text/template"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/v2/tenancy/v1/tenancyv1connect"
 	tenancyv1 "buf.build/gen/go/antinvestor/tenancy/protocolbuffers/go/tenancy/v1"
-	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	"github.com/antinvestor/service-notification/pkg/constants"
-	"github.com/pitabwire/frame/v2"
-	"github.com/pitabwire/frame/v2/data"
-	"github.com/pitabwire/frame/v2/events"
-	"github.com/pitabwire/frame/v2/queue"
+	"github.com/pitabwire/frame/v3"
+	"github.com/pitabwire/frame/v3/data"
+	"github.com/pitabwire/frame/v3/events"
+	"github.com/pitabwire/frame/v3/queue"
 	"github.com/pitabwire/util"
 	"google.golang.org/protobuf/proto"
 )
@@ -344,12 +343,12 @@ func (event *NotificationOutQueue) extendWithSupportContacts(ctx context.Context
 		return templateMap, nil
 	}
 
-	resp, err := event.tenancyCli.GetPartition(ctx, connect.NewRequest(&tenancyv1.GetPartitionRequest{Id: n.GetPartitionID()}))
+	resp, err := event.tenancyCli.GetPartition(ctx, &tenancyv1.GetPartitionRequest{Id: n.GetPartitionID()})
 	if err != nil {
 		return nil, err
 	}
 
-	partition := resp.Msg.GetData()
+	partition := resp.GetData()
 	properties := (&data.JSONMap{}).FromProtoStruct(partition.GetProperties())
 	contacts, ok := properties["support_contacts"]
 	if ok {

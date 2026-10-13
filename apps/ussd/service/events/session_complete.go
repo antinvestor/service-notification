@@ -3,10 +3,10 @@ package events
 import (
 	"context"
 	"errors"
+	"io"
 
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"connectrpc.com/connect"
 	"github.com/pitabwire/util"
 )
 
@@ -61,20 +61,25 @@ func (e *SessionComplete) Execute(ctx context.Context, payload any) error {
 		return nil
 	}
 
-	stream, err := e.notificationCli.Receive(ctx, connect.NewRequest(&notificationv1.ReceiveRequest{
+	stream, err := e.notificationCli.Receive(ctx, &notificationv1.ReceiveRequest{
 		Data: []*notificationv1.Notification{notification},
-	}))
+	})
 	if err != nil {
 		logger.WithError(err).Warn("failed to send session completion to notification service")
 		return nil
 	}
+	defer func() { _ = stream.Close() }()
 
 	// Drain the stream
-	for stream.Receive() {
-		// Response received
-	}
-	if err := stream.Err(); err != nil {
-		logger.WithError(err).Warn("error reading notification response stream")
+	for {
+		_, recvErr := stream.Receive()
+		if recvErr == nil {
+			continue
+		}
+		if !errors.Is(recvErr, io.EOF) {
+			logger.WithError(recvErr).Warn("error reading notification response stream")
+		}
+		break
 	}
 
 	logger.Debug("event handler completed successfully")

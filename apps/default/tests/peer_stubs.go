@@ -2,17 +2,17 @@ package tests
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
-	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/v2/tenancy/v1/tenancyv1connect"
 	tenancyv1 "buf.build/gen/go/antinvestor/tenancy/protocolbuffers/go/tenancy/v1"
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 )
 
 // ProfileStub is an in-process profile service: every contact id resolves to a profile
@@ -38,20 +38,20 @@ func profileFor(profileID, contactID string) *profilev1.ProfileObject {
 	}
 }
 
-func (ProfileStub) GetByContact(_ context.Context, req *connect.Request[profilev1.GetByContactRequest]) (*connect.Response[profilev1.GetByContactResponse], error) {
-	contact := req.Msg.GetContact()
+func (ProfileStub) GetByContact(_ context.Context, req *profilev1.GetByContactRequest) (*profilev1.GetByContactResponse, error) {
+	contact := req.GetContact()
 	if contact == "" || strings.Contains(contact, "missing") {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("profile not found"))
+		return nil, connect.NewError(connect.CodeNotFound, "profile not found")
 	}
-	return connect.NewResponse(&profilev1.GetByContactResponse{Data: profileFor("profile-of-"+contact, contact)}), nil
+	return &profilev1.GetByContactResponse{Data: profileFor("profile-of-"+contact, contact)}, nil
 }
 
-func (ProfileStub) GetById(_ context.Context, req *connect.Request[profilev1.GetByIdRequest]) (*connect.Response[profilev1.GetByIdResponse], error) {
-	id := req.Msg.GetId()
+func (ProfileStub) GetById(_ context.Context, req *profilev1.GetByIdRequest) (*profilev1.GetByIdResponse, error) {
+	id := req.GetId()
 	if id == "" || strings.Contains(id, "missing") {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("profile not found"))
+		return nil, connect.NewError(connect.CodeNotFound, "profile not found")
 	}
-	return connect.NewResponse(&profilev1.GetByIdResponse{Data: profileFor(id, "contact-of-"+id)}), nil
+	return &profilev1.GetByIdResponse{Data: profileFor(id, "contact-of-"+id)}, nil
 }
 
 // TenancyStub answers partition lookups with an empty partition.
@@ -59,18 +59,21 @@ type TenancyStub struct {
 	tenancyv1connect.UnimplementedTenancyServiceHandler
 }
 
-func (TenancyStub) GetPartition(_ context.Context, req *connect.Request[tenancyv1.GetPartitionRequest]) (*connect.Response[tenancyv1.GetPartitionResponse], error) {
-	return connect.NewResponse(&tenancyv1.GetPartitionResponse{Data: &tenancyv1.PartitionObject{Id: req.Msg.GetId(), Name: "test"}}), nil
+func (TenancyStub) GetPartition(_ context.Context, req *tenancyv1.GetPartitionRequest) (*tenancyv1.GetPartitionResponse, error) {
+	return &tenancyv1.GetPartitionResponse{Data: &tenancyv1.PartitionObject{Id: req.GetId(), Name: "test"}}, nil
 }
 
 // NewPeerClients serves both stubs over HTTP for the lifetime of the test.
 func NewPeerClients(t *testing.T) (profilev1connect.ProfileServiceClient, tenancyv1connect.TenancyServiceClient) {
 	t.Helper()
 	mux := http.NewServeMux()
-	mux.Handle(profilev1connect.NewProfileServiceHandler(ProfileStub{}))
-	mux.Handle(tenancyv1connect.NewTenancyServiceHandler(TenancyStub{}))
+	server := connect.NewServer()
+	profilev1connect.RegisterProfileServiceHandler(server, ProfileStub{})
+	tenancyv1connect.RegisterTenancyServiceHandler(server, TenancyStub{})
+	connecthttp.Mount(mux, server)
+
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	return profilev1connect.NewProfileServiceClient(srv.Client(), srv.URL),
-		tenancyv1connect.NewTenancyServiceClient(srv.Client(), srv.URL)
+	return profilev1connect.NewProfileServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL))),
+		tenancyv1connect.NewTenancyServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
 }
