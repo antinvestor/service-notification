@@ -35,21 +35,22 @@ class TemplateSearchParams {
 /// fresh search runs under the new scope.
 final templateSearchProvider = FutureProvider.autoDispose
     .family<List<notif.Template>, TemplateSearchParams>((ref, params) async {
-  ref.watch(tenancyScopeProvider);
+      ref.watch(tenancyScopeProvider);
 
-  final client = ref.watch(notificationServiceClientProvider);
-  final request = notif.TemplateSearchRequest()
-    ..query = params.query
-    ..languageCode = params.languageCode;
-  final stream = client.templateSearch(request);
-  final all = await collectStream<notif.TemplateSearchResponse, notif.Template>(
-    stream,
-    extract: (r) => r.data,
-  );
-  // Hide language-registration placeholders from the user-facing template list.
-  // They're consumed by `languageSearchProvider` (which has its own derivation).
-  return all.where((t) => !t.name.startsWith('_lang_')).toList();
-});
+      final client = ref.watch(notificationServiceClientProvider);
+      final request = notif.TemplateSearchRequest()
+        ..query = params.query
+        ..languageCode = params.languageCode;
+      final stream = client.templateSearch(request);
+      final all =
+          await collectStream<notif.TemplateSearchResponse, notif.Template>(
+            stream,
+            extract: (r) => r.data,
+          );
+      // Hide language-registration placeholders from the user-facing template list.
+      // They're consumed by `languageSearchProvider` (which has its own derivation).
+      return all.where((t) => !t.name.startsWith('_lang_')).toList();
+    });
 
 /// Notifier for template mutations.
 ///

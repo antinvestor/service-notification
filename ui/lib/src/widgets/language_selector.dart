@@ -30,15 +30,13 @@ class LanguageSelector extends StatelessWidget {
       decoration: InputDecoration(
         labelText: 'Language',
         prefixIcon: const Icon(Icons.language, size: 20),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       items: availableLanguages
-          .map((lang) => DropdownMenuItem(
-                value: lang.code,
-                child: Text(lang.label),
-              ))
+          .map(
+            (lang) =>
+                DropdownMenuItem(value: lang.code, child: Text(lang.label)),
+          )
           .toList(),
       onChanged: (value) {
         if (value != null) onChanged(value);

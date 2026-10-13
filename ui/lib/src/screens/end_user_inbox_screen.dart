@@ -16,8 +16,7 @@ class EndUserInboxScreen extends ConsumerStatefulWidget {
   final String profileId;
 
   @override
-  ConsumerState<EndUserInboxScreen> createState() =>
-      _EndUserInboxScreenState();
+  ConsumerState<EndUserInboxScreen> createState() => _EndUserInboxScreenState();
 }
 
 class _EndUserInboxScreenState extends ConsumerState<EndUserInboxScreen> {

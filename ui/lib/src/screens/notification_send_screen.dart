@@ -55,9 +55,8 @@ class _NotificationSendScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go('/notifications'),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/notifications'),
         ),
         title: Text(
           'Compose Notification',
@@ -187,7 +186,10 @@ class _NotificationSendScreenState
                     ButtonSegment(
                       value: notif.PRIORITY.HIGH,
                       label: const Text('High'),
-                      icon: const Icon(Icons.keyboard_double_arrow_up, size: 16),
+                      icon: const Icon(
+                        Icons.keyboard_double_arrow_up,
+                        size: 16,
+                      ),
                     ),
                     ButtonSegment(
                       value: notif.PRIORITY.LOW,
@@ -229,8 +231,7 @@ class _NotificationSendScreenState
               // Data key-value pairs
               FormFieldCard(
                 label: 'Data',
-                description:
-                    'Template variables as key-value pairs.',
+                description: 'Template variables as key-value pairs.',
                 child: Column(
                   children: [
                     for (var i = 0; i < _dataEntries.length; i++)
@@ -250,8 +251,10 @@ class _NotificationSendScreenState
                                   ),
                                 ),
                                 onChanged: (val) {
-                                  _dataEntries[i] =
-                                      MapEntry(val, _dataEntries[i].value);
+                                  _dataEntries[i] = MapEntry(
+                                    val,
+                                    _dataEntries[i].value,
+                                  );
                                 },
                               ),
                             ),
@@ -268,14 +271,18 @@ class _NotificationSendScreenState
                                   ),
                                 ),
                                 onChanged: (val) {
-                                  _dataEntries[i] =
-                                      MapEntry(_dataEntries[i].key, val);
+                                  _dataEntries[i] = MapEntry(
+                                    _dataEntries[i].key,
+                                    val,
+                                  );
                                 },
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.remove_circle_outline,
-                                  size: 20),
+                              icon: const Icon(
+                                Icons.remove_circle_outline,
+                                size: 20,
+                              ),
                               onPressed: () {
                                 setState(() => _dataEntries.removeAt(i));
                               },
@@ -386,7 +393,8 @@ class _NotificationSendScreenState
       final notifier = ref.read(notificationNotifierProvider.notifier);
 
       final notification = notif.Notification()
-        ..recipient = (notif.ContactLink()..detail = _recipientController.text.trim())
+        ..recipient = (notif.ContactLink()
+          ..detail = _recipientController.text.trim())
         ..source = (notif.ContactLink()..detail = _sourceController.text.trim())
         ..type = _selectedChannel
         ..template = _templateController.text.trim()
@@ -405,7 +413,8 @@ class _NotificationSendScreenState
         final payload = notif.Struct();
         for (final entry in _dataEntries) {
           if (entry.key.isNotEmpty) {
-            payload.fields[entry.key] = notif.Value()..stringValue = entry.value;
+            payload.fields[entry.key] = notif.Value()
+              ..stringValue = entry.value;
           }
         }
         if (payload.fields.isNotEmpty) {

@@ -44,8 +44,7 @@ class TenancyScope {
           branchId == other.branchId;
 
   @override
-  int get hashCode =>
-      Object.hash(partitionId, organizationId, branchId);
+  int get hashCode => Object.hash(partitionId, organizationId, branchId);
 
   @override
   String toString() =>

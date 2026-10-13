@@ -14,13 +14,7 @@ class ChannelSelector extends StatelessWidget {
   final ValueChanged<Set<String>> onChanged;
   final List<String> availableChannels;
 
-  static const _defaultChannels = [
-    'SMS',
-    'EMAIL',
-    'PUSH',
-    'WHATSAPP',
-    'VOICE',
-  ];
+  static const _defaultChannels = ['SMS', 'EMAIL', 'PUSH', 'WHATSAPP', 'VOICE'];
 
   IconData _channelIcon(String channel) {
     return switch (channel.toUpperCase()) {
@@ -54,9 +48,7 @@ class ChannelSelector extends StatelessWidget {
           ),
           selectedColor: theme.colorScheme.secondaryContainer,
           checkmarkColor: theme.colorScheme.onSecondaryContainer,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           onSelected: (selected) {
             final updated = Set<String>.from(selectedChannels);
             if (selected) {

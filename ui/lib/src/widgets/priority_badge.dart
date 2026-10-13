@@ -9,10 +9,7 @@ import 'package:flutter/material.dart';
 /// - LOW: blue
 /// - VERY_LOW: grey
 class PriorityBadge extends StatelessWidget {
-  const PriorityBadge({
-    super.key,
-    required this.priority,
-  });
+  const PriorityBadge({super.key, required this.priority});
 
   final PRIORITY priority;
 

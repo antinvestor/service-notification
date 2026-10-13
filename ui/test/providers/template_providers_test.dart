@@ -10,10 +10,12 @@ import '../_helpers/fake_notification_client.dart';
 ProviderContainer _container(FakeNotificationClient fake) {
   final tenancy = TenancyContext()
     ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
-  return ProviderContainer(overrides: [
-    tenancyContextProvider.overrideWithValue(tenancy),
-    notificationServiceClientProvider.overrideWithValue(fake.client),
-  ]);
+  return ProviderContainer(
+    overrides: [
+      tenancyContextProvider.overrideWithValue(tenancy),
+      notificationServiceClientProvider.overrideWithValue(fake.client),
+    ],
+  );
 }
 
 void main() {
@@ -37,10 +39,9 @@ void main() {
 
   test('save round-trips variants through the data Struct', () async {
     final fake = FakeNotificationClient()
-      ..nextSavedTemplate =
-          (notif.Template()
-            ..id = 't1'
-            ..name = 'welcome');
+      ..nextSavedTemplate = (notif.Template()
+        ..id = 't1'
+        ..name = 'welcome');
     final container = _container(fake);
     addTearDown(container.dispose);
 
@@ -57,10 +58,9 @@ void main() {
         ..language = (notif.Language()..code = 'en'),
     ];
 
-    await container.read(templateNotifierProvider.notifier).save(
-          name: 'welcome',
-          variants: variants,
-        );
+    await container
+        .read(templateNotifierProvider.notifier)
+        .save(name: 'welcome', variants: variants);
 
     expect(fake.templateSaveRequests, hasLength(1));
     final req = fake.templateSaveRequests.single;
@@ -103,10 +103,12 @@ void main() {
   test('decodeTemplateVariants prefers typed data field when present', () {
     final template = notif.Template()
       ..name = 'welcome'
-      ..data.add(notif.TemplateData()
-        ..type = 'EMAIL'
-        ..detail = 'Hello'
-        ..language = (notif.Language()..code = 'fr'));
+      ..data.add(
+        notif.TemplateData()
+          ..type = 'EMAIL'
+          ..detail = 'Hello'
+          ..language = (notif.Language()..code = 'fr'),
+      );
     final variants = decodeTemplateVariants(template);
     expect(variants, hasLength(1));
     expect(variants.single.type, 'EMAIL');
@@ -119,33 +121,34 @@ void main() {
 
     await container.read(
       templateSearchProvider(
-              const TemplateSearchParams(query: 'q', languageCode: 'sw'))
-          .future,
+        const TemplateSearchParams(query: 'q', languageCode: 'sw'),
+      ).future,
     );
     expect(fake.templateSearchRequests, hasLength(1));
     expect(fake.templateSearchRequests.single.query, 'q');
     expect(fake.templateSearchRequests.single.languageCode, 'sw');
   });
 
-  test('save with empty variants still sends a request with empty list',
-      () async {
-    final fake = FakeNotificationClient()
-      ..nextSavedTemplate = (notif.Template()
-        ..id = 'tx'
-        ..name = 'empty');
-    final container = _container(fake);
-    addTearDown(container.dispose);
+  test(
+    'save with empty variants still sends a request with empty list',
+    () async {
+      final fake = FakeNotificationClient()
+        ..nextSavedTemplate = (notif.Template()
+          ..id = 'tx'
+          ..name = 'empty');
+      final container = _container(fake);
+      addTearDown(container.dispose);
 
-    await container.read(templateNotifierProvider.notifier).save(
-          name: 'empty',
-          variants: const [],
-        );
-    expect(fake.templateSaveRequests, hasLength(1));
-    final req = fake.templateSaveRequests.single;
-    expect(req.name, 'empty');
-    expect(req.languageCode, '');
-    expect(req.data.fields['variants']?.listValue.values, isEmpty);
-  });
+      await container
+          .read(templateNotifierProvider.notifier)
+          .save(name: 'empty', variants: const []);
+      expect(fake.templateSaveRequests, hasLength(1));
+      final req = fake.templateSaveRequests.single;
+      expect(req.name, 'empty');
+      expect(req.languageCode, '');
+      expect(req.data.fields['variants']?.listValue.values, isEmpty);
+    },
+  );
 
   test('templateSearchProvider hides _lang_* placeholders', () async {
     final fake = FakeNotificationClient()
@@ -173,10 +176,12 @@ void main() {
     final fake = FakeNotificationClient();
     final tenancy = TenancyContext()
       ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
-    final container = ProviderContainer(overrides: [
-      tenancyContextProvider.overrideWithValue(tenancy),
-      notificationServiceClientProvider.overrideWithValue(fake.client),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        tenancyContextProvider.overrideWithValue(tenancy),
+        notificationServiceClientProvider.overrideWithValue(fake.client),
+      ],
+    );
     addTearDown(container.dispose);
 
     const params = TemplateSearchParams();

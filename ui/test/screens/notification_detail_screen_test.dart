@@ -11,34 +11,39 @@ import '../_helpers/fake_notification_client.dart';
 import '../_helpers/test_harness.dart';
 
 GoRouter _routerFor(Widget screen) {
-  return GoRouter(routes: [
-    GoRoute(path: '/', builder: (_, _) => screen),
-    GoRoute(
-      path: '/notifications',
-      builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
-    ),
-  ]);
+  return GoRouter(
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => screen),
+      GoRoute(
+        path: '/notifications',
+        builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
+      ),
+    ],
+  );
 }
 
 void main() {
-  testWidgets('uses MetadataRow and renders an AuditTrailEntry timeline',
-      (tester) async {
+  testWidgets('uses MetadataRow and renders an AuditTrailEntry timeline', (
+    tester,
+  ) async {
     final n = makeNotification(id: 'n1')
       ..status = (notif.StatusResponse()..state = notif.STATE.ACTIVE);
     final tenancy = TenancyContext()
       ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
 
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        tenancyContextProvider.overrideWithValue(tenancy),
-      ],
-      child: MaterialApp.router(
-        routerConfig: _routerFor(NotificationDetailScreen(
-          notificationId: 'n1',
-          initialNotification: n,
-        )),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [tenancyContextProvider.overrideWithValue(tenancy)],
+        child: MaterialApp.router(
+          routerConfig: _routerFor(
+            NotificationDetailScreen(
+              notificationId: 'n1',
+              initialNotification: n,
+            ),
+          ),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     // MetadataRow renders the ID label.
@@ -49,25 +54,28 @@ void main() {
     expect(find.byType(AuditTrailEntry), findsWidgets);
   });
 
-  testWidgets('deep-link without initialNotification fetches by id',
-      (tester) async {
+  testWidgets('deep-link without initialNotification fetches by id', (
+    tester,
+  ) async {
     final n = makeNotification(id: 'n42', template: 'welcome')
       ..status = (notif.StatusResponse()..state = notif.STATE.ACTIVE);
     final fake = FakeNotificationClient()..nextSearchResults = [n];
     final tenancy = TenancyContext()
       ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
 
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        tenancyContextProvider.overrideWithValue(tenancy),
-        notificationServiceClientProvider.overrideWithValue(fake.client),
-      ],
-      child: MaterialApp.router(
-        routerConfig: _routerFor(const NotificationDetailScreen(
-          notificationId: 'n42',
-        )),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tenancyContextProvider.overrideWithValue(tenancy),
+          notificationServiceClientProvider.overrideWithValue(fake.client),
+        ],
+        child: MaterialApp.router(
+          routerConfig: _routerFor(
+            const NotificationDetailScreen(notificationId: 'n42'),
+          ),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
     expect(find.text('welcome'), findsWidgets);
     expect(fake.searchRequests, hasLength(1));
@@ -81,18 +89,22 @@ void main() {
     final tenancy = TenancyContext()
       ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
 
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        tenancyContextProvider.overrideWithValue(tenancy),
-        notificationServiceClientProvider.overrideWithValue(fake.client),
-      ],
-      child: MaterialApp.router(
-        routerConfig: _routerFor(NotificationDetailScreen(
-          notificationId: 'n1',
-          initialNotification: n,
-        )),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tenancyContextProvider.overrideWithValue(tenancy),
+          notificationServiceClientProvider.overrideWithValue(fake.client),
+        ],
+        child: MaterialApp.router(
+          routerConfig: _routerFor(
+            NotificationDetailScreen(
+              notificationId: 'n1',
+              initialNotification: n,
+            ),
+          ),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('detail-retry-button')));

@@ -9,15 +9,21 @@ import '../providers/notification_providers.dart';
 ///
 /// Uses [notificationSearchProvider] to fetch notifications and counts those
 /// whose status indicates they are unread/pending.
-final unreadCountProvider =
-    FutureProvider.family<int, String>((ref, recipientId) async {
+final unreadCountProvider = FutureProvider.family<int, String>((
+  ref,
+  recipientId,
+) async {
   if (recipientId.isEmpty) return 0;
   final params = NotificationSearchParams(recipient: recipientId);
-  final notifications = await ref.watch(notificationSearchProvider(params).future);
+  final notifications = await ref.watch(
+    notificationSearchProvider(params).future,
+  );
   return notifications
-      .where((n) =>
-          n.status.status == notif.STATUS.QUEUED ||
-          n.status.status == notif.STATUS.IN_PROCESS)
+      .where(
+        (n) =>
+            n.status.status == notif.STATUS.QUEUED ||
+            n.status.status == notif.STATUS.IN_PROCESS,
+      )
       .length;
 });
 
@@ -175,10 +181,7 @@ class InlineNotificationList extends ConsumerWidget {
 }
 
 class _CompactNotificationTile extends StatelessWidget {
-  const _CompactNotificationTile({
-    required this.notification,
-    this.onTap,
-  });
+  const _CompactNotificationTile({required this.notification, this.onTap});
 
   final notif.Notification notification;
   final VoidCallback? onTap;

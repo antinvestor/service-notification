@@ -50,8 +50,7 @@ class NotificationRouteModule extends RouteModule {
             builder: (context, state) {
               final id = state.pathParameters['id'] ?? '';
               final extra = state.extra;
-              final notification =
-                  extra is notif.Notification ? extra : null;
+              final notification = extra is notif.Notification ? extra : null;
               return NotificationDetailScreen(
                 notificationId: id,
                 initialNotification: notification,
@@ -75,8 +74,7 @@ class NotificationRouteModule extends RouteModule {
                 builder: (context, state) {
                   final id = state.pathParameters['id'] ?? '';
                   final extra = state.extra;
-                  final template =
-                      extra is notif.Template ? extra : null;
+                  final template = extra is notif.Template ? extra : null;
                   return TemplateEditScreen(
                     templateId: id,
                     initialTemplate: template,
@@ -98,8 +96,7 @@ class NotificationRouteModule extends RouteModule {
                 builder: (context, state) {
                   final id = state.pathParameters['id'] ?? '';
                   final extra = state.extra;
-                  final language =
-                      extra is notif.Language ? extra : null;
+                  final language = extra is notif.Language ? extra : null;
                   return LanguageEditScreen(
                     languageCode: id,
                     initialLanguage: language,
@@ -174,46 +171,46 @@ class NotificationRouteModule extends RouteModule {
 
   @override
   Map<String, Set<String>> get routePermissions => {
-        '/notifications': {'notification_search'},
-        '/notifications/inbox': {'notification_search'},
-        '/notifications/detail': {'notification_status_view'},
-        '/notifications/send': {'notification_send'},
-        '/notifications/templates': {'template_view'},
-        '/notifications/templates/edit': {'template_manage'},
-        '/notifications/languages': {'template_view'},
-        '/notifications/languages/edit': {'template_manage'},
-        '/me/notifications': {'notification_search'},
-      };
+    '/notifications': {'notification_search'},
+    '/notifications/inbox': {'notification_search'},
+    '/notifications/detail': {'notification_status_view'},
+    '/notifications/send': {'notification_send'},
+    '/notifications/templates': {'template_view'},
+    '/notifications/templates/edit': {'template_manage'},
+    '/notifications/languages': {'template_view'},
+    '/notifications/languages/edit': {'template_manage'},
+    '/me/notifications': {'notification_search'},
+  };
 
   @override
   PermissionManifest get permissionManifest => const PermissionManifest(
-        namespace: 'service_notification',
-        permissions: [
-          PermissionEntry(
-            key: 'notification_send',
-            label: 'Send Notifications',
-            scope: PermissionScope.action,
-          ),
-          PermissionEntry(
-            key: 'notification_search',
-            label: 'Search Notifications',
-            scope: PermissionScope.service,
-          ),
-          PermissionEntry(
-            key: 'notification_status_view',
-            label: 'View Notification Status',
-            scope: PermissionScope.feature,
-          ),
-          PermissionEntry(
-            key: 'template_manage',
-            label: 'Manage Templates and Languages',
-            scope: PermissionScope.feature,
-          ),
-          PermissionEntry(
-            key: 'template_view',
-            label: 'View Templates and Languages',
-            scope: PermissionScope.feature,
-          ),
-        ],
-      );
+    namespace: 'service_notification',
+    permissions: [
+      PermissionEntry(
+        key: 'notification_send',
+        label: 'Send Notifications',
+        scope: PermissionScope.action,
+      ),
+      PermissionEntry(
+        key: 'notification_search',
+        label: 'Search Notifications',
+        scope: PermissionScope.service,
+      ),
+      PermissionEntry(
+        key: 'notification_status_view',
+        label: 'View Notification Status',
+        scope: PermissionScope.feature,
+      ),
+      PermissionEntry(
+        key: 'template_manage',
+        label: 'Manage Templates and Languages',
+        scope: PermissionScope.feature,
+      ),
+      PermissionEntry(
+        key: 'template_view',
+        label: 'View Templates and Languages',
+        scope: PermissionScope.feature,
+      ),
+    ],
+  );
 }

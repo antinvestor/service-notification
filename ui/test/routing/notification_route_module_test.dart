@@ -7,33 +7,38 @@ void main() {
   test('exposes dashboard, inbox, languages, end-user inbox routes', () {
     final module = NotificationRouteModule();
     final paths = _flattenPaths(module.buildRoutes());
-    expect(paths, containsAll(<String>[
-      '/notifications',
-      '/notifications/inbox',
-      '/notifications/detail/:id',
-      '/notifications/send',
-      '/notifications/templates',
-      '/notifications/templates/edit',
-      '/notifications/templates/edit/:id',
-      '/notifications/languages',
-      '/notifications/languages/edit',
-      '/notifications/languages/edit/:id',
-      '/me/notifications',
-    ]));
+    expect(
+      paths,
+      containsAll(<String>[
+        '/notifications',
+        '/notifications/inbox',
+        '/notifications/detail/:id',
+        '/notifications/send',
+        '/notifications/templates',
+        '/notifications/templates/edit',
+        '/notifications/templates/edit/:id',
+        '/notifications/languages',
+        '/notifications/languages/edit',
+        '/notifications/languages/edit/:id',
+        '/me/notifications',
+      ]),
+    );
   });
 
   test('nav items include dashboard and languages but not /me', () {
     final module = NotificationRouteModule();
     final ids = _flattenNavIds(module.buildNavItems());
-    expect(ids,
-        containsAll(<String>[
-          'notifications',
-          'notification-inbox',
-          'notification-send',
-          'notification-templates',
-          'notification-languages',
-          'notification-dashboard',
-        ]));
+    expect(
+      ids,
+      containsAll(<String>[
+        'notifications',
+        'notification-inbox',
+        'notification-send',
+        'notification-templates',
+        'notification-languages',
+        'notification-dashboard',
+      ]),
+    );
     expect(ids, isNot(contains('end-user-inbox')));
   });
 }

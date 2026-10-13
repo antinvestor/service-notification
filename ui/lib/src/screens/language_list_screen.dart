@@ -12,8 +12,7 @@ class LanguageListScreen extends ConsumerStatefulWidget {
   const LanguageListScreen({super.key});
 
   @override
-  ConsumerState<LanguageListScreen> createState() =>
-      _LanguageListScreenState();
+  ConsumerState<LanguageListScreen> createState() => _LanguageListScreenState();
 }
 
 class _LanguageListScreenState extends ConsumerState<LanguageListScreen> {
@@ -32,8 +31,11 @@ class _LanguageListScreenState extends ConsumerState<LanguageListScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline,
-                  size: 48, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 16),
               Text(
                 '$e',
@@ -64,17 +66,13 @@ class _LanguageListScreenState extends ConsumerState<LanguageListScreen> {
         onAdd: () => context.go('/notifications/languages/edit'),
         addLabel: 'New Language',
         onRowNavigate: (lang) {
-          context.go('/notifications/languages/edit/${lang.code}',
-              extra: lang);
+          context.go('/notifications/languages/edit/${lang.code}', extra: lang);
         },
         rowBuilder: (lang, selected, onSelect) {
           return DataRow(
             selected: selected,
             onSelectChanged: (_) => onSelect(),
-            cells: [
-              DataCell(Text(lang.code)),
-              DataCell(Text(lang.name)),
-            ],
+            cells: [DataCell(Text(lang.code)), DataCell(Text(lang.name))],
           );
         },
         exportRow: (lang) => [lang.code, lang.name],

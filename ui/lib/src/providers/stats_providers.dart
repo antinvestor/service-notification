@@ -28,13 +28,13 @@ class NotificationStats {
   final List<({String template, int failures})> topFailing;
 
   factory NotificationStats.empty() => const NotificationStats(
-        sent: 0,
-        delivered: 0,
-        failed: 0,
-        queued: 0,
-        channelMix: <String, int>{},
-        topFailing: <({String template, int failures})>[],
-      );
+    sent: 0,
+    delivered: 0,
+    failed: 0,
+    queued: 0,
+    channelMix: <String, int>{},
+    topFailing: <({String template, int failures})>[],
+  );
 
   factory NotificationStats.fromList(List<notif.Notification> ns) {
     var delivered = 0;
@@ -68,10 +68,11 @@ class NotificationStats {
         channelMix.update(n.type, (v) => v + 1, ifAbsent: () => 1);
       }
     }
-    final topFailing = failuresByTemplate.entries
-        .map((e) => (template: e.key, failures: e.value))
-        .toList()
-      ..sort((a, b) => b.failures.compareTo(a.failures));
+    final topFailing =
+        failuresByTemplate.entries
+            .map((e) => (template: e.key, failures: e.value))
+            .toList()
+          ..sort((a, b) => b.failures.compareTo(a.failures));
     return NotificationStats(
       sent: ns.length,
       delivered: delivered,
@@ -84,8 +85,9 @@ class NotificationStats {
 }
 
 /// Computes stats from the current scope's full notification snapshot.
-final notificationStatsProvider = Provider.autoDispose<NotificationStats>(
-    (ref) {
+final notificationStatsProvider = Provider.autoDispose<NotificationStats>((
+  ref,
+) {
   final asyncNotifs = ref.watch(
     notificationSearchProvider(const NotificationSearchParams()),
   );

@@ -9,7 +9,11 @@ import '../_helpers/fake_notification_client.dart';
 import '../_helpers/test_harness.dart';
 
 notif.Notification _withState(
-    String id, notif.STATE state, String type, String template) {
+  String id,
+  notif.STATE state,
+  String type,
+  String template,
+) {
   return makeNotification(id: id, type: type, template: template)
     ..status = (notif.StatusResponse()..state = state);
 }
@@ -32,23 +36,29 @@ void main() {
     expect(stats.topFailing.first.failures, 2);
   });
 
-  testWidgets('notificationStatsProvider derives from search snapshot',
-      (tester) async {
+  testWidgets('notificationStatsProvider derives from search snapshot', (
+    tester,
+  ) async {
     final fake = FakeNotificationClient()
       ..nextSearchResults = [
         _withState('1', notif.STATE.ACTIVE, 'SMS', 'welcome'),
         _withState('2', notif.STATE.INACTIVE, 'SMS', 'reset'),
       ];
     NotificationStats? observed;
-    await tester.pumpWidget(TestHarness(
-      client: fake,
-      child: Consumer(builder: (_, ref, _) {
-        ref.watch(notificationSearchProvider(
-            const NotificationSearchParams()));
-        observed = ref.watch(notificationStatsProvider);
-        return const SizedBox();
-      }),
-    ));
+    await tester.pumpWidget(
+      TestHarness(
+        client: fake,
+        child: Consumer(
+          builder: (_, ref, _) {
+            ref.watch(
+              notificationSearchProvider(const NotificationSearchParams()),
+            );
+            observed = ref.watch(notificationStatsProvider);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(observed!.sent, 2);
     expect(observed!.delivered, 1);

@@ -10,8 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../_helpers/fake_notification_client.dart';
 
 void main() {
-  testWidgets('lists languages derived from template variants',
-      (tester) async {
+  testWidgets('lists languages derived from template variants', (tester) async {
     final fake = FakeNotificationClient()
       ..nextTemplateResults = [
         notif.Template()
@@ -20,41 +19,42 @@ void main() {
             notif.TemplateData()
               ..type = 'SMS'
               ..detail = '...'
-              ..language =
-                  (notif.Language()
-                    ..code = 'en'
-                    ..name = 'English'),
+              ..language = (notif.Language()
+                ..code = 'en'
+                ..name = 'English'),
             notif.TemplateData()
               ..type = 'SMS'
               ..detail = '...'
-              ..language =
-                  (notif.Language()
-                    ..code = 'sw'
-                    ..name = 'Swahili'),
+              ..language = (notif.Language()
+                ..code = 'sw'
+                ..name = 'Swahili'),
           ]),
       ];
     final tenancy = TenancyContext()
       ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
 
-    final router = GoRouter(routes: [
-      GoRoute(
-        path: '/',
-        builder: (_, _) =>
-            const Scaffold(body: LanguageListScreen()),
-      ),
-      GoRoute(
-        path: '/notifications/languages/edit',
-        builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
-      ),
-    ]);
-
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        tenancyContextProvider.overrideWithValue(tenancy),
-        notificationServiceClientProvider.overrideWithValue(fake.client),
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(body: LanguageListScreen()),
+        ),
+        GoRoute(
+          path: '/notifications/languages/edit',
+          builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
+        ),
       ],
-      child: MaterialApp.router(routerConfig: router),
-    ));
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tenancyContextProvider.overrideWithValue(tenancy),
+          notificationServiceClientProvider.overrideWithValue(fake.client),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('en'), findsOneWidget);

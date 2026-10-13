@@ -17,37 +17,39 @@ import 'template_providers.dart' show templateNotifierProvider;
 /// the user-facing template list.
 final languageSearchProvider = FutureProvider.autoDispose
     .family<List<notif.Language>, String>((ref, query) async {
-  ref.watch(tenancyScopeProvider);
-  final client = ref.watch(notificationServiceClientProvider);
-  // Read the unfiltered template stream (including _lang_* placeholders) so
-  // we can union all known languages.
-  final request = notif.TemplateSearchRequest()..query = '';
-  final stream = client.templateSearch(request);
-  final templates =
-      await collectStream<notif.TemplateSearchResponse, notif.Template>(
-    stream,
-    extract: (r) => r.data,
-  );
+      ref.watch(tenancyScopeProvider);
+      final client = ref.watch(notificationServiceClientProvider);
+      // Read the unfiltered template stream (including _lang_* placeholders) so
+      // we can union all known languages.
+      final request = notif.TemplateSearchRequest()..query = '';
+      final stream = client.templateSearch(request);
+      final templates =
+          await collectStream<notif.TemplateSearchResponse, notif.Template>(
+            stream,
+            extract: (r) => r.data,
+          );
 
-  final byCode = <String, notif.Language>{};
-  for (final t in templates) {
-    for (final td in t.data) {
-      final code = td.language.code;
-      if (code.isEmpty) continue;
-      byCode.putIfAbsent(code, () => td.language);
-    }
-  }
+      final byCode = <String, notif.Language>{};
+      for (final t in templates) {
+        for (final td in t.data) {
+          final code = td.language.code;
+          if (code.isEmpty) continue;
+          byCode.putIfAbsent(code, () => td.language);
+        }
+      }
 
-  final q = query.toLowerCase().trim();
-  final all = byCode.values.toList()
-    ..sort((a, b) => a.code.compareTo(b.code));
-  if (q.isEmpty) return all;
-  return all
-      .where((l) =>
-          l.code.toLowerCase().contains(q) ||
-          l.name.toLowerCase().contains(q))
-      .toList();
-});
+      final q = query.toLowerCase().trim();
+      final all = byCode.values.toList()
+        ..sort((a, b) => a.code.compareTo(b.code));
+      if (q.isEmpty) return all;
+      return all
+          .where(
+            (l) =>
+                l.code.toLowerCase().contains(q) ||
+                l.name.toLowerCase().contains(q),
+          )
+          .toList();
+    });
 
 /// Saves a Language by upserting it onto a placeholder template variant.
 ///
@@ -73,10 +75,7 @@ class LanguageNotifier extends Notifier<AsyncValue<void>> {
         ..detail = '(language registration placeholder)'
         ..language = language;
       final templateNotifier = ref.read(templateNotifierProvider.notifier);
-      await templateNotifier.save(
-        name: '_lang_$code',
-        variants: [placeholder],
-      );
+      await templateNotifier.save(name: '_lang_$code', variants: [placeholder]);
       ref.invalidate(languageSearchProvider);
       state = const AsyncValue.data(null);
       return language;
@@ -88,5 +87,4 @@ class LanguageNotifier extends Notifier<AsyncValue<void>> {
 }
 
 final languageNotifierProvider =
-    NotifierProvider<LanguageNotifier, AsyncValue<void>>(
-        LanguageNotifier.new);
+    NotifierProvider<LanguageNotifier, AsyncValue<void>>(LanguageNotifier.new);

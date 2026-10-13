@@ -30,10 +30,7 @@ Widget _buildApp(FakeNotificationClient fake) {
   final router = GoRouter(
     initialLocation: '/edit',
     routes: [
-      GoRoute(
-        path: '/edit',
-        builder: (_, _) => const TemplateEditScreen(),
-      ),
+      GoRoute(path: '/edit', builder: (_, _) => const TemplateEditScreen()),
       GoRoute(
         path: '/notifications/templates',
         builder: (_, _) => const Scaffold(body: Text('Templates')),
@@ -88,10 +85,7 @@ void main() {
     final list = req.data.fields['variants']?.listValue.values;
     expect(list, isNotNull);
     expect(list!.first.structValue.fields['type']?.stringValue, 'SMS');
-    expect(
-      list.first.structValue.fields['detail']?.stringValue,
-      'Hi {{name}}',
-    );
+    expect(list.first.structValue.fields['detail']?.stringValue, 'Hi {{name}}');
   });
 
   testWidgets('save button has correct key and validates name', (tester) async {

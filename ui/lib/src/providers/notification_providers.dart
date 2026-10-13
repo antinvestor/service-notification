@@ -39,83 +39,87 @@ class NotificationSearchParams {
 
 /// Search notifications scoped to the active tenancy.
 final notificationSearchProvider = FutureProvider.autoDispose
-    .family<List<notif.Notification>, NotificationSearchParams>(
-        (ref, params) async {
-  final scope = ref.watch(tenancyScopeProvider);
-  final client = ref.watch(notificationServiceClientProvider);
+    .family<List<notif.Notification>, NotificationSearchParams>((
+      ref,
+      params,
+    ) async {
+      final scope = ref.watch(tenancyScopeProvider);
+      final client = ref.watch(notificationServiceClientProvider);
 
-  final request = notif.SearchRequest()..query = params.query;
-  if (scope.partitionId.isNotEmpty) {
-    request.properties.add('partition:${scope.partitionId}');
-  }
-  if (scope.organizationId.isNotEmpty) {
-    request.properties.add('organization:${scope.organizationId}');
-  }
-  if (scope.branchId.isNotEmpty) {
-    request.properties.add('branch:${scope.branchId}');
-  }
-  if (params.type.isNotEmpty) request.properties.add('type:${params.type}');
-  if (params.language.isNotEmpty) {
-    request.properties.add('language:${params.language}');
-  }
-  if (params.recipient.isNotEmpty) {
-    request.properties.add('recipient:${params.recipient}');
-  }
+      final request = notif.SearchRequest()..query = params.query;
+      if (scope.partitionId.isNotEmpty) {
+        request.properties.add('partition:${scope.partitionId}');
+      }
+      if (scope.organizationId.isNotEmpty) {
+        request.properties.add('organization:${scope.organizationId}');
+      }
+      if (scope.branchId.isNotEmpty) {
+        request.properties.add('branch:${scope.branchId}');
+      }
+      if (params.type.isNotEmpty) request.properties.add('type:${params.type}');
+      if (params.language.isNotEmpty) {
+        request.properties.add('language:${params.language}');
+      }
+      if (params.recipient.isNotEmpty) {
+        request.properties.add('recipient:${params.recipient}');
+      }
 
-  final stream = client.search(request);
-  return collectStream<notif.SearchResponse, notif.Notification>(
-    stream,
-    extract: (r) => r.data,
-  );
-});
+      final stream = client.search(request);
+      return collectStream<notif.SearchResponse, notif.Notification>(
+        stream,
+        extract: (r) => r.data,
+      );
+    });
 
 /// Fetch a single notification by ID. Used by detail screens that arrive
 /// via deep-link without a pre-loaded `Notification` (e.g., URL refresh,
 /// share-link).
 final notificationByIdProvider = FutureProvider.autoDispose
     .family<notif.Notification?, String>((ref, id) async {
-  if (id.isEmpty) return null;
-  final scope = ref.watch(tenancyScopeProvider);
-  final client = ref.watch(notificationServiceClientProvider);
-  final request = notif.SearchRequest();
-  request.properties.add('id:$id');
-  if (scope.partitionId.isNotEmpty) {
-    request.properties.add('partition:${scope.partitionId}');
-  }
-  final stream = client.search(request);
-  final results = await collectStream<notif.SearchResponse, notif.Notification>(
-    stream,
-    extract: (r) => r.data,
-  );
-  for (final n in results) {
-    if (n.id == id) return n;
-  }
-  return null;
-});
+      if (id.isEmpty) return null;
+      final scope = ref.watch(tenancyScopeProvider);
+      final client = ref.watch(notificationServiceClientProvider);
+      final request = notif.SearchRequest();
+      request.properties.add('id:$id');
+      if (scope.partitionId.isNotEmpty) {
+        request.properties.add('partition:${scope.partitionId}');
+      }
+      final stream = client.search(request);
+      final results =
+          await collectStream<notif.SearchResponse, notif.Notification>(
+            stream,
+            extract: (r) => r.data,
+          );
+      for (final n in results) {
+        if (n.id == id) return n;
+      }
+      return null;
+    });
 
 /// Acknowledge receipt of notifications. Used by the end-user inbox.
-final notificationReceiveProvider = FutureProvider.autoDispose.family<
-    List<notif.StatusResponse>,
-    List<notif.Notification>>((ref, notifications) async {
-  ref.watch(tenancyScopeProvider);
-  final client = ref.watch(notificationServiceClientProvider);
-  final request = notif.ReceiveRequest()..data.addAll(notifications);
-  final stream = client.receive(request);
-  return collectStream<notif.ReceiveResponse, notif.StatusResponse>(
-    stream,
-    extract: (r) => r.data,
-  );
-});
+final notificationReceiveProvider = FutureProvider.autoDispose
+    .family<List<notif.StatusResponse>, List<notif.Notification>>((
+      ref,
+      notifications,
+    ) async {
+      ref.watch(tenancyScopeProvider);
+      final client = ref.watch(notificationServiceClientProvider);
+      final request = notif.ReceiveRequest()..data.addAll(notifications);
+      final stream = client.receive(request);
+      return collectStream<notif.ReceiveResponse, notif.StatusResponse>(
+        stream,
+        extract: (r) => r.data,
+      );
+    });
 
 /// Get notification status by ID.
-final notificationStatusProvider = FutureProvider.autoDispose.family<
-    notif.StatusResponse,
-    String>((ref, notificationId) async {
-  ref.watch(tenancyScopeProvider);
-  final client = ref.watch(notificationServiceClientProvider);
-  final request = notif.StatusRequest()..id = notificationId;
-  return client.status(request);
-});
+final notificationStatusProvider = FutureProvider.autoDispose
+    .family<notif.StatusResponse, String>((ref, notificationId) async {
+      ref.watch(tenancyScopeProvider);
+      final client = ref.watch(notificationServiceClientProvider);
+      final request = notif.StatusRequest()..id = notificationId;
+      return client.status(request);
+    });
 
 /// Notifier for notification mutations (send, release, status update).
 ///
@@ -171,4 +175,5 @@ class NotificationNotifier extends Notifier<AsyncValue<void>> {
 
 final notificationNotifierProvider =
     NotifierProvider<NotificationNotifier, AsyncValue<void>>(
-        NotificationNotifier.new);
+      NotificationNotifier.new,
+    );

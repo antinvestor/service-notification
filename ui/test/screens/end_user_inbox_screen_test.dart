@@ -18,32 +18,38 @@ void main() {
     final tenancy = TenancyContext()
       ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
 
-    final router = GoRouter(routes: [
-      GoRoute(
-        path: '/',
-        builder: (_, _) =>
-            const Scaffold(body: EndUserInboxScreen(profileId: 'profile-1')),
-      ),
-      GoRoute(
-        path: '/notifications/detail/:id',
-        builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
-      ),
-    ]);
-
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        tenancyContextProvider.overrideWithValue(tenancy),
-        notificationServiceClientProvider.overrideWithValue(fake.client),
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) =>
+              const Scaffold(body: EndUserInboxScreen(profileId: 'profile-1')),
+        ),
+        GoRoute(
+          path: '/notifications/detail/:id',
+          builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
+        ),
       ],
-      child: MaterialApp.router(routerConfig: router),
-    ));
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          tenancyContextProvider.overrideWithValue(tenancy),
+          notificationServiceClientProvider.overrideWithValue(fake.client),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('welcome'), findsOneWidget);
     expect(find.text('reset'), findsOneWidget);
 
     expect(fake.receiveRequests, hasLength(1));
-    expect(fake.receiveRequests.single.data.map((n) => n.id),
-        unorderedEquals(['a', 'b']));
+    expect(
+      fake.receiveRequests.single.data.map((n) => n.id),
+      unorderedEquals(['a', 'b']),
+    );
   });
 }

@@ -9,9 +9,9 @@ void main() {
       final tenancy = TenancyContext()
         ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
 
-      final container = ProviderContainer(overrides: [
-        tenancyContextProvider.overrideWithValue(tenancy),
-      ]);
+      final container = ProviderContainer(
+        overrides: [tenancyContextProvider.overrideWithValue(tenancy)],
+      );
       addTearDown(container.dispose);
 
       expect(container.read(partitionIdProvider), 'p1');
@@ -21,16 +21,13 @@ void main() {
       final tenancy = TenancyContext()
         ..initializeFromLogin(LoginLevel.root, partitionId: 'p1');
 
-      final container = ProviderContainer(overrides: [
-        tenancyContextProvider.overrideWithValue(tenancy),
-      ]);
+      final container = ProviderContainer(
+        overrides: [tenancyContextProvider.overrideWithValue(tenancy)],
+      );
       addTearDown(container.dispose);
 
       // Establish a subscription so invalidation rebuilds.
-      final sub = container.listen<String>(
-        partitionIdProvider,
-        (_, _) {},
-      );
+      final sub = container.listen<String>(partitionIdProvider, (_, _) {});
       addTearDown(sub.close);
       expect(container.read(partitionIdProvider), 'p1');
 
@@ -50,9 +47,9 @@ void main() {
           branchId: 'b1',
         );
 
-      final container = ProviderContainer(overrides: [
-        tenancyContextProvider.overrideWithValue(tenancy),
-      ]);
+      final container = ProviderContainer(
+        overrides: [tenancyContextProvider.overrideWithValue(tenancy)],
+      );
       addTearDown(container.dispose);
 
       final scope = container.read(tenancyScopeProvider);
@@ -63,11 +60,20 @@ void main() {
 
     test('TenancyScope equality is by all three fields', () {
       const a = TenancyScope(
-          partitionId: 'p', organizationId: 'o', branchId: 'b');
+        partitionId: 'p',
+        organizationId: 'o',
+        branchId: 'b',
+      );
       const b = TenancyScope(
-          partitionId: 'p', organizationId: 'o', branchId: 'b');
+        partitionId: 'p',
+        organizationId: 'o',
+        branchId: 'b',
+      );
       const c = TenancyScope(
-          partitionId: 'p', organizationId: 'o', branchId: 'x');
+        partitionId: 'p',
+        organizationId: 'o',
+        branchId: 'x',
+      );
       expect(a, equals(b));
       expect(a, isNot(equals(c)));
     });
