@@ -1,15 +1,13 @@
 package business
 
 import (
-	"fmt"
-
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 )
 
 var (
-	ErrorUnspecifiedID      = connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no id was supplied"))
-	ErrorEmptyValueSupplied = connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("empty value supplied"))
-	ErrorItemExist          = connect.NewError(connect.CodeAlreadyExists, fmt.Errorf("specified item already exists"))
-	ErrorItemDoesNotExist   = connect.NewError(connect.CodeNotFound, fmt.Errorf("specified item does not exist"))
-	ErrorInitializationFail = connect.NewError(connect.CodeInternal, fmt.Errorf("internal configuration is invalid"))
+	ErrorUnspecifiedID      = connect.Errorf(connect.CodeInvalidArgument, "no id was supplied")
+	ErrorEmptyValueSupplied = connect.Errorf(connect.CodeInvalidArgument, "empty value supplied")
+	ErrorItemExist          = connect.Errorf(connect.CodeAlreadyExists, "specified item already exists")
+	ErrorItemDoesNotExist   = connect.Errorf(connect.CodeNotFound, "specified item does not exist")
+	ErrorInitializationFail = connect.Errorf(connect.CodeInternal, "internal configuration is invalid")
 )

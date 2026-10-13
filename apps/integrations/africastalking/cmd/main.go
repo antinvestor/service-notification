@@ -3,19 +3,19 @@ package main
 import (
 	"context"
 
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
-	apis "github.com/antinvestor/common/v2"
-	"github.com/antinvestor/common/v2/connection"
-	"github.com/antinvestor/common/v2/servicecatalog"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/v2/settings/v1/settingsv1connect"
+	apis "github.com/antinvestor/common/v3"
+	"github.com/antinvestor/common/v3/connection"
+	"github.com/antinvestor/common/v3/servicecatalog"
 	aconfig "github.com/antinvestor/service-notification/apps/integrations/africastalking/config"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/handlers"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/queue"
 	"github.com/antinvestor/service-notification/pkg/events"
-	"github.com/pitabwire/frame/v2"
-	"github.com/pitabwire/frame/v2/config"
+	"github.com/pitabwire/frame/v3"
+	"github.com/pitabwire/frame/v3/config"
 	"github.com/pitabwire/util"
 )
 

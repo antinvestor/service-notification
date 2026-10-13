@@ -5,14 +5,13 @@ import (
 	"errors"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
-	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame/v2"
-	"github.com/pitabwire/frame/v2/data"
-	"github.com/pitabwire/frame/v2/events"
+	"github.com/pitabwire/frame/v3"
+	"github.com/pitabwire/frame/v3/data"
+	"github.com/pitabwire/frame/v3/events"
 	"github.com/pitabwire/util"
 )
 
@@ -91,7 +90,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 			return nil
 		}
 
-		p, profileErr := event.profileCli.GetByContact(ctx, connect.NewRequest(&profilev1.GetByContactRequest{Contact: n.RecipientContactID}))
+		p, profileErr := event.profileCli.GetByContact(ctx, &profilev1.GetByContactRequest{Contact: n.RecipientContactID})
 		if profileErr != nil {
 			logger.WithError(profileErr).Error("could not get profile by contact")
 			if frame.ErrorIsNotFound(profileErr) {
@@ -111,10 +110,10 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 			return profileErr
 		}
 
-		profileObj = p.Msg.GetData()
+		profileObj = p.GetData()
 	} else {
 
-		p, profileErr := event.profileCli.GetById(ctx, connect.NewRequest(&profilev1.GetByIdRequest{Id: n.RecipientProfileID}))
+		p, profileErr := event.profileCli.GetById(ctx, &profilev1.GetByIdRequest{Id: n.RecipientProfileID})
 		if profileErr != nil {
 			logger.WithError(profileErr).Error("could not get profile by id")
 			if frame.ErrorIsNotFound(profileErr) {
@@ -134,7 +133,7 @@ func (event *NotificationOutRoute) Execute(ctx context.Context, payload any) err
 			return profileErr
 		}
 
-		profileObj = p.Msg.GetData()
+		profileObj = p.GetData()
 	}
 
 	var channelTypes []string

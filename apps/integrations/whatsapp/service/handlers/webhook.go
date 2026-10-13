@@ -11,9 +11,9 @@ import (
 	"strconv"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/antinvestor/service-notification/apps/integrations/whatsapp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/whatsapp/service/client"
 	"github.com/antinvestor/service-notification/pkg/apperrors"
@@ -221,17 +221,26 @@ func (ws *WebhookServer) handleMessage(ctx context.Context, routeID string, valu
 		Extras:    extra,
 	}
 
-	stream, err := ws.notificationCli.Receive(ctx, connect.NewRequest(&notificationv1.ReceiveRequest{
+	stream, err := ws.notificationCli.Receive(ctx, &notificationv1.ReceiveRequest{
 		Data: []*notificationv1.Notification{notification},
-	}))
+	})
 	if err != nil {
 		return err
 	}
 	defer func() { _ = stream.Close() }()
-	for stream.Receive() {
+	var streamErr error
+	for {
+		_, err := stream.Receive()
+		if err != nil {
+			streamErr = err
+			break
+		}
 		// The acknowledgement carries nothing the provider needs.
 	}
-	return stream.Err()
+	if errors.Is(streamErr, io.EOF) {
+		streamErr = nil
+	}
+	return streamErr
 }
 
 func (ws *WebhookServer) handleStatus(ctx context.Context, routeID string, status client.Status) error {
@@ -284,12 +293,12 @@ func (ws *WebhookServer) handleStatus(ctx context.Context, routeID string, statu
 		return err
 	}
 
-	_, err = ws.notificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
+	_, err = ws.notificationCli.StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
 		State:      state,
 		Status:     internalStatus,
 		ExternalId: status.ID,
 		Extras:     extra,
-	}))
+	})
 	if err != nil {
 		if connect.CodeOf(err) == connect.CodeNotFound {
 			util.Log(ctx).WithField("wamid", status.ID).Debug("status for a message this service did not send, ignoring")

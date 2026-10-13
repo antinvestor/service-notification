@@ -8,11 +8,11 @@ import (
 	"github.com/antinvestor/service-notification/apps/ussd/service/business"
 	"github.com/antinvestor/service-notification/apps/ussd/service/repository"
 	internaltests "github.com/antinvestor/service-notification/pkg/tests"
-	"github.com/pitabwire/frame/v2"
-	"github.com/pitabwire/frame/v2/config"
-	"github.com/pitabwire/frame/v2/datastore"
-	"github.com/pitabwire/frame/v2/frametests"
-	"github.com/pitabwire/frame/v2/frametests/definition"
+	"github.com/pitabwire/frame/v3"
+	"github.com/pitabwire/frame/v3/config"
+	"github.com/pitabwire/frame/v3/datastore"
+	"github.com/pitabwire/frame/v3/frametests"
+	"github.com/pitabwire/frame/v3/frametests/definition"
 	"github.com/stretchr/testify/require"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/models"
-	"github.com/pitabwire/frame/v2/datastore/pool"
+	"github.com/pitabwire/frame/v3/datastore/pool"
 )
 
 type TemplateRepository interface {

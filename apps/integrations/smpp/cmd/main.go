@@ -3,19 +3,19 @@ package main
 import (
 	"context"
 
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
-	apis "github.com/antinvestor/common/v2"
-	"github.com/antinvestor/common/v2/connection"
-	"github.com/antinvestor/common/v2/servicecatalog"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/v2/tenancy/v1/tenancyv1connect"
+	apis "github.com/antinvestor/common/v3"
+	"github.com/antinvestor/common/v3/connection"
+	"github.com/antinvestor/common/v3/servicecatalog"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/config"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/events"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/models"
-	"github.com/pitabwire/frame/v2"
-	fconfig "github.com/pitabwire/frame/v2/config"
-	"github.com/pitabwire/frame/v2/datastore"
+	"github.com/pitabwire/frame/v3"
+	fconfig "github.com/pitabwire/frame/v3/config"
+	"github.com/pitabwire/frame/v3/datastore"
 	"github.com/pitabwire/util"
 )
 

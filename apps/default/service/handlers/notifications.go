@@ -4,12 +4,11 @@ import (
 	"context"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"connectrpc.com/connect"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	"github.com/antinvestor/service-notification/pkg/apperrors"
-	"github.com/pitabwire/frame/v2/workerpool"
+	"github.com/pitabwire/frame/v3/workerpool"
 	"github.com/pitabwire/util"
 )
 
@@ -32,12 +31,12 @@ func NewNotificationServer(
 }
 
 // Send method for queueing massages as requested
-func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[notificationv1.SendRequest], stream *connect.ServerStream[notificationv1.SendResponse]) error {
+func (ns *NotificationServer) Send(ctx context.Context, req *notificationv1.SendRequest, stream notificationv1connect.NotificationServiceSendServerStream) error {
 
 	logger := util.Log(ctx).WithField("method", "Send")
 
 	var responses []*commonv1.StatusResponse
-	data := req.Msg.GetData()
+	data := req.GetData()
 
 	logger.WithField("item_count", len(data)).Debug("processing notification send request")
 
@@ -65,30 +64,30 @@ func (ns *NotificationServer) Send(ctx context.Context, req *connect.Request[not
 }
 
 // Status request to determine if notification is prepared or released
-func (ns *NotificationServer) Status(ctx context.Context, req *connect.Request[commonv1.StatusRequest]) (*connect.Response[commonv1.StatusResponse], error) {
+func (ns *NotificationServer) Status(ctx context.Context, req *commonv1.StatusRequest) (*commonv1.StatusResponse, error) {
 
-	resp, err := ns.notificationBusiness.Status(ctx, req.Msg)
+	resp, err := ns.notificationBusiness.Status(ctx, req)
 	if err != nil {
 		return nil, apperrors.CleanErr(err)
 	}
-	return connect.NewResponse(resp), nil
+	return resp, nil
 }
 
 // StatusUpdate request to allow continuation of notification processing
-func (ns *NotificationServer) StatusUpdate(ctx context.Context, req *connect.Request[commonv1.StatusUpdateRequest]) (*connect.Response[commonv1.StatusUpdateResponse], error) {
+func (ns *NotificationServer) StatusUpdate(ctx context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusUpdateResponse, error) {
 
-	response, err := ns.notificationBusiness.StatusUpdate(ctx, req.Msg)
+	response, err := ns.notificationBusiness.StatusUpdate(ctx, req)
 	if err != nil {
 		return nil, apperrors.CleanErr(err)
 	}
 
-	return connect.NewResponse(&commonv1.StatusUpdateResponse{Data: response}), nil
+	return &commonv1.StatusUpdateResponse{Data: response}, nil
 }
 
 // Release method for releasing queued massages and returns if notification status if released
-func (ns *NotificationServer) Release(ctx context.Context, req *connect.Request[notificationv1.ReleaseRequest], stream *connect.ServerStream[notificationv1.ReleaseResponse]) error {
+func (ns *NotificationServer) Release(ctx context.Context, req *notificationv1.ReleaseRequest, stream notificationv1connect.NotificationServiceReleaseServerStream) error {
 
-	result, err := ns.notificationBusiness.Release(ctx, req.Msg)
+	result, err := ns.notificationBusiness.Release(ctx, req)
 	if err != nil {
 		return apperrors.CleanErr(err)
 	}
@@ -110,10 +109,10 @@ func (ns *NotificationServer) Release(ctx context.Context, req *connect.Request[
 }
 
 // Receive method is for client request for particular notification responses from system
-func (ns *NotificationServer) Receive(ctx context.Context, req *connect.Request[notificationv1.ReceiveRequest], stream *connect.ServerStream[notificationv1.ReceiveResponse]) error {
+func (ns *NotificationServer) Receive(ctx context.Context, req *notificationv1.ReceiveRequest, stream notificationv1connect.NotificationServiceReceiveServerStream) error {
 
 	var responses []*commonv1.StatusResponse
-	for _, data := range req.Msg.GetData() {
+	for _, data := range req.GetData() {
 
 		resp, err := ns.notificationBusiness.QueueIn(ctx, data)
 		if err != nil {
@@ -127,9 +126,9 @@ func (ns *NotificationServer) Receive(ctx context.Context, req *connect.Request[
 }
 
 // Search method is for client request for particular notification details from system
-func (ns *NotificationServer) Search(ctx context.Context, req *connect.Request[commonv1.SearchRequest], stream *connect.ServerStream[notificationv1.SearchResponse]) error {
+func (ns *NotificationServer) Search(ctx context.Context, req *commonv1.SearchRequest, stream notificationv1connect.NotificationServiceSearchServerStream) error {
 
-	err := ns.notificationBusiness.Search(ctx, req.Msg,
+	err := ns.notificationBusiness.Search(ctx, req,
 		func(_ context.Context, batch []*notificationv1.Notification) error {
 			return stream.Send(&notificationv1.SearchResponse{Data: batch})
 		})
@@ -140,9 +139,9 @@ func (ns *NotificationServer) Search(ctx context.Context, req *connect.Request[c
 }
 
 // TemplateSearch method is for client request for templates matching criteria from system
-func (ns *NotificationServer) TemplateSearch(ctx context.Context, req *connect.Request[notificationv1.TemplateSearchRequest], stream *connect.ServerStream[notificationv1.TemplateSearchResponse]) error {
+func (ns *NotificationServer) TemplateSearch(ctx context.Context, req *notificationv1.TemplateSearchRequest, stream notificationv1connect.NotificationServiceTemplateSearchServerStream) error {
 
-	err := ns.notificationBusiness.TemplateSearch(ctx, req.Msg,
+	err := ns.notificationBusiness.TemplateSearch(ctx, req,
 		func(_ context.Context, batch []*notificationv1.Template) error {
 			return stream.Send(&notificationv1.TemplateSearchResponse{Data: batch})
 		})
@@ -153,13 +152,13 @@ func (ns *NotificationServer) TemplateSearch(ctx context.Context, req *connect.R
 	return nil
 }
 
-func (ns *NotificationServer) TemplateSave(ctx context.Context, req *connect.Request[notificationv1.TemplateSaveRequest]) (*connect.Response[notificationv1.TemplateSaveResponse], error) {
+func (ns *NotificationServer) TemplateSave(ctx context.Context, req *notificationv1.TemplateSaveRequest) (*notificationv1.TemplateSaveResponse, error) {
 
-	response, err := ns.notificationBusiness.TemplateSave(ctx, req.Msg)
+	response, err := ns.notificationBusiness.TemplateSave(ctx, req)
 
 	if err != nil {
 		return nil, apperrors.CleanErr(err)
 	}
 
-	return connect.NewResponse(&notificationv1.TemplateSaveResponse{Data: response}), nil
+	return &notificationv1.TemplateSaveResponse{Data: response}, nil
 }

@@ -13,9 +13,10 @@ import (
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
+	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/v2/settings/v1/settingsv1connect"
 	settingsv1 "buf.build/gen/go/antinvestor/settingz/protocolbuffers/go/settings/v1"
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 	"github.com/antinvestor/service-notification/apps/integrations/whatsapp/config"
 	"github.com/antinvestor/service-notification/pkg/constants"
 	"github.com/stretchr/testify/require"
@@ -27,12 +28,12 @@ type settingsStub struct {
 	values map[string]string
 }
 
-func (s *settingsStub) Get(_ context.Context, req *connect.Request[settingsv1.GetRequest]) (*connect.Response[settingsv1.GetResponse], error) {
-	value, ok := s.values[req.Msg.GetKey().GetName()]
+func (s *settingsStub) Get(_ context.Context, req *settingsv1.GetRequest) (*settingsv1.GetResponse, error) {
+	value, ok := s.values[req.GetKey().GetName()]
 	if !ok {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such setting"))
+		return nil, connect.NewError(connect.CodeNotFound, "no such setting")
 	}
-	return connect.NewResponse(&settingsv1.GetResponse{Data: &settingsv1.SettingObject{Key: req.Msg.GetKey(), Value: value}}), nil
+	return &settingsv1.GetResponse{Data: &settingsv1.SettingObject{Key: req.GetKey(), Value: value}}, nil
 }
 
 // graphStub records requests to the messages endpoint and replies with a canned response.
@@ -80,7 +81,9 @@ func newTestClient(t *testing.T, graph *graphStub) *Client {
 		"route-bad": `{"access_token":"","phone_number_id":"555"}`,
 	}}
 	mux := http.NewServeMux()
-	mux.Handle(settingsv1connect.NewSettingsServiceHandler(settings))
+	server := connect.NewServer()
+	settingsv1connect.RegisterSettingsServiceHandler(server, settings)
+	connecthttp.Mount(mux, server)
 	settingsSrv := httptest.NewServer(mux)
 	t.Cleanup(settingsSrv.Close)
 
@@ -91,7 +94,7 @@ func newTestClient(t *testing.T, graph *graphStub) *Client {
 		GraphAPIVersion:         "v21.0",
 		RequestTimeoutSeconds:   5,
 	}
-	return NewClient(cfg, nil, settingsv1connect.NewSettingsServiceClient(settingsSrv.Client(), settingsSrv.URL))
+	return NewClient(cfg, nil, settingsv1connect.NewSettingsServiceClient(connect.NewClient(connecthttp.NewTransport(settingsSrv.Client(), settingsSrv.URL))))
 }
 
 func headersFor(route string) map[string]string {

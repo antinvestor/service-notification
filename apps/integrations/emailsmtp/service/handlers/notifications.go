@@ -7,9 +7,8 @@ import (
 	"net/http"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"connectrpc.com/connect"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
 	"github.com/antinvestor/service-notification/apps/integrations/emailsmtp/service/client"
 	"github.com/antinvestor/service-notification/pkg/apperrors"
 	"github.com/pitabwire/util"
@@ -122,13 +121,13 @@ func (ps *SMTPServer) handleDeliveryReport(ctx context.Context, routeID string, 
 	extraData["route"] = routeID
 	extra, _ := structpb.NewStruct(extraData)
 
-	_, err := ps.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
+	_, err := ps.NotificationCli.StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
 		Id:         fmt.Sprintf("%v", notificationID),
 		State:      commonv1.STATE_INACTIVE,
 		Status:     internalStatus,
 		ExternalId: externalID,
 		Extras:     extra,
-	}))
+	})
 	if err != nil {
 		return apperrors.ErrSystemFailure.Extend(err.Error())
 	}

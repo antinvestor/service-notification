@@ -6,8 +6,7 @@ import (
 	"log/slog"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
-	"connectrpc.com/connect"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
 	"github.com/pitabwire/util"
 )
 
@@ -59,7 +58,7 @@ func (e *NotificationStatusUpdate) Execute(ctx context.Context, payload any) err
 		logger.WithField("payload", statusUpdateRequest).Debug("processing status update request")
 	}
 
-	_, err := e.NotificationCli.StatusUpdate(ctx, connect.NewRequest(statusUpdateRequest))
+	_, err := e.NotificationCli.StatusUpdate(ctx, statusUpdateRequest)
 	if err != nil {
 		logger.WithError(err).Warn("could not update status")
 		return nil

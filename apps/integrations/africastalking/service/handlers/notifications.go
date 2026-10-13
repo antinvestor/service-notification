@@ -3,14 +3,16 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"connectrpc.com/connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
+	"connectrpc.com/connect/v2"
 	"github.com/antinvestor/service-notification/apps/integrations/africastalking/service/client"
 	"github.com/antinvestor/service-notification/pkg/apperrors"
 	"github.com/antinvestor/service-notification/pkg/utility"
@@ -170,12 +172,12 @@ func (ps *ATServer) handleDeliveryReport(ctx context.Context, routeID, ip string
 
 	// The notification service resolves the notification through the external id the
 	// send step recorded, so no internal id is needed here.
-	_, err = ps.NotificationCli.StatusUpdate(ctx, connect.NewRequest(&commonv1.StatusUpdateRequest{
+	_, err = ps.NotificationCli.StatusUpdate(ctx, &commonv1.StatusUpdateRequest{
 		State:      internalState,
 		Status:     internalStatus,
 		ExternalId: externalID,
 		Extras:     extra,
-	}))
+	})
 	if err != nil {
 		if connect.CodeOf(err) == connect.CodeNotFound {
 			util.Log(ctx).WithField("external_id", externalID).Warn("delivery report for unknown message, ignoring")
@@ -285,19 +287,23 @@ func (ps *ATServer) handleIncomingMessages(ctx context.Context, ip, routeID stri
 		Extras:    extra,
 	}
 
-	stream, err := ps.NotificationCli.Receive(ctx, connect.NewRequest(&notificationv1.ReceiveRequest{
+	stream, err := ps.NotificationCli.Receive(ctx, &notificationv1.ReceiveRequest{
 		Data: []*notificationv1.Notification{notification},
-	}))
+	})
 	if err != nil {
 		return apperrors.ErrSystemFailure.Extend(err.Error())
 	}
 	defer func() { _ = stream.Close() }()
 
-	for stream.Receive() {
+	for {
+		_, err := stream.Receive()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return apperrors.ErrSystemFailure.Extend(err.Error())
+		}
 		// Drain acknowledgements; the provider only needs a 200.
-	}
-	if err = stream.Err(); err != nil {
-		return apperrors.ErrSystemFailure.Extend(err.Error())
 	}
 
 	util.Log(ctx).WithFields(map[string]any{

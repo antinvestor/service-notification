@@ -3,14 +3,14 @@ package business
 import (
 	"context"
 
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/v2/tenancy/v1/tenancyv1connect"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/events"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/models"
 	"github.com/antinvestor/service-notification/apps/integrations/smpp/service/repository"
-	"github.com/pitabwire/frame/v2/datastore/pool"
-	fevents "github.com/pitabwire/frame/v2/events"
-	"github.com/pitabwire/frame/v2/security"
+	"github.com/pitabwire/frame/v3/datastore/pool"
+	fevents "github.com/pitabwire/frame/v3/events"
+	"github.com/pitabwire/frame/v3/security"
 )
 
 type TemplateBusiness interface {

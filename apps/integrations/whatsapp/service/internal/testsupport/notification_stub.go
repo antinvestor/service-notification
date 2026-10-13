@@ -3,18 +3,18 @@ package testsupport
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/settings/v1/settingsv1connect"
+	"buf.build/gen/go/antinvestor/settingz/connectrpc/go/v2/settings/v1/settingsv1connect"
 	settingsv1 "buf.build/gen/go/antinvestor/settingz/protocolbuffers/go/settings/v1"
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 )
 
 // NotificationStub records what an integration sends to the notification service.
@@ -28,28 +28,28 @@ type NotificationStub struct {
 	UnknownExternalIDs map[string]bool
 }
 
-func (s *NotificationStub) Receive(_ context.Context, req *connect.Request[notificationv1.ReceiveRequest], stream *connect.ServerStream[notificationv1.ReceiveResponse]) error {
+func (s *NotificationStub) Receive(_ context.Context, req *notificationv1.ReceiveRequest, stream notificationv1connect.NotificationServiceReceiveServerStream) error {
 	s.mu.Lock()
-	s.Received = append(s.Received, req.Msg.GetData()...)
+	s.Received = append(s.Received, req.GetData()...)
 	s.mu.Unlock()
 
-	responses := make([]*commonv1.StatusResponse, 0, len(req.Msg.GetData()))
-	for _, n := range req.Msg.GetData() {
+	responses := make([]*commonv1.StatusResponse, 0, len(req.GetData()))
+	for _, n := range req.GetData() {
 		responses = append(responses, &commonv1.StatusResponse{Id: n.GetId(), State: commonv1.STATE_CREATED})
 	}
 	return stream.Send(&notificationv1.ReceiveResponse{Data: responses})
 }
 
-func (s *NotificationStub) StatusUpdate(_ context.Context, req *connect.Request[commonv1.StatusUpdateRequest]) (*connect.Response[commonv1.StatusUpdateResponse], error) {
-	if s.UnknownExternalIDs[req.Msg.GetExternalId()] {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no notification for external id"))
+func (s *NotificationStub) StatusUpdate(_ context.Context, req *commonv1.StatusUpdateRequest) (*commonv1.StatusUpdateResponse, error) {
+	if s.UnknownExternalIDs[req.GetExternalId()] {
+		return nil, connect.NewError(connect.CodeNotFound, "no notification for external id")
 	}
 	s.mu.Lock()
-	s.Statuses = append(s.Statuses, req.Msg)
+	s.Statuses = append(s.Statuses, req)
 	s.mu.Unlock()
-	return connect.NewResponse(&commonv1.StatusUpdateResponse{Data: &commonv1.StatusResponse{
-		Id: req.Msg.GetId(), ExternalId: req.Msg.GetExternalId(), State: req.Msg.GetState(), Status: req.Msg.GetStatus(),
-	}}), nil
+	return &commonv1.StatusUpdateResponse{Data: &commonv1.StatusResponse{
+		Id: req.GetId(), ExternalId: req.GetExternalId(), State: req.GetState(), Status: req.GetStatus(),
+	}}, nil
 }
 
 // Snapshot returns copies of the recorded calls.
@@ -63,10 +63,12 @@ func (s *NotificationStub) Snapshot() ([]*notificationv1.Notification, []*common
 func NewNotificationClient(t *testing.T, stub *NotificationStub) notificationv1connect.NotificationServiceClient {
 	t.Helper()
 	mux := http.NewServeMux()
-	mux.Handle(notificationv1connect.NewNotificationServiceHandler(stub))
+	server := connect.NewServer()
+	notificationv1connect.RegisterNotificationServiceHandler(server, stub)
+	connecthttp.Mount(mux, server)
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	return notificationv1connect.NewNotificationServiceClient(srv.Client(), srv.URL)
+	return notificationv1connect.NewNotificationServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
 }
 
 // SettingsStub answers settings lookups from a fixed map of connection name to JSON.
@@ -75,20 +77,22 @@ type SettingsStub struct {
 	Values map[string]string
 }
 
-func (s *SettingsStub) Get(_ context.Context, req *connect.Request[settingsv1.GetRequest]) (*connect.Response[settingsv1.GetResponse], error) {
-	value, ok := s.Values[req.Msg.GetKey().GetName()]
+func (s *SettingsStub) Get(_ context.Context, req *settingsv1.GetRequest) (*settingsv1.GetResponse, error) {
+	value, ok := s.Values[req.GetKey().GetName()]
 	if !ok {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("no such setting"))
+		return nil, connect.NewError(connect.CodeNotFound, "no such setting")
 	}
-	return connect.NewResponse(&settingsv1.GetResponse{Data: &settingsv1.SettingObject{Key: req.Msg.GetKey(), Value: value}}), nil
+	return &settingsv1.GetResponse{Data: &settingsv1.SettingObject{Key: req.GetKey(), Value: value}}, nil
 }
 
 // NewSettingsClient serves the stub over HTTP and returns a Connect client for it.
 func NewSettingsClient(t *testing.T, stub *SettingsStub) settingsv1connect.SettingsServiceClient {
 	t.Helper()
 	mux := http.NewServeMux()
-	mux.Handle(settingsv1connect.NewSettingsServiceHandler(stub))
+	server := connect.NewServer()
+	settingsv1connect.RegisterSettingsServiceHandler(server, stub)
+	connecthttp.Mount(mux, server)
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	return settingsv1connect.NewSettingsServiceClient(srv.Client(), srv.URL)
+	return settingsv1connect.NewSettingsServiceClient(connect.NewClient(connecthttp.NewTransport(srv.Client(), srv.URL)))
 }

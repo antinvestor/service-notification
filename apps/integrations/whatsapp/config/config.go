@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/pitabwire/frame/v2/config"
+	"github.com/pitabwire/frame/v3/config"
 )
 
 // WhatsAppConfig configures the WhatsApp Business Cloud API integration.

@@ -5,31 +5,35 @@ import (
 	_ "embed"
 	"net/http"
 
-	"buf.build/gen/go/antinvestor/notification/connectrpc/go/notification/v1/notificationv1connect"
+	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
 	notificationpb "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
-	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/tenancy/v1/tenancyv1connect"
-	"connectrpc.com/connect"
-	apis "github.com/antinvestor/common/v2"
-	"github.com/antinvestor/common/v2/connection"
-	"github.com/antinvestor/common/v2/permissions"
-	"github.com/antinvestor/common/v2/servicecatalog"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/tenancy/connectrpc/go/v2/tenancy/v1/tenancyv1connect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
+	apis "github.com/antinvestor/common/v3"
+	"github.com/antinvestor/common/v3/connection"
+	"github.com/antinvestor/common/v3/permissions"
+	"github.com/antinvestor/common/v3/servicecatalog"
 	aconfig "github.com/antinvestor/service-notification/apps/default/config"
 	"github.com/antinvestor/service-notification/apps/default/service/authz"
 	"github.com/antinvestor/service-notification/apps/default/service/business"
 	events2 "github.com/antinvestor/service-notification/apps/default/service/events"
 	"github.com/antinvestor/service-notification/apps/default/service/handlers"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
-	"github.com/pitabwire/frame/v2"
-	"github.com/pitabwire/frame/v2/config"
-	"github.com/pitabwire/frame/v2/datastore"
-	"github.com/pitabwire/frame/v2/security"
-	"github.com/pitabwire/frame/v2/security/authorizer"
-	connectInterceptors "github.com/pitabwire/frame/v2/security/interceptors/connect"
-	"github.com/pitabwire/frame/v2/setup"
-	"github.com/pitabwire/frame/v2/workerpool"
+	"github.com/pitabwire/frame/v3"
+	"github.com/pitabwire/frame/v3/config"
+	"github.com/pitabwire/frame/v3/datastore"
+	"github.com/pitabwire/frame/v3/security"
+	"github.com/pitabwire/frame/v3/security/authorizer"
+	connectInterceptors "github.com/pitabwire/frame/v3/security/interceptors/connect"
+	"github.com/pitabwire/frame/v3/setup"
+	"github.com/pitabwire/frame/v3/workerpool"
 	"github.com/pitabwire/util"
 )
+
+// maxRequestMessageBytes caps each received Connect message.
+const maxRequestMessageBytes = 16 << 20
 
 //go:embed spec/notification.openapi.yaml
 var notificationAPISpecFile []byte
@@ -185,11 +189,13 @@ func setupConnectServer(ctx context.Context, sm security.Manager, workMan worker
 		util.Log(ctx).WithError(err).Fatal("main -- Could not create default interceptors")
 	}
 
-	_, serverHandler := notificationv1connect.NewNotificationServiceHandler(
-		implementation, connect.WithInterceptors(defaultInterceptorList...))
+	server := connect.NewServer(defaultInterceptorList...)
+	notificationv1connect.RegisterNotificationServiceHandler(server, implementation)
 
 	mux := http.NewServeMux()
-	mux.Handle("/", serverHandler)
+	// Send and TemplateSave carry batches of rendered message bodies (HTML email
+	// included), so allow more than connect v2's 4 MiB default per message.
+	connecthttp.Mount(mux, server, connecthttp.WithReadMaxBytes(maxRequestMessageBytes))
 	mux.Handle("/openapi.yaml", apis.NewOpenAPIHandler(notificationAPISpecFile, nil))
 
 	return mux

@@ -2,24 +2,23 @@ package events
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"testing"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
-	"buf.build/gen/go/antinvestor/profile/connectrpc/go/profile/v1/profilev1connect"
+	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
 	profilev1 "buf.build/gen/go/antinvestor/profile/protocolbuffers/go/profile/v1"
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	aconfig "github.com/antinvestor/service-notification/apps/default/config"
 	"github.com/antinvestor/service-notification/apps/default/service/models"
 	"github.com/antinvestor/service-notification/apps/default/service/repository"
 	internaltests "github.com/antinvestor/service-notification/pkg/tests"
-	"github.com/pitabwire/frame/v2"
-	"github.com/pitabwire/frame/v2/config"
-	"github.com/pitabwire/frame/v2/datastore"
-	"github.com/pitabwire/frame/v2/events"
-	"github.com/pitabwire/frame/v2/frametests"
-	"github.com/pitabwire/frame/v2/frametests/definition"
+	"github.com/pitabwire/frame/v3"
+	"github.com/pitabwire/frame/v3/config"
+	"github.com/pitabwire/frame/v3/datastore"
+	"github.com/pitabwire/frame/v3/events"
+	"github.com/pitabwire/frame/v3/frametests"
+	"github.com/pitabwire/frame/v3/frametests/definition"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -65,12 +64,12 @@ type profilesByID struct {
 	profiles map[string]*profilev1.ProfileObject
 }
 
-func (p *profilesByID) GetById(_ context.Context, req *connect.Request[profilev1.GetByIdRequest]) (*connect.Response[profilev1.GetByIdResponse], error) {
-	obj, ok := p.profiles[req.Msg.GetId()]
+func (p *profilesByID) GetById(_ context.Context, req *profilev1.GetByIdRequest) (*profilev1.GetByIdResponse, error) {
+	obj, ok := p.profiles[req.GetId()]
 	if !ok {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("profile not found"))
+		return nil, connect.NewError(connect.CodeNotFound, "profile not found")
 	}
-	return connect.NewResponse(&profilev1.GetByIdResponse{Data: obj}), nil
+	return &profilev1.GetByIdResponse{Data: obj}, nil
 }
 
 type NotificationOutRouteTestSuite struct {
