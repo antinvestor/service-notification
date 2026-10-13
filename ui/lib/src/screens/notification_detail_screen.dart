@@ -53,9 +53,8 @@ class _NotificationDetailScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go('/notifications'),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/notifications'),
         ),
         title: Text(
           notification.template.isNotEmpty
@@ -430,9 +429,8 @@ class _NotificationDetailScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go('/notifications'),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/notifications'),
         ),
         title: const Text('Notification Not Found'),
       ),

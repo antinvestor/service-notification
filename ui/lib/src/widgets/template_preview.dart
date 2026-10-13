@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 /// A preview card showing a template's name and its data entries
 /// grouped by language.
 class TemplatePreview extends StatelessWidget {
-  const TemplatePreview({
-    super.key,
-    required this.template,
-  });
+  const TemplatePreview({super.key, required this.template});
 
   final Template template;
 

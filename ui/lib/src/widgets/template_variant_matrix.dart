@@ -64,14 +64,17 @@ class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
   }) {
     final next = List<notif.TemplateData>.of(widget.variants);
     final i = next.indexWhere(
-        (v) => v.type == channel && v.language.code == language);
+      (v) => v.type == channel && v.language.code == language,
+    );
     if (i >= 0) {
       next[i] = next[i].deepCopy()..detail = detail;
     } else {
-      next.add(notif.TemplateData()
-        ..type = channel
-        ..detail = detail
-        ..language = (notif.Language()..code = language));
+      next.add(
+        notif.TemplateData()
+          ..type = channel
+          ..detail = detail
+          ..language = (notif.Language()..code = language),
+      );
     }
     widget.onChanged(next);
     _closeEditor();
@@ -125,11 +128,13 @@ class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
             ],
             rows: [
               for (final channel in widget.availableChannels)
-                DataRow(cells: [
-                  DataCell(Text(channel)),
-                  for (final lang in widget.availableLanguages)
-                    DataCell(_cellChip(channel, lang)),
-                ]),
+                DataRow(
+                  cells: [
+                    DataCell(Text(channel)),
+                    for (final lang in widget.availableLanguages)
+                      DataCell(_cellChip(channel, lang)),
+                  ],
+                ),
             ],
           ),
         ),
@@ -188,10 +193,7 @@ class _TemplateVariantMatrixState extends State<TemplateVariantMatrix> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              TextButton(
-                onPressed: _closeEditor,
-                child: const Text('Cancel'),
-              ),
+              TextButton(onPressed: _closeEditor, child: const Text('Cancel')),
               const SizedBox(width: 8),
               FilledButton(
                 key: const Key('cell-editor-save'),

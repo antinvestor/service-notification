@@ -106,8 +106,9 @@ class NotificationTile extends StatelessWidget {
                     Text(
                       _title(notification),
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight:
-                            isUnread ? FontWeight.w700 : FontWeight.w600,
+                        fontWeight: isUnread
+                            ? FontWeight.w700
+                            : FontWeight.w600,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -134,7 +135,9 @@ class NotificationTile extends StatelessWidget {
                     children: [
                       PriorityBadge(priority: notification.priority),
                       const SizedBox(width: 4),
-                      NotificationStatusBadge(status: notification.status.state.name),
+                      NotificationStatusBadge(
+                        status: notification.status.state.name,
+                      ),
                     ],
                   ),
                 ],

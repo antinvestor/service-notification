@@ -99,15 +99,11 @@ class _FakeTransport implements Transport {
       response = _fake.nextStatusUpdateResult as O;
     } else {
       throw UnimplementedError(
-          'FakeNotificationClient: unhandled procedure ${spec.procedure}');
+        'FakeNotificationClient: unhandled procedure ${spec.procedure}',
+      );
     }
 
-    return UnaryResponse<I, O>(
-      spec,
-      _emptyHeaders,
-      response,
-      _emptyHeaders,
-    );
+    return UnaryResponse<I, O>(spec, _emptyHeaders, response, _emptyHeaders);
   }
 
   @override
@@ -134,8 +130,7 @@ class _FakeTransport implements Transport {
     } else if (procedure == '${_svcPrefix}Search') {
       final req = await input.first as notif.SearchRequest;
       _fake.searchRequests.add(req);
-      final resp = notif.SearchResponse()
-        ..data.addAll(_fake.nextSearchResults);
+      final resp = notif.SearchResponse()..data.addAll(_fake.nextSearchResults);
       responseStream = Stream.value(resp as O);
     } else if (procedure == '${_svcPrefix}TemplateSearch') {
       final req = await input.first as notif.TemplateSearchRequest;
@@ -145,7 +140,8 @@ class _FakeTransport implements Transport {
       responseStream = Stream.value(resp as O);
     } else {
       throw UnimplementedError(
-          'FakeNotificationClient: unhandled procedure ${spec.procedure}');
+        'FakeNotificationClient: unhandled procedure ${spec.procedure}',
+      );
     }
 
     return StreamResponse<I, O>(

@@ -13,11 +13,7 @@ import '../widgets/template_variant_matrix.dart';
 
 /// Create or edit a notification template using the variants matrix.
 class TemplateEditScreen extends ConsumerStatefulWidget {
-  const TemplateEditScreen({
-    super.key,
-    this.templateId,
-    this.initialTemplate,
-  });
+  const TemplateEditScreen({super.key, this.templateId, this.initialTemplate});
 
   final String? templateId;
   final notif.Template? initialTemplate;
@@ -55,9 +51,8 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
     final asyncLanguages = ref.watch(languageSearchProvider(''));
 
     final availableLanguages = asyncLanguages.maybeWhen(
-      data: (langs) => langs.isEmpty
-          ? const ['en']
-          : langs.map((l) => l.code).toList(),
+      data: (langs) =>
+          langs.isEmpty ? const ['en'] : langs.map((l) => l.code).toList(),
       orElse: () => const ['en'],
     );
 
@@ -153,9 +148,11 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 20,
-                          color: theme.colorScheme.onErrorContainer),
+                      Icon(
+                        Icons.error_outline,
+                        size: 20,
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -183,10 +180,9 @@ class _TemplateEditScreenState extends ConsumerState<TemplateEditScreen> {
       _error = null;
     });
     try {
-      await ref.read(templateNotifierProvider.notifier).save(
-            name: _nameController.text.trim(),
-            variants: _variants,
-          );
+      await ref
+          .read(templateNotifierProvider.notifier)
+          .save(name: _nameController.text.trim(), variants: _variants);
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(

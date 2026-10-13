@@ -27,16 +27,17 @@ class _NotificationInboxScreenState
   String _languageFilter = '';
 
   NotificationSearchParams get _searchParams => NotificationSearchParams(
-        query: _searchQuery,
-        type: _typeFilter,
-        language: _languageFilter,
-      );
+    query: _searchQuery,
+    type: _typeFilter,
+    language: _languageFilter,
+  );
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final asyncNotifications =
-        ref.watch(notificationSearchProvider(_searchParams));
+    final asyncNotifications = ref.watch(
+      notificationSearchProvider(_searchParams),
+    );
     final asyncLangs = ref.watch(languageSearchProvider(''));
     final langs = asyncLangs.maybeWhen(
       data: (l) => l,
@@ -86,15 +87,11 @@ class _NotificationInboxScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline,
-                size: 48, color: theme.colorScheme.error),
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
             const SizedBox(height: 16),
             Text('$error', style: theme.textTheme.bodyLarge),
             const SizedBox(height: 16),
-            FilledButton.tonal(
-              onPressed: _refresh,
-              child: const Text('Retry'),
-            ),
+            FilledButton.tonal(onPressed: _refresh, child: const Text('Retry')),
           ],
         ),
       ),
@@ -102,61 +99,64 @@ class _NotificationInboxScreenState
         title: 'Notifications',
         breadcrumbs: const ['Home', 'Notifications'],
         filters: filtersBar,
-              columns: const [
-                DataColumn(label: Text('Type')),
-                DataColumn(label: Text('Template')),
-                DataColumn(label: Text('Source')),
-                DataColumn(label: Text('Recipient')),
-                DataColumn(label: Text('Priority')),
-                DataColumn(label: Text('Status')),
-              ],
-              items: notifications,
-              onSearch: (query) {
-                setState(() => _searchQuery = query.trim());
-              },
-              searchHint: 'Search notifications...',
-              onAdd: () => context.go('/notifications/send'),
-              addLabel: 'Compose',
-              onRowNavigate: (notification) {
-                context.go(
-                  '/notifications/detail/${notification.id}',
-                  extra: notification,
-                );
-              },
-              rowBuilder: (notification, selected, onSelect) {
-                return DataRow(
-                  selected: selected,
-                  onSelectChanged: (_) => onSelect(),
-                  cells: [
-                    DataCell(Text(notification.type)),
-                    DataCell(Text(notification.template)),
-                    DataCell(Text(notification.source.detail)),
-                    DataCell(Text(notification.recipient.detail)),
-                    DataCell(PriorityBadge(priority: notification.priority)),
-                    DataCell(NotificationStatusBadge(
-                      status: notification.status.state.name,
-                    )),
-                  ],
-                );
-              },
-              exportRow: (notification) => [
-                notification.type,
-                notification.template,
-                notification.source.detail,
-                notification.recipient.detail,
-                notification.priority.name,
-                notification.status.state.name,
-              ],
-              onExport: (format, count) {
-                debugPrint(
-                    '[AUDIT] Exported $count Notifications as $format');
-              },
+        columns: const [
+          DataColumn(label: Text('Type')),
+          DataColumn(label: Text('Template')),
+          DataColumn(label: Text('Source')),
+          DataColumn(label: Text('Recipient')),
+          DataColumn(label: Text('Priority')),
+          DataColumn(label: Text('Status')),
+        ],
+        items: notifications,
+        onSearch: (query) {
+          setState(() => _searchQuery = query.trim());
+        },
+        searchHint: 'Search notifications...',
+        onAdd: () => context.go('/notifications/send'),
+        addLabel: 'Compose',
+        onRowNavigate: (notification) {
+          context.go(
+            '/notifications/detail/${notification.id}',
+            extra: notification,
+          );
+        },
+        rowBuilder: (notification, selected, onSelect) {
+          return DataRow(
+            selected: selected,
+            onSelectChanged: (_) => onSelect(),
+            cells: [
+              DataCell(Text(notification.type)),
+              DataCell(Text(notification.template)),
+              DataCell(Text(notification.source.detail)),
+              DataCell(Text(notification.recipient.detail)),
+              DataCell(PriorityBadge(priority: notification.priority)),
+              DataCell(
+                NotificationStatusBadge(status: notification.status.state.name),
+              ),
+            ],
+          );
+        },
+        exportRow: (notification) => [
+          notification.type,
+          notification.template,
+          notification.source.detail,
+          notification.recipient.detail,
+          notification.priority.name,
+          notification.status.state.name,
+        ],
+        onExport: (format, count) {
+          debugPrint('[AUDIT] Exported $count Notifications as $format');
+        },
       ),
     );
   }
 
-  Widget _langChip(ThemeData theme, String value, String label,
-      {String? keySuffix}) {
+  Widget _langChip(
+    ThemeData theme,
+    String value,
+    String label, {
+    String? keySuffix,
+  }) {
     final isSelected = _languageFilter == value;
     return FilterChip(
       key: Key('inbox-lang-${keySuffix ?? value}'),
@@ -174,9 +174,7 @@ class _NotificationInboxScreenState
       selected: isSelected,
       label: Text(label),
       selectedColor: theme.colorScheme.secondaryContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onSelected: (_) {
         setState(() => _typeFilter = value);
       },

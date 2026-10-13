@@ -13,8 +13,9 @@ final notificationTransportProvider = Provider<Transport>((ref) {
   return createTransport(tokenProvider, baseUrl: _notificationUrl);
 });
 
-final notificationServiceClientProvider =
-    Provider<NotificationServiceClient>((ref) {
+final notificationServiceClientProvider = Provider<NotificationServiceClient>((
+  ref,
+) {
   final transport = ref.watch(notificationTransportProvider);
   return NotificationServiceClient(transport);
 });

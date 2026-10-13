@@ -19,8 +19,7 @@ class LanguageEditScreen extends ConsumerStatefulWidget {
   final notif.Language? initialLanguage;
 
   @override
-  ConsumerState<LanguageEditScreen> createState() =>
-      _LanguageEditScreenState();
+  ConsumerState<LanguageEditScreen> createState() => _LanguageEditScreenState();
 }
 
 class _LanguageEditScreenState extends ConsumerState<LanguageEditScreen> {
@@ -34,9 +33,11 @@ class _LanguageEditScreenState extends ConsumerState<LanguageEditScreen> {
   void initState() {
     super.initState();
     _codeController = TextEditingController(
-        text: widget.initialLanguage?.code ?? widget.languageCode ?? '');
-    _nameController =
-        TextEditingController(text: widget.initialLanguage?.name ?? '');
+      text: widget.initialLanguage?.code ?? widget.languageCode ?? '',
+    );
+    _nameController = TextEditingController(
+      text: widget.initialLanguage?.name ?? '',
+    );
   }
 
   @override
@@ -59,8 +60,9 @@ class _LanguageEditScreenState extends ConsumerState<LanguageEditScreen> {
         ),
         title: Text(
           widget.languageCode == null ? 'New Language' : 'Edit Language',
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
         actions: [
           FilledButton.icon(
@@ -123,8 +125,9 @@ class _LanguageEditScreenState extends ConsumerState<LanguageEditScreen> {
                 const SizedBox(height: 16),
                 Text(
                   _error!,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.error),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
                 ),
               ],
             ],
@@ -141,7 +144,9 @@ class _LanguageEditScreenState extends ConsumerState<LanguageEditScreen> {
       _error = null;
     });
     try {
-      await ref.read(languageNotifierProvider.notifier).save(
+      await ref
+          .read(languageNotifierProvider.notifier)
+          .save(
             code: _codeController.text.trim(),
             name: _nameController.text.trim(),
           );

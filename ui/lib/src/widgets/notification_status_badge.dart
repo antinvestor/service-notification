@@ -17,8 +17,7 @@ class NotificationStatusBadge extends StatelessWidget {
         'ACTIVE' || 'DELIVERED' => ('Active', Colors.green, null),
         'CREATED' || 'QUEUED' => ('Queued', Colors.blue, Icons.schedule),
         'CHECKED' => ('Checked', Colors.orange, null),
-        'INACTIVE' || 'FAILED' =>
-          ('Failed', Colors.red, Icons.error_outline),
+        'INACTIVE' || 'FAILED' => ('Failed', Colors.red, Icons.error_outline),
         'DELETED' => ('Deleted', Colors.grey, null),
         '' => ('Unknown', Colors.grey, null),
         _ => (s, Colors.grey, null),
