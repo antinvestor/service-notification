@@ -23,6 +23,21 @@ func NewQueryResolver(queryRepo repository.QueryRepository) *QueryResolver {
 	return &QueryResolver{queryRepo: queryRepo}
 }
 
+// CallerRef is how query rows address the caller of a turn.
+type CallerRef struct {
+	ContactID string
+	MSISDN    string
+	UserID    string
+}
+
+// key addresses the rows owner wrote under name for this caller. A caller
+// with a contact id reads contact-addressed rows only.
+func (c CallerRef) key(owner, name string) repository.QueryKey {
+	return repository.QueryKey{
+		OwnerID: owner, Name: name, ContactID: c.ContactID, MSISDN: c.MSISDN, UserID: c.UserID,
+	}
+}
+
 // ExpandedMenuItem holds a menu item plus optional query payload it was resolved with.
 type ExpandedMenuItem struct {
 	Menu         *models.UssdMenu
@@ -31,7 +46,7 @@ type ExpandedMenuItem struct {
 
 // ResolveChildren takes raw children from the DB and expands/filters them based on query data.
 // Returns the resolved list of expanded menu items. Items that should be hidden return nil.
-func (qr *QueryResolver) ResolveChildren(ctx context.Context, children []*models.UssdMenu, msisdn, userID, botID, lang string) []ExpandedMenuItem {
+func (qr *QueryResolver) ResolveChildren(ctx context.Context, children []*models.UssdMenu, caller CallerRef, lang string) []ExpandedMenuItem {
 	logger := util.Log(ctx)
 	var result []ExpandedMenuItem
 
@@ -41,7 +56,7 @@ func (qr *QueryResolver) ResolveChildren(ctx context.Context, children []*models
 			continue
 		}
 
-		expanded := qr.resolveQueryMenuItem(ctx, child, msisdn, userID, botID, lang)
+		expanded := qr.resolveQueryMenuItem(ctx, child, caller, lang)
 		if expanded == nil {
 			logger.WithField("menu_id", child.GetID()).Debug("menu item filtered by query resolution")
 			continue
@@ -52,7 +67,7 @@ func (qr *QueryResolver) ResolveChildren(ctx context.Context, children []*models
 	return result
 }
 
-func (qr *QueryResolver) resolveQueryMenuItem(ctx context.Context, menu *models.UssdMenu, msisdn, userID, _, lang string) []ExpandedMenuItem {
+func (qr *QueryResolver) resolveQueryMenuItem(ctx context.Context, menu *models.UssdMenu, caller CallerRef, lang string) []ExpandedMenuItem {
 	logger := util.Log(ctx)
 	queryName := menu.Extra
 	if queryName == "" {
@@ -63,10 +78,10 @@ func (qr *QueryResolver) resolveQueryMenuItem(ctx context.Context, menu *models.
 
 	switch menu.Action {
 	case models.ActionChoiceFromManyQuery:
-		return qr.resolveMany(ctx, menu, msisdn, userID, lang)
+		return qr.resolveMany(ctx, menu, caller, lang)
 
 	case models.ActionChoiceFromQuery, models.ActionInverseChoiceFromQry:
-		q, err := qr.queryRepo.FindByName(ctx, queryName, msisdn, userID)
+		q, err := qr.queryRepo.FindByName(ctx, caller.key(menu.OwnerID, queryName))
 		if err != nil {
 			if isInverse {
 				// No query found and inverse: show the item
@@ -83,7 +98,7 @@ func (qr *QueryResolver) resolveQueryMenuItem(ctx context.Context, menu *models.
 		return []ExpandedMenuItem{{Menu: expanded, QueryPayload: q.Payload}}
 
 	case models.ActionInputFromQuery, models.ActionInverseInputFromQry:
-		q, err := qr.queryRepo.FindByName(ctx, queryName, msisdn, userID)
+		q, err := qr.queryRepo.FindByName(ctx, caller.key(menu.OwnerID, queryName))
 		if err != nil {
 			if isInverse {
 				return []ExpandedMenuItem{{Menu: menu}}
@@ -102,9 +117,9 @@ func (qr *QueryResolver) resolveQueryMenuItem(ctx context.Context, menu *models.
 	}
 }
 
-func (qr *QueryResolver) resolveMany(ctx context.Context, menu *models.UssdMenu, msisdn, userID, _ string) []ExpandedMenuItem {
+func (qr *QueryResolver) resolveMany(ctx context.Context, menu *models.UssdMenu, caller CallerRef, _ string) []ExpandedMenuItem {
 	queryName := menu.Extra
-	queries, err := qr.queryRepo.FindAllByName(ctx, queryName, msisdn, userID)
+	queries, err := qr.queryRepo.FindAllByName(ctx, caller.key(menu.OwnerID, queryName))
 	if err != nil || len(queries) == 0 {
 		return nil
 	}

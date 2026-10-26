@@ -6,9 +6,11 @@ import (
 
 	aconfig "github.com/antinvestor/service-notification/apps/ussd/config"
 	"github.com/antinvestor/service-notification/apps/ussd/service/business"
+	"github.com/antinvestor/service-notification/apps/ussd/service/engine"
 	"github.com/antinvestor/service-notification/apps/ussd/service/repository"
 	internaltests "github.com/antinvestor/service-notification/pkg/tests"
 	"github.com/pitabwire/frame/v3"
+	"github.com/pitabwire/frame/v3/client"
 	"github.com/pitabwire/frame/v3/config"
 	"github.com/pitabwire/frame/v3/datastore"
 	"github.com/pitabwire/frame/v3/frametests"
@@ -20,8 +22,20 @@ type BaseTestSuite struct {
 	internaltests.BaseTestSuite
 }
 
+// FakeCallers resolves the numbers it was given and leaves any other caller
+// anonymous.
+type FakeCallers map[string]engine.Caller
+
+func (f FakeCallers) Resolve(_ context.Context, msisdn string) (engine.Caller, error) {
+	if caller, ok := f[msisdn]; ok {
+		return caller, nil
+	}
+	return engine.Caller{}, business.ErrCallerUnknown
+}
+
 // ServiceResources holds all repositories and business object for easy reuse in tests.
 type ServiceResources struct {
+	Callers           FakeCallers
 	MenuRepo          repository.MenuRepository
 	TranslationRepo   repository.TranslationRepository
 	SessionRepo       repository.SessionRepository
@@ -66,6 +80,9 @@ func (bs *BaseTestSuite) CreateService(
 		frame.WithConfig(&cfg),
 		frame.WithDatastore(),
 		frametests.WithNoopDriver())
+	// Each test gets its own service and pool; stop it with the test so the
+	// suite does not run the database out of connections.
+	t.Cleanup(func() { svc.Stop(context.Background()) })
 
 	workMan := svc.WorkManager()
 	evtsMan := svc.EventsManager()
@@ -88,11 +105,13 @@ func (bs *BaseTestSuite) CreateService(
 	require.NoError(t, err)
 
 	// Create business logic
+	callers := FakeCallers{}
 	ussdBiz := business.NewUssdBusiness(ctx, evtsMan,
 		menuRepo, translationRepo, sessionRepo, queryRepo, serviceConfigRepo,
-		"en", 5)
+		client.NewHTTPClient(ctx), callers, "en", 5)
 
 	resources := &ServiceResources{
+		Callers:           callers,
 		MenuRepo:          menuRepo,
 		TranslationRepo:   translationRepo,
 		SessionRepo:       sessionRepo,

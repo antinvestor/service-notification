@@ -183,16 +183,24 @@ func (s *UssdSession) IsExpired() bool {
 }
 
 // UssdQuery stores dynamic data used to populate query-based menus at runtime.
+//
+// A row belongs to the service that wrote it (OwnerID) and is addressed to a
+// caller by their profile contact id. Menus read only rows their own owner
+// wrote, so services sharing the engine never see each other's data. MSISDN
+// and UserID remain for rows written before contact addressing.
 type UssdQuery struct {
 	data.BaseModel
 
-	MSISDN   string       `gorm:"type:varchar(20);index:idx_query_lookup"`
-	UserID   string       `gorm:"type:varchar(50);index:idx_query_lookup"`
-	BotID    string       `gorm:"type:varchar(50)"`
-	Name     string       `gorm:"type:varchar(100);not null;index:idx_query_lookup"`
-	Payload  data.JSONMap `gorm:"type:jsonb"`
-	IsMany   bool         `gorm:"default:false"`
-	IsActive bool         `gorm:"default:true;index:idx_query_lookup"`
+	OwnerID   string       `gorm:"type:varchar(255);index:idx_query_contact"`
+	ContactID string       `gorm:"type:varchar(50);index:idx_query_contact"`
+	ProfileID string       `gorm:"type:varchar(50)"`
+	MSISDN    string       `gorm:"type:varchar(20);index:idx_query_lookup"`
+	UserID    string       `gorm:"type:varchar(50);index:idx_query_lookup"`
+	BotID     string       `gorm:"type:varchar(50)"`
+	Name      string       `gorm:"type:varchar(100);not null;index:idx_query_lookup;index:idx_query_contact"`
+	Payload   data.JSONMap `gorm:"type:jsonb"`
+	IsMany    bool         `gorm:"default:false"`
+	IsActive  bool         `gorm:"default:true;index:idx_query_lookup;index:idx_query_contact"`
 }
 
 func (UssdQuery) TableName() string {
@@ -203,7 +211,10 @@ func (UssdQuery) TableName() string {
 type UssdServiceConfig struct {
 	data.BaseModel
 
-	ServiceID   string `gorm:"type:varchar(50);uniqueIndex:uq_service_config;not null"`
+	ServiceID string `gorm:"type:varchar(50);uniqueIndex:uq_service_config;not null"`
+	// OwnerID is the account that configured the service first; only it may
+	// change the service's settings, its auth key included.
+	OwnerID     string `gorm:"type:varchar(255);index"`
 	Name        string `gorm:"type:varchar(100);uniqueIndex:uq_service_config;not null"`
 	Value       string `gorm:"type:varchar(500)"`
 	Description string `gorm:"type:text"`
@@ -230,4 +241,15 @@ const (
 	ConfigWhitelistIP          = "whitelist_ip"
 	ConfigDefaultLang          = "default_lang"
 	ConfigSessionExpiryMinutes = "session_expiry_minutes"
+	// ConfigInputSeparator, when set, means the gateway sends the whole path
+	// typed so far joined by it (Africa's Talking sends "1*2*3"); the input
+	// for this turn is the part after the last separator.
+	ConfigInputSeparator = "input_separator"
+)
+
+// Session data keys the engine fills in for every session.
+const (
+	SessionKeyProfileID   = "user_id"
+	SessionKeyContactID   = "contact_id"
+	SessionKeyServiceCode = "service_code"
 )
