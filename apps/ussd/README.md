@@ -14,7 +14,8 @@ that need no data, and its completed sessions are not handed on.
 
 ## Gateway
 
-`POST /ussd/gateway/{serviceID}[/{protocol}]` takes form, JSON or XML. Every
+`POST /ussd/gateway/{serviceID}[/{protocol}]` (also `/gateway/...`, which is
+what arrives through the API gateway's `/ussd` prefix) takes form, JSON or XML. Every
 service must have an `auth_key`, and it must match `authKey` (form field,
 query parameter or `X-Auth-Key` header): the engine acts for whoever the
 number names, so a service without a key serves nobody. `whitelist_ip`
@@ -30,6 +31,26 @@ For Africa's Talking, configure the service with:
 | `auth_key` | a secret, put in the callback URL as `?authKey=` |
 
 The dialled `serviceCode` is kept in the session data as `service_code`.
+
+## Caller state at session start
+
+A service may set `session_start_url`. When a caller with a profile opens a
+session, the engine POSTs `{service_id, profile_id, contact_id}` there as its
+own service account and stores the answer, `{"rows": {name: [payload, ...]}}`,
+as that caller's rows before the first screen is drawn: a name with no rows
+clears them, a name left out keeps them. The URL must be https on a host in
+`USSD_TRUSTED_SERVICE_HOSTS` (default `api.stawi.org`), because the call
+carries the engine's token. If the call fails, the session runs on the rows
+already stored.
+
+## Secret input
+
+A menu with `is_secret` (a PIN prompt) never keeps what the caller typed in
+the clear. The value is sealed (NaCl anonymous box) with the service's
+`secret_box_public_key` setting before it is stored in the session or handed
+on, as `sealed:<base64>`; only the service holding the private key can open
+it. A secret prompt in a service without that key ends the session. Inputs
+are never logged.
 
 ## Management API
 

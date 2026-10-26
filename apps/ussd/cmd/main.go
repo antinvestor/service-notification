@@ -94,10 +94,15 @@ func main() {
 	serviceConfigRepo := repository.NewServiceConfigRepository(ctx, dbPool, workMan)
 
 	// Create business logic
-	validatorHTTP := client.NewHTTPClient(ctx, client.WithHTTPTimeout(validatorTimeout))
+	// External validators are anonymous HTTPS calls. A service's
+	// session_start_url is called as this service account (OAuth from the
+	// service config). Both are bounded tightly: a gateway drops a USSD turn
+	// that takes longer than a few seconds.
+	validatorHTTP := client.NewHTTPClient(ctx, client.WithHTTPTimeout(validatorTimeout), client.WithHTTPNoAuth())
+	serviceHTTP := client.NewHTTPClient(ctx, client.WithHTTPTimeout(validatorTimeout))
 	ussdBusiness := business.NewUssdBusiness(ctx, evtsMan,
 		menuRepo, translationRepo, sessionRepo, queryRepo, serviceConfigRepo,
-		validatorHTTP, business.NewProfileCallers(profileCli),
+		validatorHTTP, serviceHTTP, cfg.TrustedServiceHosts, business.NewProfileCallers(profileCli),
 		cfg.DefaultLanguageCode, cfg.SessionExpiryMinutes)
 
 	// Setup HTTP handlers
@@ -109,6 +114,7 @@ func main() {
 	// Mount gateway routes (telco-facing — uses auth_key, not JWT)
 	gatewayMux := gatewayServer.NewRouter()
 	mux.Handle("/ussd/", gatewayMux)
+	mux.Handle("/gateway/", gatewayMux)
 
 	// Mount management API routes behind authentication
 	mgmtMux := http.NewServeMux()

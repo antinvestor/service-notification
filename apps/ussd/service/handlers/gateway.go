@@ -28,8 +28,13 @@ func NewGatewayServer(ussdBusiness business.UssdBusiness) *GatewayServer {
 // NewRouter builds the HTTP router for the gateway endpoints.
 func (gs *GatewayServer) NewRouter() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /ussd/gateway/{serviceID}", gs.HandleUSSD)
-	mux.HandleFunc("POST /ussd/gateway/{serviceID}/{protocol}", gs.HandleUSSD)
+	// The API gateway strips its /ussd prefix, so a callback to
+	// https://api.stawi.org/ussd/gateway/{id} arrives as /gateway/{id}; the
+	// prefixed form serves direct calls to the service.
+	for _, prefix := range []string{"/ussd", ""} {
+		mux.HandleFunc("POST "+prefix+"/gateway/{serviceID}", gs.HandleUSSD)
+		mux.HandleFunc("POST "+prefix+"/gateway/{serviceID}/{protocol}", gs.HandleUSSD)
+	}
 	mux.HandleFunc("GET /ussd/health", gs.HealthCheck)
 	return mux
 }

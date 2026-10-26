@@ -16,6 +16,10 @@ type UssdConfig struct {
 	NotificationServiceWorkloadAPITargetPath string `envDefault:"/ns/notifications/sa/service-notification" env:"NOTIFICATION_SERVICE_WORKLOAD_API_TARGET_PATH"`
 	SettingsServiceWorkloadAPITargetPath     string `envDefault:"/ns/profile/sa/service-settings" env:"SETTINGS_SERVICE_WORKLOAD_API_TARGET_PATH"`
 
+	// TrustedServiceHosts are the hosts a service's session_start_url may
+	// name; the call carries this service's token.
+	TrustedServiceHosts []string `envDefault:"api.stawi.org" env:"USSD_TRUSTED_SERVICE_HOSTS" envSeparator:","`
+
 	DefaultLanguageCode  string `envDefault:"en" env:"DEFAULT_LANGUAGE_CODE"`
 	SessionExpiryMinutes int    `envDefault:"5" env:"USSD_SESSION_EXPIRY_MINUTES"`
 }

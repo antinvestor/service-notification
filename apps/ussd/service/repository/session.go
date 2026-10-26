@@ -49,14 +49,14 @@ func (r *sessionRepository) FindActiveSession(ctx context.Context, msisdn, servi
 
 func (r *sessionRepository) DeactivateSession(ctx context.Context, sessionID string) error {
 	return r.Pool().DB(ctx, false).
-		Model(&models.UssdSession{}).
+		Table("ussd_sessions").
 		Where("id = ?", sessionID).
 		Update("state", models.SessionStateInactive).Error
 }
 
 func (r *sessionRepository) CleanupExpired(ctx context.Context) (int64, error) {
 	result := r.Pool().DB(ctx, false).
-		Model(&models.UssdSession{}).
+		Table("ussd_sessions").
 		Where("state = ? AND expires_at < ?", models.SessionStateActive, time.Now()).
 		Update("state", models.SessionStateInactive)
 	return result.RowsAffected, result.Error
