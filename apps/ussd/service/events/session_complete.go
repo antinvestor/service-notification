@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
@@ -40,8 +41,8 @@ func (e *SessionComplete) Validate(_ context.Context, payload any) error {
 	if !ok {
 		return errors.New("payload is not of type notificationv1.Notification")
 	}
-	if notification.GetSource() == nil || notification.GetSource().GetContactId() == "" {
-		return errors.New("notification source contact (MSISDN) is required")
+	if notification.GetSource().GetProfileId() == "" || notification.GetSource().GetContactId() == "" {
+		return errors.New("session completion needs the caller's profile and contact")
 	}
 	return nil
 }
@@ -50,34 +51,33 @@ func (e *SessionComplete) Execute(ctx context.Context, payload any) error {
 	notification := payload.(*notificationv1.Notification)
 
 	logger := util.Log(ctx).WithFields(map[string]any{
-		"type":   e.Name(),
-		"msisdn": notification.GetSource().GetContactId(),
+		"type":       e.Name(),
+		"profile_id": notification.GetSource().GetProfileId(),
 	})
 	defer logger.Release()
 	logger.Debug("event handler started")
 
 	if e.notificationCli == nil {
-		logger.Debug("no notification client configured, skipping")
-		return nil
+		return errors.New("no notification client configured")
 	}
 
+	// A failure is returned so the event is retried: a completed session is
+	// a customer's request and must not be dropped.
 	stream, err := e.notificationCli.Receive(ctx, &notificationv1.ReceiveRequest{
 		Data: []*notificationv1.Notification{notification},
 	})
 	if err != nil {
-		logger.WithError(err).Warn("failed to send session completion to notification service")
-		return nil
+		return fmt.Errorf("send session completion to notification service: %w", err)
 	}
 	defer func() { _ = stream.Close() }()
 
-	// Drain the stream
 	for {
 		_, recvErr := stream.Receive()
 		if recvErr == nil {
 			continue
 		}
 		if !errors.Is(recvErr, io.EOF) {
-			logger.WithError(recvErr).Warn("error reading notification response stream")
+			return fmt.Errorf("read session completion response: %w", recvErr)
 		}
 		break
 	}

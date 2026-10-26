@@ -45,6 +45,7 @@ func NewProcessor(
 	serviceConfigRepo repository.ServiceConfigRepository,
 	queryRepo repository.QueryRepository,
 	httpClient *http.Client,
+	callers CallerResolver,
 	defaultLang string,
 	sessionExpiryMinutes int,
 ) *Processor {
@@ -52,6 +53,7 @@ func NewProcessor(
 	validator := NewInputValidator(httpClient)
 	navigator := NewNavigator(menuRepo, translationRepo, queryResolver, validator)
 	sessionManager := NewSessionManager(sessionRepo, sessionExpiryMinutes)
+	sessionManager.callers = callers
 
 	return &Processor{
 		sessionManager:    sessionManager,
@@ -65,6 +67,7 @@ func NewProcessor(
 // USSDRequest represents a parsed incoming USSD request.
 type USSDRequest struct {
 	ServiceID       string
+	ServiceCode     string
 	MSISDN          string
 	SessionExternal string
 	UserInput       string
@@ -130,8 +133,7 @@ func (p *Processor) ProcessRequest(ctx context.Context, req USSDRequest) USSDRes
 		return USSDResponse{IsEnd: true, SessionID: session.GetID()}
 	}
 
-	// Clean user input
-	userInput := strings.TrimSpace(req.UserInput)
+	userInput := turnInput(req, sessionState, svcConfig)
 
 	// Handle special navigation inputs
 	switch userInput {
@@ -159,7 +161,8 @@ func (p *Processor) ProcessRequest(ctx context.Context, req USSDRequest) USSDRes
 	// Process the navigation turn
 	navCtx := NavigationContext{
 		ServiceID: req.ServiceID,
-		UserID:    session.CollectedData.GetString("user_id"),
+		UserID:    session.CollectedData.GetString(models.SessionKeyProfileID),
+		ContactID: session.CollectedData.GetString(models.SessionKeyContactID),
 		BotID:     session.CollectedData.GetString("bot_id"),
 		MSISDN:    session.MSISDN,
 		Lang:      lang,
@@ -223,6 +226,22 @@ func (p *Processor) ProcessRequest(ctx context.Context, req USSDRequest) USSDRes
 		_ = p.sessionManager.DestroySession(ctx, session.GetID())
 		return USSDResponse{Message: "Service error", IsEnd: true}
 	}
+}
+
+// turnInput is what the caller typed this turn. A gateway that resends the
+// whole path typed so far names its separator in the service config, and
+// the dial string that opens a session is not a choice. It also keeps the
+// dialled service code on the session.
+func turnInput(req USSDRequest, state *SessionState, config map[string]string) string {
+	session := state.Session
+	if req.ServiceCode != "" && session.CollectedData.GetString(models.SessionKeyServiceCode) == "" {
+		session.CollectedData[models.SessionKeyServiceCode] = req.ServiceCode
+	}
+	separator := config[models.ConfigInputSeparator]
+	if state.IsBeginning && separator != "" {
+		return ""
+	}
+	return strings.TrimSpace(lastInput(req.UserInput, separator))
 }
 
 // authenticate verifies auth key and IP whitelist.

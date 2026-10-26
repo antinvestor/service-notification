@@ -20,6 +20,7 @@ const (
 type SessionManager struct {
 	sessionRepo   repository.SessionRepository
 	defaultExpiry int
+	callers       CallerResolver
 }
 
 // NewSessionManager creates a session manager.
@@ -49,7 +50,10 @@ func (sm *SessionManager) GetOrCreateSession(ctx context.Context, msisdn, servic
 		expiryMinutes = sm.defaultExpiry
 	}
 
-	// Try to find an existing active session
+	// Sessions are stored under the normalised number, so they are looked up
+	// under it too: a gateway that sends "2547..." on one turn and "+2547..."
+	// on the next must land in the same session.
+	msisdn = normaliseMSISDN(msisdn)
 	session, err := sm.sessionRepo.FindActiveSession(ctx, msisdn, serviceID, sessionExternal)
 	if err == nil && session != nil && !session.IsExpired() {
 		logger.WithField("session_id", session.GetID()).Debug("resuming active session")
@@ -57,15 +61,30 @@ func (sm *SessionManager) GetOrCreateSession(ctx context.Context, msisdn, servic
 	}
 
 	// Create a new session
+	collected := data.JSONMap{}
+	if sm.callers != nil {
+		caller, resolveErr := sm.callers.Resolve(ctx, msisdn)
+		if resolveErr != nil {
+			// An unknown caller still gets the menus that need no profile.
+			logger.WithError(resolveErr).Debug("caller has no profile contact")
+		}
+		if caller.ProfileID != "" {
+			collected[models.SessionKeyProfileID] = caller.ProfileID
+		}
+		if caller.ContactID != "" {
+			collected[models.SessionKeyContactID] = caller.ContactID
+		}
+	}
+
 	session = &models.UssdSession{
-		MSISDN:          normaliseMSISDN(msisdn),
+		MSISDN:          msisdn,
 		ServiceID:       serviceID,
 		SessionExternal: sessionExternal,
 		State:           models.SessionStateActive,
 		CurrentMenuID:   initialMenuID,
 		PreviousMenuID:  "",
 		Language:        lang,
-		CollectedData:   data.JSONMap{},
+		CollectedData:   collected,
 		ExpiresAt:       time.Now().Add(time.Duration(expiryMinutes) * time.Minute),
 	}
 	session.GenID(ctx)

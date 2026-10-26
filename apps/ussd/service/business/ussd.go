@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	commonv1 "buf.build/gen/go/antinvestor/common/protocolbuffers/go/common/v1"
 	notificationv1 "buf.build/gen/go/antinvestor/notification/protocolbuffers/go/notification/v1"
@@ -40,13 +39,17 @@ type UssdBusiness interface {
 	GetSession(ctx context.Context, sessionID string) (*models.UssdSession, error)
 	CleanupExpiredSessions(ctx context.Context) (int64, error)
 
-	// Query operations
+	// Query operations. Rows are written by the calling account (OwnerID)
+	// for a caller's contact; ReplaceQueries swaps the whole set under a name
+	// in one step, which is how a service pushes the current state.
 	CreateQuery(ctx context.Context, q *models.UssdQuery) error
-	DeactivateQueries(ctx context.Context, name, msisdn, userID string) error
+	ReplaceQueries(ctx context.Context, key repository.QueryKey, rows []*models.UssdQuery) error
+	DeactivateQueries(ctx context.Context, key repository.QueryKey) error
 
 	// Service config operations
 	GetServiceConfig(ctx context.Context, serviceID string) (map[string]string, error)
 	SetServiceConfig(ctx context.Context, cfg *models.UssdServiceConfig) error
+	ServiceOwner(ctx context.Context, serviceID string) (string, error)
 }
 
 // NewUssdBusiness creates a new USSD business layer instance.
@@ -58,11 +61,11 @@ func NewUssdBusiness(
 	sessionRepo repository.SessionRepository,
 	queryRepo repository.QueryRepository,
 	serviceConfigRepo repository.ServiceConfigRepository,
+	httpClient *http.Client,
+	callers engine.CallerResolver,
 	defaultLang string,
 	sessionExpiryMinutes int,
 ) UssdBusiness {
-	httpClient := &http.Client{Timeout: 10 * time.Second}
-
 	processor := engine.NewProcessor(
 		menuRepo,
 		translationRepo,
@@ -70,6 +73,7 @@ func NewUssdBusiness(
 		serviceConfigRepo,
 		queryRepo,
 		httpClient,
+		callers,
 		defaultLang,
 		sessionExpiryMinutes,
 	)
@@ -118,41 +122,52 @@ func (ub *ussdBusiness) onSessionComplete(ctx context.Context, session *models.U
 	ub.emitSessionNotification(ctx, session, logger)
 }
 
-// persistPreference saves a collected value as a user preference via UssdQuery.
+// persistPreference saves a collected value as the caller's preference. It
+// is stored under the service's own owner so the service's menus read it.
 func (ub *ussdBusiness) persistPreference(ctx context.Context, session *models.UssdSession, key, value string) {
-	logger := util.Log(ctx).WithFields(map[string]any{
-		"msisdn":         session.MSISDN,
-		"preference_key": key,
-	})
+	logger := util.Log(ctx).WithField("preference_key", key)
 
-	// Deactivate any existing preference with this name
-	_ = ub.queryRepo.DeactivateByName(ctx, "preference:"+key, session.MSISDN, session.CollectedData.GetString("user_id"))
+	contactID := session.CollectedData.GetString(models.SessionKeyContactID)
+	if contactID == "" {
+		logger.Debug("caller has no profile contact; preference not kept")
+		return
+	}
+	owner, err := ub.serviceConfigRepo.OwnerOf(ctx, session.ServiceID)
+	if err != nil || owner == "" {
+		logger.WithError(err).Debug("service has no owner; preference not kept")
+		return
+	}
 
-	// Store the new preference
+	name := "preference:" + key
 	pref := &models.UssdQuery{
-		MSISDN:   session.MSISDN,
-		UserID:   session.CollectedData.GetString("user_id"),
-		BotID:    session.CollectedData.GetString("bot_id"),
-		Name:     "preference:" + key,
-		Payload:  data.JSONMap{key: value},
-		IsMany:   false,
-		IsActive: true,
+		OwnerID:   owner,
+		ContactID: contactID,
+		ProfileID: session.CollectedData.GetString(models.SessionKeyProfileID),
+		Name:      name,
+		Payload:   data.JSONMap{key: value},
+		IsActive:  true,
 	}
 	pref.GenID(ctx)
-	if err := ub.queryRepo.Create(ctx, pref); err != nil {
+	if err = ub.queryRepo.Replace(ctx, repository.QueryKey{OwnerID: owner, Name: name, ContactID: contactID},
+		[]*models.UssdQuery{pref}); err != nil {
 		logger.WithError(err).Warn("failed to persist preference")
-	} else {
-		logger.Debug("preference persisted")
 	}
 }
 
-// emitSessionNotification publishes collected session data as a notification.
+// emitSessionNotification hands the collected session data to the
+// notification service as an inbound "ussd" message from the caller. The
+// caller is named by profile and contact id; their number is not sent.
 func (ub *ussdBusiness) emitSessionNotification(ctx context.Context, session *models.UssdSession, logger *util.LogEntry) {
 	if ub.eventsMan == nil {
 		return
 	}
+	if session.CollectedData.GetString(models.SessionKeyProfileID) == "" ||
+		session.CollectedData.GetString(models.SessionKeyContactID) == "" {
+		// Nobody to act for: the number belongs to no profile.
+		logger.Info("session completed by a caller without a profile; nothing to hand on")
+		return
+	}
 
-	// Build payload from collected session data
 	payload, err := structpb.NewStruct(session.CollectedData)
 	if err != nil {
 		logger.WithError(err).Warn("failed to convert collected data to struct")
@@ -161,10 +176,8 @@ func (ub *ussdBusiness) emitSessionNotification(ctx context.Context, session *mo
 
 	notification := &notificationv1.Notification{
 		Source: &commonv1.ContactLink{
-			ContactId: session.MSISDN,
-		},
-		Recipient: &commonv1.ContactLink{
-			ProfileId: session.CollectedData.GetString("user_id"),
+			ProfileId: session.CollectedData.GetString(models.SessionKeyProfileID),
+			ContactId: session.CollectedData.GetString(models.SessionKeyContactID),
 		},
 		Type:     "ussd",
 		Data:     session.ServiceID,
@@ -173,11 +186,8 @@ func (ub *ussdBusiness) emitSessionNotification(ctx context.Context, session *mo
 		OutBound: false,
 	}
 
-	err = ub.eventsMan.Emit(ctx, ussdEvents.SessionCompleteEvent, notification)
-	if err != nil {
-		logger.WithError(err).Warn("failed to emit session complete notification")
-	} else {
-		logger.Debug("session completion notification emitted")
+	if err = ub.eventsMan.Emit(ctx, ussdEvents.SessionCompleteEvent, notification); err != nil {
+		logger.WithError(err).Error("failed to emit session complete notification")
 	}
 }
 
@@ -317,8 +327,19 @@ func (ub *ussdBusiness) CreateQuery(ctx context.Context, q *models.UssdQuery) er
 	return ub.queryRepo.Create(ctx, q)
 }
 
-func (ub *ussdBusiness) DeactivateQueries(ctx context.Context, name, msisdn, userID string) error {
-	return ub.queryRepo.DeactivateByName(ctx, name, msisdn, userID)
+func (ub *ussdBusiness) ReplaceQueries(ctx context.Context, key repository.QueryKey, rows []*models.UssdQuery) error {
+	for _, row := range rows {
+		row.OwnerID = key.OwnerID
+		row.ContactID = key.ContactID
+		row.Name = key.Name
+		row.IsActive = true
+		row.GenID(ctx)
+	}
+	return ub.queryRepo.Replace(ctx, key, rows)
+}
+
+func (ub *ussdBusiness) DeactivateQueries(ctx context.Context, key repository.QueryKey) error {
+	return ub.queryRepo.DeactivateByName(ctx, key)
 }
 
 func (ub *ussdBusiness) GetServiceConfig(ctx context.Context, serviceID string) (map[string]string, error) {
@@ -327,4 +348,8 @@ func (ub *ussdBusiness) GetServiceConfig(ctx context.Context, serviceID string) 
 
 func (ub *ussdBusiness) SetServiceConfig(ctx context.Context, cfg *models.UssdServiceConfig) error {
 	return ub.serviceConfigRepo.Upsert(ctx, cfg)
+}
+
+func (ub *ussdBusiness) ServiceOwner(ctx context.Context, serviceID string) (string, error) {
+	return ub.serviceConfigRepo.OwnerOf(ctx, serviceID)
 }

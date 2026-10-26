@@ -34,11 +34,16 @@ func NewNavigator(menuRepo repository.MenuRepository, translationRepo repository
 type NavigationContext struct {
 	ServiceID string
 	UserID    string
+	ContactID string
 	BotID     string
 	MSISDN    string
 	Lang      string
 	MenuID    string
 	UserInput string
+}
+
+func (nc NavigationContext) callerRef() CallerRef {
+	return CallerRef{ContactID: nc.ContactID, MSISDN: nc.MSISDN, UserID: nc.UserID}
 }
 
 // ProcessTurn handles one round of user interaction: validate input at current menu,
@@ -70,7 +75,7 @@ func (n *Navigator) ProcessTurn(ctx context.Context, nc NavigationContext) (*Pro
 	n.applyTranslations(ctx, parent, rawChildren, nc.Lang)
 
 	// Expand children through query resolution
-	expandedChildren := n.queryResolver.ResolveChildren(ctx, rawChildren, nc.MSISDN, nc.UserID, nc.BotID, nc.Lang)
+	expandedChildren := n.queryResolver.ResolveChildren(ctx, rawChildren, nc.callerRef(), nc.Lang)
 
 	// First turn at this menu (no user input yet) — display the menu
 	if nc.UserInput == "" {
@@ -282,7 +287,7 @@ func (n *Navigator) advanceToChild(ctx context.Context, nc NavigationContext, pa
 	grandchildren := shallowCopyMenus(dbGrandchildren)
 	n.applyTranslations(ctx, child, grandchildren, nc.Lang)
 
-	expandedGrandchildren := n.queryResolver.ResolveChildren(ctx, grandchildren, nc.MSISDN, nc.UserID, nc.BotID, nc.Lang)
+	expandedGrandchildren := n.queryResolver.ResolveChildren(ctx, grandchildren, nc.callerRef(), nc.Lang)
 
 	if len(expandedGrandchildren) == 0 {
 		// Leaf node — display its message as input prompt or done
@@ -313,6 +318,7 @@ func (n *Navigator) advanceToChild(ctx context.Context, nc NavigationContext, pa
 	childNC := NavigationContext{
 		ServiceID: nc.ServiceID,
 		UserID:    nc.UserID,
+		ContactID: nc.ContactID,
 		BotID:     nc.BotID,
 		MSISDN:    nc.MSISDN,
 		Lang:      nc.Lang,

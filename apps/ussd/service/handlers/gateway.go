@@ -101,6 +101,7 @@ func (gs *GatewayServer) parseFormRequest(r *http.Request, serviceID string) (en
 
 	return engine.USSDRequest{
 		ServiceID:       serviceID,
+		ServiceCode:     firstNonEmpty(r.FormValue("serviceCode"), r.FormValue("service_code")),
 		MSISDN:          firstNonEmpty(r.FormValue("msisdn"), r.FormValue("MSISDN"), r.FormValue("phoneNumber")),
 		SessionExternal: firstNonEmpty(r.FormValue("sessionId"), r.FormValue("session_id"), r.FormValue("sessionID")),
 		UserInput:       firstNonEmpty(r.FormValue("input"), r.FormValue("text"), r.FormValue("data"), r.FormValue("ussdString")),

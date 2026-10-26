@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"buf.build/gen/go/antinvestor/notification/connectrpc/go/v2/notification/v1/notificationv1connect"
 	"buf.build/gen/go/antinvestor/profile/connectrpc/go/v2/profile/v1/profilev1connect"
@@ -16,10 +17,16 @@ import (
 	"github.com/antinvestor/service-notification/apps/ussd/service/repository"
 	"github.com/antinvestor/service-notification/pkg/events"
 	"github.com/pitabwire/frame/v3"
+	"github.com/pitabwire/frame/v3/client"
 	"github.com/pitabwire/frame/v3/config"
 	"github.com/pitabwire/frame/v3/datastore"
+	"github.com/pitabwire/frame/v3/setup"
 	"github.com/pitabwire/util"
 )
+
+// validatorTimeout bounds a menu's external validator call; a gateway drops
+// a USSD turn that takes longer than a few seconds.
+const validatorTimeout = 4 * time.Second
 
 func main() {
 	tmpCtx := context.Background()
@@ -39,21 +46,26 @@ func main() {
 		frame.WithConfig(&cfg),
 		frame.WithDatastore(),
 	)
+	svc.Setup().RegisterFunc(setup.NameMigrate, func(ctx context.Context) error {
+		return repository.Migrate(ctx, svc.DatastoreManager(), cfg.GetDatabaseMigrationPath())
+	})
 	defer svc.Stop(ctx)
 	log := util.Log(ctx)
+
+	// Setup Job only: migrate, then exit. The USSD app exposes no Connect
+	// API, so it registers no permission manifest.
+	if frame.ShouldRunSetup(&cfg) {
+		svc.Init(ctx)
+		if setupErr := svc.RunSetupForProcess(ctx, &cfg); setupErr != nil {
+			log.WithError(setupErr).Fatal("setup plan failed")
+		}
+		log.Info("setup plan complete — exiting")
+		return
+	}
 
 	dbManager := svc.DatastoreManager()
 	evtsMan := svc.EventsManager()
 	sm := svc.SecurityManager()
-
-	// Handle database migration if requested
-	if cfg.DoDatabaseMigrate() {
-		errMigrate := repository.Migrate(ctx, dbManager, cfg.GetDatabaseMigrationPath())
-		if errMigrate != nil {
-			log.WithError(errMigrate).Fatal("main -- Could not migrate successfully")
-		}
-		return
-	}
 
 	// Setup external service clients
 	notificationCli, err := setupNotificationClient(ctx, cfg)
@@ -61,7 +73,7 @@ func main() {
 		log.WithError(err).Fatal("main -- Could not setup notification client")
 	}
 
-	_, err = setupProfileClient(ctx, cfg)
+	profileCli, err := setupProfileClient(ctx, cfg)
 	if err != nil {
 		log.WithError(err).Fatal("main -- Could not setup profile client")
 	}
@@ -82,8 +94,10 @@ func main() {
 	serviceConfigRepo := repository.NewServiceConfigRepository(ctx, dbPool, workMan)
 
 	// Create business logic
+	validatorHTTP := client.NewHTTPClient(ctx, client.WithHTTPTimeout(validatorTimeout))
 	ussdBusiness := business.NewUssdBusiness(ctx, evtsMan,
 		menuRepo, translationRepo, sessionRepo, queryRepo, serviceConfigRepo,
+		validatorHTTP, business.NewProfileCallers(profileCli),
 		cfg.DefaultLanguageCode, cfg.SessionExpiryMinutes)
 
 	// Setup HTTP handlers
