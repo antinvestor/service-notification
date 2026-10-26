@@ -6,15 +6,15 @@ toolchain go1.26.9
 
 require (
 	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.12-20260509050709-3f270876dbf3.2
-	buf.build/gen/go/antinvestor/notification/connectrpc/go/v2 v2.0.1-20260831182621-e7d71a2bcc5d.1
+	buf.build/gen/go/antinvestor/notification/connectrpc/go/v2 v2.0.2-20260831182621-e7d71a2bcc5d.1
 	buf.build/gen/go/antinvestor/notification/protocolbuffers/go v1.36.12-20260831182621-e7d71a2bcc5d.2
-	buf.build/gen/go/antinvestor/profile/connectrpc/go/v2 v2.0.1-20261010180548-eeb7b4541358.1
+	buf.build/gen/go/antinvestor/profile/connectrpc/go/v2 v2.0.2-20261010180548-eeb7b4541358.1
 	buf.build/gen/go/antinvestor/profile/protocolbuffers/go v1.36.12-20261010180548-eeb7b4541358.2
-	buf.build/gen/go/antinvestor/settingz/connectrpc/go/v2 v2.0.1-20261010180548-c7910134e0de.1
+	buf.build/gen/go/antinvestor/settingz/connectrpc/go/v2 v2.0.2-20261010180548-c7910134e0de.1
 	buf.build/gen/go/antinvestor/settingz/protocolbuffers/go v1.36.12-20261010180548-c7910134e0de.2
-	buf.build/gen/go/antinvestor/tenancy/connectrpc/go/v2 v2.0.1-20260831112830-2b2240b00a45.1
+	buf.build/gen/go/antinvestor/tenancy/connectrpc/go/v2 v2.0.2-20260831112830-2b2240b00a45.1
 	buf.build/gen/go/antinvestor/tenancy/protocolbuffers/go v1.36.12-20260831112830-2b2240b00a45.2
-	connectrpc.com/connect/v2 v2.0.1
+	connectrpc.com/connect/v2 v2.0.2
 	github.com/antinvestor/common/v3 v3.0.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gorilla/mux v1.8.1
@@ -41,9 +41,9 @@ require (
 	cloud.google.com/go/auth v0.24.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.3.0 // indirect
 	cloud.google.com/go/compute/metadata v0.10.0 // indirect
-	cloud.google.com/go/iam v1.14.0 // indirect
+	cloud.google.com/go/iam v1.15.0 // indirect
 	cloud.google.com/go/pubsub v1.51.1 // indirect
-	cloud.google.com/go/pubsub/v2 v2.7.0 // indirect
+	cloud.google.com/go/pubsub/v2 v2.8.0 // indirect
 	connectrpc.com/connect v1.21.1 // indirect
 	connectrpc.com/otelconnect v0.12.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
@@ -74,8 +74,8 @@ require (
 	github.com/google/s2a-go v0.1.11 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.3.23 // indirect
-	github.com/googleapis/gax-go/v2 v2.26.2 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.24 // indirect
+	github.com/googleapis/gax-go/v2 v2.27.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.32.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -112,7 +112,7 @@ require (
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.72.1 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
-	github.com/prometheus/procfs v0.22.0 // indirect
+	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.9 // indirect
 	github.com/sirupsen/logrus v1.10.2 // indirect
@@ -160,10 +160,10 @@ require (
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	google.golang.org/api v0.305.0 // indirect
+	google.golang.org/api v0.308.0 // indirect
 	google.golang.org/genproto v0.0.0-20261012220534-4341edf3f941 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261019180522-ce908d29299b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.3 // indirect
 )
