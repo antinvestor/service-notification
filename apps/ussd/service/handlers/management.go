@@ -137,6 +137,7 @@ type createMenuRequest struct {
 	ErrorMessage  string `json:"error_message"`
 	IsPreference  bool   `json:"is_preference"`
 	IsPublic      bool   `json:"is_public"`
+	IsSecret      bool   `json:"is_secret"`
 }
 
 // CreateMenu adds a menu owned by the caller. A child goes only under a
@@ -164,6 +165,7 @@ func (ms *ManagementServer) CreateMenu(w http.ResponseWriter, r *http.Request) {
 		req.Regex, req.ErrorMessage, req.IsPreference, req.IsPublic,
 	)
 	menu.Order = req.Order
+	menu.IsSecret = req.IsSecret
 
 	if err := ms.ussdBusiness.CreateMenu(r.Context(), menu); err != nil {
 		util.Log(r.Context()).WithError(err).Error("failed to create menu")
@@ -201,6 +203,7 @@ func (ms *ManagementServer) UpdateMenu(w http.ResponseWriter, r *http.Request) {
 	existing.ErrorMessage = req.ErrorMessage
 	existing.IsPreference = req.IsPreference
 	existing.IsPublic = req.IsPublic
+	existing.IsSecret = req.IsSecret
 	existing.Order = req.Order
 
 	if err := ms.ussdBusiness.UpdateMenu(r.Context(), existing); err != nil {

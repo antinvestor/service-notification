@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -57,4 +59,13 @@ func containsStr(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+func TestGatewayServesTheStrippedPath(t *testing.T) {
+	mux := NewGatewayServer(nil).NewRouter()
+	for _, path := range []string{"/ussd/gateway/seed", "/gateway/seed", "/gateway/seed/json"} {
+		req := httptest.NewRequest(http.MethodPost, path, nil)
+		_, pattern := mux.Handler(req)
+		require.NotEmpty(t, pattern, path)
+	}
 }

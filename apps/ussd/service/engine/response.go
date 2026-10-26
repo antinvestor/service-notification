@@ -26,9 +26,12 @@ type ProcessingResult struct {
 	CollectionKey string
 	CollectedData string
 	IsPreference  bool
-	NextMenuID    string
-	PrevMenuID    string
-	SessionID     string
+	// IsSecret is true when CollectedData was typed into a secret menu and
+	// must be sealed before it is stored.
+	IsSecret   bool
+	NextMenuID string
+	PrevMenuID string
+	SessionID  string
 }
 
 // Response is the final message sent back to the telco gateway.

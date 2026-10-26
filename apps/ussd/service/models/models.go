@@ -70,6 +70,15 @@ func IsChoiceAction(action string) bool {
 	return false
 }
 
+// IsInputAction returns true if the action asks the caller to type a value.
+func IsInputAction(action string) bool {
+	switch action {
+	case ActionInput, ActionInputFromQuery, ActionInverseInputFromQry, ActionInputFromURL, ActionInputFromCode:
+		return true
+	}
+	return false
+}
+
 // IsQueryAction returns true if the action involves dynamic query data.
 func IsQueryAction(action string) bool {
 	switch action {
@@ -116,6 +125,9 @@ type UssdMenu struct {
 	IsPreference  bool   `gorm:"default:false"`
 	IsPublic      bool   `gorm:"default:false"`
 	IsActive      bool   `gorm:"default:true"`
+	// IsSecret marks an input (a PIN) that is sealed with the service's
+	// secret_box_public_key before it is kept anywhere.
+	IsSecret bool `gorm:"default:false"`
 }
 
 func (UssdMenu) TableName() string {
@@ -245,6 +257,13 @@ const (
 	// typed so far joined by it (Africa's Talking sends "1*2*3"); the input
 	// for this turn is the part after the last separator.
 	ConfigInputSeparator = "input_separator"
+	// ConfigSecretBoxKey is the service's X25519 public key (base64) that
+	// secret inputs are sealed with.
+	ConfigSecretBoxKey = "secret_box_public_key"
+	// ConfigSessionStartURL, when set, is called as the engine's service
+	// account when a known caller opens a session; it returns the caller's
+	// current rows (engine.StateResponse).
+	ConfigSessionStartURL = "session_start_url"
 )
 
 // Session data keys the engine fills in for every session.

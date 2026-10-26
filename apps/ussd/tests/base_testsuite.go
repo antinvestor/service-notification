@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	aconfig "github.com/antinvestor/service-notification/apps/ussd/config"
@@ -20,6 +21,11 @@ import (
 
 type BaseTestSuite struct {
 	internaltests.BaseTestSuite
+	// ServiceClient, when set, is the client the engine calls services'
+	// session_start_url with (a test server's TLS client), and TrustedHosts
+	// the hosts it may call.
+	ServiceClient *http.Client
+	TrustedHosts  []string
 }
 
 // FakeCallers resolves the numbers it was given and leaves any other caller
@@ -108,7 +114,7 @@ func (bs *BaseTestSuite) CreateService(
 	callers := FakeCallers{}
 	ussdBiz := business.NewUssdBusiness(ctx, evtsMan,
 		menuRepo, translationRepo, sessionRepo, queryRepo, serviceConfigRepo,
-		client.NewHTTPClient(ctx), callers, "en", 5)
+		client.NewHTTPClient(ctx), bs.serviceClient(ctx), bs.TrustedHosts, callers, "en", 5)
 
 	resources := &ServiceResources{
 		Callers:           callers,
@@ -121,4 +127,11 @@ func (bs *BaseTestSuite) CreateService(
 	}
 
 	return svc, ctx, resources
+}
+
+func (bs *BaseTestSuite) serviceClient(ctx context.Context) *http.Client {
+	if bs.ServiceClient != nil {
+		return bs.ServiceClient
+	}
+	return client.NewHTTPClient(ctx, client.WithHTTPNoAuth())
 }

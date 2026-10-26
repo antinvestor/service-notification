@@ -62,6 +62,8 @@ func NewUssdBusiness(
 	queryRepo repository.QueryRepository,
 	serviceConfigRepo repository.ServiceConfigRepository,
 	httpClient *http.Client,
+	serviceClient *http.Client,
+	trustedServiceHosts []string,
 	callers engine.CallerResolver,
 	defaultLang string,
 	sessionExpiryMinutes int,
@@ -73,6 +75,8 @@ func NewUssdBusiness(
 		serviceConfigRepo,
 		queryRepo,
 		httpClient,
+		serviceClient,
+		trustedServiceHosts,
 		callers,
 		defaultLang,
 		sessionExpiryMinutes,
@@ -258,6 +262,7 @@ func (ub *ussdBusiness) duplicateMenuRecursive(ctx context.Context, sourceMenuID
 		IsPreference:  source.IsPreference,
 		IsPublic:      false,
 		IsActive:      true,
+		IsSecret:      source.IsSecret,
 	}
 	newMenu.GenID(ctx)
 

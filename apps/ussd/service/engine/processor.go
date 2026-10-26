@@ -21,6 +21,7 @@ type CompletionHandler func(ctx context.Context, session *models.UssdSession, re
 // Processor is the top-level USSD request processor.
 // It orchestrates authentication, session management, navigation, and response building.
 type Processor struct {
+	state             *statePuller
 	sessionManager    *SessionManager
 	navigator         *Navigator
 	serviceConfigRepo repository.ServiceConfigRepository
@@ -45,6 +46,8 @@ func NewProcessor(
 	serviceConfigRepo repository.ServiceConfigRepository,
 	queryRepo repository.QueryRepository,
 	httpClient *http.Client,
+	serviceClient *http.Client,
+	trustedServiceHosts []string,
 	callers CallerResolver,
 	defaultLang string,
 	sessionExpiryMinutes int,
@@ -56,6 +59,8 @@ func NewProcessor(
 	sessionManager.callers = callers
 
 	return &Processor{
+		state: &statePuller{client: serviceClient, queryRepo: queryRepo, owners: serviceConfigRepo,
+			trustedHosts: trustedServiceHosts},
 		sessionManager:    sessionManager,
 		navigator:         navigator,
 		serviceConfigRepo: serviceConfigRepo,
@@ -121,6 +126,9 @@ func (p *Processor) ProcessRequest(ctx context.Context, req USSDRequest) USSDRes
 		return USSDResponse{Message: "Service error", IsEnd: true}
 	}
 	session := sessionState.Session
+	if sessionState.IsBeginning {
+		p.state.pull(ctx, svcConfig[models.ConfigSessionStartURL], req.ServiceID, session)
+	}
 
 	// Apply language from session if available
 	if session.Language != "" {
@@ -177,6 +185,13 @@ func (p *Processor) ProcessRequest(ctx context.Context, req USSDRequest) USSDRes
 		return USSDResponse{Message: "Service error", IsEnd: true}
 	}
 
+	if sealErr := sealSecretInput(svcConfig, result); sealErr != nil {
+		// Never keep a secret in the clear: end the session instead.
+		logger.WithError(sealErr).Error("secret input cannot be sealed")
+		_ = p.sessionManager.DestroySession(ctx, session.GetID())
+		return USSDResponse{Message: "Service misconfigured", IsEnd: true}
+	}
+
 	// Handle the processing result
 	switch result.Outcome {
 	case OutcomeContinue:
@@ -226,6 +241,19 @@ func (p *Processor) ProcessRequest(ctx context.Context, req USSDRequest) USSDRes
 		_ = p.sessionManager.DestroySession(ctx, session.GetID())
 		return USSDResponse{Message: "Service error", IsEnd: true}
 	}
+}
+
+// sealSecretInput replaces a secret input with its sealed form.
+func sealSecretInput(config map[string]string, result *ProcessingResult) error {
+	if !result.IsSecret || result.CollectedData == "" {
+		return nil
+	}
+	sealed, err := SealSecret(config[models.ConfigSecretBoxKey], result.CollectedData)
+	if err != nil {
+		return err
+	}
+	result.CollectedData = sealed
+	return nil
 }
 
 // turnInput is what the caller typed this turn. A gateway that resends the

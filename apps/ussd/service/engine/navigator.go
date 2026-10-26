@@ -49,10 +49,10 @@ func (nc NavigationContext) callerRef() CallerRef {
 // ProcessTurn handles one round of user interaction: validate input at current menu,
 // determine the next menu, and return the result.
 func (n *Navigator) ProcessTurn(ctx context.Context, nc NavigationContext) (*ProcessingResult, error) {
+	// The input itself is never logged: it may be a PIN.
 	logger := util.Log(ctx).WithFields(map[string]any{
-		"menu_id":    nc.MenuID,
-		"user_input": nc.UserInput,
-		"msisdn":     maskMSISDN(nc.MSISDN),
+		"menu_id": nc.MenuID,
+		"msisdn":  maskMSISDN(nc.MSISDN),
 	})
 
 	// Load current menu and its children in a single query
@@ -96,8 +96,13 @@ func (n *Navigator) ProcessTurn(ctx context.Context, nc NavigationContext) (*Pro
 		}, nil
 	}
 
-	// Input is valid — determine next step based on action type
-	return n.processAction(ctx, nc, parent, expandedChildren)
+	// Input is valid — determine next step based on action type. What the
+	// caller typed here is secret when this menu says so.
+	result, err := n.processAction(ctx, nc, parent, expandedChildren)
+	if result != nil {
+		result.IsSecret = parent.IsSecret
+	}
+	return result, err
 }
 
 // applyTranslations loads translations for the given language and overlays
@@ -339,7 +344,9 @@ func (n *Navigator) advanceToChild(ctx context.Context, nc NavigationContext, pa
 
 // buildMenuDisplay renders a menu and its children into a displayable string.
 func (n *Navigator) buildMenuDisplay(parent *models.UssdMenu, children []ExpandedMenuItem, _ NavigationContext) MenuDisplay {
-	if models.IsChoiceAction(parent.Action) || len(children) > 0 {
+	// An input's child is where the flow continues, not a choice: an input
+	// shows only its prompt.
+	if models.IsChoiceAction(parent.Action) || (len(children) > 0 && !models.IsInputAction(parent.Action)) {
 		return buildChoicesDisplay(parent, children)
 	}
 
