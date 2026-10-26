@@ -20,7 +20,6 @@ import (
 	"github.com/pitabwire/frame/v3/client"
 	"github.com/pitabwire/frame/v3/config"
 	"github.com/pitabwire/frame/v3/datastore"
-	"github.com/pitabwire/frame/v3/security/interceptors/httptor"
 	"github.com/pitabwire/frame/v3/setup"
 	"github.com/pitabwire/util"
 )
@@ -120,11 +119,10 @@ func main() {
 	// Mount management API routes behind authentication
 	mgmtMux := http.NewServeMux()
 	managementServer.RegisterRoutes(mgmtMux)
-	// The bearer token is verified first (it sets the claims); the
-	// management guard then admits internal service accounts only.
+	// The management guard verifies the bearer token (without logging it)
+	// and admits internal service accounts only.
 	authenticator := sm.GetAuthenticator(ctx)
-	mux.Handle("/api/", httptor.AuthenticationMiddleware(
-		handlers.AuthMiddleware(authenticator, mgmtMux), authenticator))
+	mux.Handle("/api/", handlers.AuthMiddleware(authenticator, mgmtMux))
 
 	// Health check
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
