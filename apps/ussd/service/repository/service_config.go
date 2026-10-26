@@ -54,25 +54,30 @@ func (r *serviceConfigRepository) GetByServiceID(ctx context.Context, serviceID 
 
 func (r *serviceConfigRepository) Upsert(ctx context.Context, cfg *models.UssdServiceConfig) error {
 	return r.Pool().DB(ctx, false).Transaction(func(tx *gorm.DB) error {
-		var owners []string
-		if err := tx.Model(&models.UssdServiceConfig{}).
-			Where("service_id = ? AND owner_id <> ''", cfg.ServiceID).
-			Distinct().Pluck("owner_id", &owners).Error; err != nil {
+		// Serialise writers of one service so two first configurers cannot
+		// both claim it.
+		if err := tx.Exec("SELECT pg_advisory_xact_lock(hashtext(?))", "ussd-service:"+cfg.ServiceID).Error; err != nil {
 			return err
 		}
-		for _, owner := range owners {
-			if owner != cfg.OwnerID {
+		var rows []*models.UssdServiceConfig
+		if err := tx.Where("service_id = ?", cfg.ServiceID).Find(&rows).Error; err != nil {
+			return err
+		}
+		// A service is claimed by the first account to configure it. Settings
+		// written before ownership was recorded have no owner and are not
+		// claimable by whoever writes next.
+		for _, row := range rows {
+			if row.OwnerID != cfg.OwnerID {
 				return ErrServiceOwnedByAnother
 			}
 		}
 
-		existing := models.UssdServiceConfig{}
-		err := tx.Where("service_id = ? AND name = ?", cfg.ServiceID, cfg.Name).First(&existing).Error
-		if err == nil {
-			existing.Value = cfg.Value
-			existing.Description = cfg.Description
-			existing.OwnerID = cfg.OwnerID
-			return tx.Save(&existing).Error
+		for _, row := range rows {
+			if row.Name == cfg.Name {
+				row.Value = cfg.Value
+				row.Description = cfg.Description
+				return tx.Save(row).Error
+			}
 		}
 		cfg.GenID(ctx)
 		return tx.Create(cfg).Error

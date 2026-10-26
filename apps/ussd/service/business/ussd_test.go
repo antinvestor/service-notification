@@ -231,6 +231,7 @@ func (s *UssdTestSuite) TestEndToEndUSSDFlow() {
 		// 2. Configure the service
 		for _, cfg := range []*models.UssdServiceConfig{
 			{ServiceID: "ussd-001", Name: models.ConfigInitialMenu, Value: root.GetID()},
+			{ServiceID: "ussd-001", Name: models.ConfigAuthKey, Value: testAuthKey},
 			{ServiceID: "ussd-001", Name: models.ConfigDataField, Value: "input"},
 			{ServiceID: "ussd-001", Name: models.ConfigMSISDNField, Value: "msisdn"},
 			{ServiceID: "ussd-001", Name: models.ConfigSessionField, Value: "sessionId"},
@@ -240,6 +241,7 @@ func (s *UssdTestSuite) TestEndToEndUSSDFlow() {
 
 		// 3. First request — should show root menu
 		resp := res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+			AuthKey:         testAuthKey,
 			ServiceID:       "ussd-001",
 			MSISDN:          "+254700000001",
 			SessionExternal: "sess-001",
@@ -252,6 +254,7 @@ func (s *UssdTestSuite) TestEndToEndUSSDFlow() {
 
 		// 4. Select option 2 (Transfer - INFORMATION action = terminal)
 		resp = res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+			AuthKey:         testAuthKey,
 			ServiceID:       "ussd-001",
 			MSISDN:          "+254700000001",
 			SessionExternal: "sess-002",
@@ -306,21 +309,27 @@ func (s *UssdTestSuite) TestNavigationBack() {
 		require.NoError(t, res.UssdBusiness.SetServiceConfig(ctx, &models.UssdServiceConfig{
 			ServiceID: "nav-001", Name: models.ConfigInitialMenu, Value: root.GetID(),
 		}))
+		require.NoError(t, res.UssdBusiness.SetServiceConfig(ctx, &models.UssdServiceConfig{
+			ServiceID: "nav-001", Name: models.ConfigAuthKey, Value: testAuthKey,
+		}))
 
 		// First request — root menu
 		resp := res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+			AuthKey:   testAuthKey,
 			ServiceID: "nav-001", MSISDN: "+254", SessionExternal: "s1",
 		})
 		require.Contains(t, resp.Message, "Main:")
 
 		// Select option 1 — go to sub menu
 		resp = res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+			AuthKey:   testAuthKey,
 			ServiceID: "nav-001", MSISDN: "+254", SessionExternal: "s1", UserInput: "1",
 		})
 		require.Contains(t, resp.Message, "Sub menu:")
 
 		// Go back with "0"
 		resp = res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+			AuthKey:   testAuthKey,
 			ServiceID: "nav-001", MSISDN: "+254", SessionExternal: "s1", UserInput: "0",
 		})
 		require.Contains(t, resp.Message, "Main:")

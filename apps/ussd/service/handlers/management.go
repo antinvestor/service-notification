@@ -70,15 +70,18 @@ func ownsMenu(r *http.Request, menu *models.UssdMenu) bool {
 	return menu != nil && (caller == "" && devMode(r) || menu.OwnerID == caller)
 }
 
-// ownsService reports whether the caller configured serviceID. A service
-// nobody configured yet is open to its first configurer.
+// ownsService reports whether the caller is the recorded owner of
+// serviceID. A service with no recorded owner is nobody's: reads of it fail
+// closed.
 func (ms *ManagementServer) ownsService(r *http.Request, serviceID string) (bool, error) {
+	if devMode(r) {
+		return true, nil
+	}
 	owner, err := ms.ussdBusiness.ServiceOwner(r.Context(), serviceID)
 	if err != nil {
 		return false, err
 	}
-	caller := OwnerIDFromRequest(r)
-	return owner == "" || owner == caller || caller == "" && devMode(r), nil
+	return owner != "" && owner == OwnerIDFromRequest(r), nil
 }
 
 // --- Menu endpoints ---
@@ -340,6 +343,13 @@ func (ms *ManagementServer) SetServiceConfig(w http.ResponseWriter, r *http.Requ
 	if req.Name == "" {
 		writeError(w, http.StatusBadRequest, "name is required")
 		return
+	}
+	// A service starts at a menu of its own: its sessions read the menu
+	// owner's data, so pointing at another owner's tree is refused.
+	if req.Name == models.ConfigInitialMenu {
+		if _, ok := ms.ownedMenu(w, r, req.Value); !ok {
+			return
+		}
 	}
 
 	cfg := &models.UssdServiceConfig{

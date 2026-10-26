@@ -14,10 +14,11 @@ that need no data, and its completed sessions are not handed on.
 
 ## Gateway
 
-`POST /ussd/gateway/{serviceID}[/{protocol}]` takes form, JSON or XML. The
-service's `auth_key` setting must match `authKey` (form field, query
-parameter or `X-Auth-Key` header), and `whitelist_ip` limits the source
-addresses.
+`POST /ussd/gateway/{serviceID}[/{protocol}]` takes form, JSON or XML. Every
+service must have an `auth_key`, and it must match `authKey` (form field,
+query parameter or `X-Auth-Key` header): the engine acts for whoever the
+number names, so a service without a key serves nobody. `whitelist_ip`
+limits the source addresses.
 
 For Africa's Talking, configure the service with:
 
@@ -38,8 +39,9 @@ belongs to the account that created it:
 - Menus (`/menus`): created under the caller's ownership; reading, changing,
   translating or deleting another owner's menu answers 404.
 - Service settings (`/services/{id}/config`): the first account to configure a
-  service owns it; others get 403 on change and 404 on read (the auth key is
-  among them).
+  brand-new service owns it; others get 403 on change and 404 on read (the
+  auth key is among them). Settings with no recorded owner are nobody's and
+  cannot be claimed. `initial_menu` must name one of the owner's own menus.
 - Caller data (`PUT /queries`): `{name, contact_id, profile_id, rows:[{payload}]}`
   replaces, in one step, what the caller's menus show that contact under
   `name`. An empty `rows` clears it, as does `DELETE /queries {name, contact_id}`.

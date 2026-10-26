@@ -12,6 +12,43 @@ import (
 	"github.com/antinvestor/service-notification/apps/ussd/service/repository"
 )
 
+const testAuthKey = "gateway-secret"
+
+func (s *UssdTestSuite) TestGatewayRefusesAServiceWithoutAnAuthKey() {
+	s.WithTestDependancies(s.T(), func(t *testing.T, dep *definition.DependencyOption) {
+		_, ctx, res := s.CreateService(t, dep)
+		res.Callers["+254700000011"] = engine.Caller{ProfileID: "profile-11", ContactID: "contact-11"}
+
+		root := &models.UssdMenu{OwnerID: "seed", Action: models.ActionInformation,
+			Name: "Root", Message: "Hello", IsActive: true}
+		root.GenID(ctx)
+		require.NoError(t, res.UssdBusiness.CreateMenu(ctx, root))
+		require.NoError(t, res.UssdBusiness.SetServiceConfig(ctx,
+			&models.UssdServiceConfig{ServiceID: "open", OwnerID: "seed", Name: models.ConfigInitialMenu, Value: root.GetID()}))
+
+		// Anyone could post any number to an open gateway and act as that
+		// caller, so a service without a key serves nobody.
+		resp := res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+			ServiceID: "open", MSISDN: "+254700000011", SessionExternal: "x1",
+		})
+		require.True(t, resp.IsEnd)
+		require.Equal(t, "Authentication failed", resp.Message)
+	})
+}
+
+func (s *UssdTestSuite) TestUnownedServiceIsNotClaimable() {
+	s.WithTestDependancies(s.T(), func(t *testing.T, dep *definition.DependencyOption) {
+		_, ctx, res := s.CreateService(t, dep)
+
+		// Settings written before ownership was recorded have no owner.
+		require.NoError(t, res.UssdBusiness.SetServiceConfig(ctx,
+			&models.UssdServiceConfig{ServiceID: "legacy", Name: models.ConfigAuthKey, Value: "old"}))
+		err := res.UssdBusiness.SetServiceConfig(ctx,
+			&models.UssdServiceConfig{ServiceID: "legacy", OwnerID: "newcomer", Name: models.ConfigAuthKey, Value: "mine"})
+		require.ErrorIs(t, err, repository.ErrServiceOwnedByAnother)
+	})
+}
+
 func (s *UssdTestSuite) TestAfricasTalkingSessionReadsTheCallersOwnRows() {
 	s.WithTestDependancies(s.T(), func(t *testing.T, dep *definition.DependencyOption) {
 		_, ctx, res := s.CreateService(t, dep)
@@ -34,6 +71,7 @@ func (s *UssdTestSuite) TestAfricasTalkingSessionReadsTheCallersOwnRows() {
 
 		for name, value := range map[string]string{
 			models.ConfigInitialMenu:          root.GetID(),
+			models.ConfigAuthKey:              testAuthKey,
 			models.ConfigInputSeparator:       "*",
 			models.ConfigDataBeginTemplate:    "CON %s",
 			models.ConfigDataContinueTemplate: "CON %s",
@@ -53,6 +91,7 @@ func (s *UssdTestSuite) TestAfricasTalkingSessionReadsTheCallersOwnRows() {
 
 		// Africa's Talking opens with an empty text, then resends the path.
 		resp := res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+			AuthKey:   testAuthKey,
 			ServiceID: "seed-ussd", ServiceCode: "*384*1#", MSISDN: "254700000009",
 			SessionExternal: "at-1", UserInput: "",
 		})
@@ -64,6 +103,7 @@ func (s *UssdTestSuite) TestAfricasTalkingSessionReadsTheCallersOwnRows() {
 		// The gateway formats the number differently on the next turn; the
 		// session is the same one.
 		resp = res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+			AuthKey:   testAuthKey,
 			ServiceID: "seed-ussd", MSISDN: "+254700000009", SessionExternal: "at-1", UserInput: "2",
 		})
 		require.True(t, resp.IsEnd)
@@ -90,6 +130,7 @@ func (s *UssdTestSuite) TestCumulativeInputTakesTheLastSegment() {
 		require.NoError(t, res.UssdBusiness.CreateMenu(ctx, leaf))
 		for name, value := range map[string]string{
 			models.ConfigInitialMenu:    root.GetID(),
+			models.ConfigAuthKey:        testAuthKey,
 			models.ConfigInputSeparator: "*",
 		} {
 			require.NoError(t, res.UssdBusiness.SetServiceConfig(ctx,
@@ -98,11 +139,13 @@ func (s *UssdTestSuite) TestCumulativeInputTakesTheLastSegment() {
 
 		for _, text := range []string{"", "1"} {
 			resp := res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+				AuthKey:   testAuthKey,
 				ServiceID: "cum", MSISDN: "+254700000010", SessionExternal: "at-2", UserInput: text,
 			})
 			require.False(t, resp.IsEnd, text)
 		}
 		resp := res.UssdBusiness.ProcessUSSD(ctx, engine.USSDRequest{
+			AuthKey:   testAuthKey,
 			ServiceID: "cum", MSISDN: "+254700000010", SessionExternal: "at-2", UserInput: "1*1",
 		})
 		require.True(t, resp.IsEnd)

@@ -80,6 +80,9 @@ func (bs *BaseTestSuite) CreateService(
 		frame.WithConfig(&cfg),
 		frame.WithDatastore(),
 		frametests.WithNoopDriver())
+	// Each test gets its own service and pool; stop it with the test so the
+	// suite does not run the database out of connections.
+	t.Cleanup(func() { svc.Stop(context.Background()) })
 
 	workMan := svc.WorkManager()
 	evtsMan := svc.EventsManager()

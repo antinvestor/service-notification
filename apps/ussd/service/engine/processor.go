@@ -246,8 +246,13 @@ func turnInput(req USSDRequest, state *SessionState, config map[string]string) s
 
 // authenticate verifies auth key and IP whitelist.
 func (p *Processor) authenticate(req USSDRequest, config map[string]string) error {
+	// Every service needs an auth key: the engine acts for whoever the
+	// number names, so an open gateway would let anyone act as any caller.
 	authKey := config[models.ConfigAuthKey]
-	if authKey != "" && subtle.ConstantTimeCompare([]byte(req.AuthKey), []byte(authKey)) != 1 {
+	if authKey == "" {
+		return &AuthError{Message: "service has no auth key configured"}
+	}
+	if subtle.ConstantTimeCompare([]byte(req.AuthKey), []byte(authKey)) != 1 {
 		return &AuthError{Message: "invalid auth key"}
 	}
 
