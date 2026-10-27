@@ -119,6 +119,8 @@ func main() {
 	// Mount management API routes behind authentication
 	mgmtMux := http.NewServeMux()
 	managementServer.RegisterRoutes(mgmtMux)
+	// The management guard verifies the bearer token (without logging it)
+	// and admits internal service accounts only.
 	authenticator := sm.GetAuthenticator(ctx)
 	mux.Handle("/api/", handlers.AuthMiddleware(authenticator, mgmtMux))
 

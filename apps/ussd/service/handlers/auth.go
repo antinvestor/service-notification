@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/pitabwire/frame/v3/security"
+	"github.com/pitabwire/util"
 )
 
 type contextKey string
@@ -37,6 +40,18 @@ func AuthMiddleware(authenticator security.Authenticator, next http.Handler) htt
 		}
 
 		claims := security.ClaimsFromContext(ctx)
+		if claims == nil {
+			// Verify the bearer token here rather than with frame's HTTP
+			// middleware, which logs the raw Authorization header on every
+			// failure; a token must never reach the logs.
+			var err error
+			if ctx, err = authenticateBearer(ctx, authenticator, r); err != nil {
+				util.Log(ctx).WithError(err).Info("ussd management API: token not accepted")
+				writeError(w, http.StatusUnauthorized, "authentication required")
+				return
+			}
+			claims = security.ClaimsFromContext(ctx)
+		}
 		if claims == nil || claims.Subject == "" {
 			writeError(w, http.StatusUnauthorized, "authentication required")
 			return
@@ -50,6 +65,24 @@ func AuthMiddleware(authenticator security.Authenticator, next http.Handler) htt
 		ctx = context.WithValue(ctx, claimsContextKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// errBearerMissing is returned for a request without a bearer token.
+var errBearerMissing = errors.New("no bearer token")
+
+// authenticateBearer verifies the request's bearer token and returns the
+// context carrying its claims. Nothing about the token is logged.
+func authenticateBearer(
+	ctx context.Context,
+	authenticator security.Authenticator,
+	r *http.Request,
+) (context.Context, error) {
+	scheme, token, found := strings.Cut(strings.TrimSpace(r.Header.Get("Authorization")), " ")
+	token = strings.TrimSpace(token)
+	if !found || !strings.EqualFold(scheme, "Bearer") || token == "" {
+		return ctx, errBearerMissing
+	}
+	return authenticator.Authenticate(ctx, token)
 }
 
 // ClaimsFromRequest extracts authentication claims from the request context.

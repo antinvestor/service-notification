@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -41,5 +43,46 @@ func TestManagementAPIAdmitsServiceAccountsOnly(t *testing.T) {
 			handler.ServeHTTP(rec, req)
 			require.Equal(t, tc.want, rec.Code)
 		})
+	}
+}
+
+// tokenAuthenticator accepts one token as a service account.
+type tokenAuthenticator struct{ good string }
+
+func (a tokenAuthenticator) Authenticate(
+	ctx context.Context,
+	token string,
+	_ ...security.AuthOption,
+) (context.Context, error) {
+	if token != a.good {
+		return ctx, errors.New("invalid token")
+	}
+	claims := &security.AuthenticationClaims{
+		Roles:            []string{security.ConstantSystemInternalRole},
+		RegisteredClaims: jwt.RegisteredClaims{Subject: "service_seed"},
+	}
+	return claims.ClaimsToContext(ctx), nil
+}
+
+// The guard verifies the bearer token itself: a good service token passes,
+// a bad or missing one is refused.
+func TestManagementAPIVerifiesTheBearerToken(t *testing.T) {
+	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	handler := AuthMiddleware(tokenAuthenticator{good: "good-token"}, ok)
+
+	for header, want := range map[string]int{
+		"Bearer good-token": http.StatusOK,
+		"bearer good-token": http.StatusOK,
+		"Bearer bad-token":  http.StatusUnauthorized,
+		"good-token":        http.StatusUnauthorized,
+		"":                  http.StatusUnauthorized,
+	} {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/menus", nil)
+		if header != "" {
+			req.Header.Set("Authorization", header)
+		}
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		require.Equal(t, want, rec.Code, header)
 	}
 }
