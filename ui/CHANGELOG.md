@@ -1,3 +1,9 @@
+## 0.4.0
+
+- Breaking: on connect-dart 2 and protobuf 6. Depends on
+  antinvestor_api_notification ^2.0.0, antinvestor_api_common ^2.0.0 and
+  antinvestor_ui_core ^0.6.0. Build output (.dart_tool) is no longer tracked.
+
 ## 0.3.4
 
 - Inbox channel/language filter chips now render in AdminEntityListPage's

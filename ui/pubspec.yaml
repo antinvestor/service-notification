@@ -2,7 +2,7 @@ name: antinvestor_ui_notification
 description: >
   Notification management UI library for Antinvestor. Embeddable screens and widgets
   for sending, receiving, searching notifications, and managing templates.
-version: 0.3.4
+version: 0.4.0
 repository: https://github.com/antinvestor/service-notification
 homepage: https://github.com/antinvestor/service-notification/tree/main/ui
 issue_tracker: https://github.com/antinvestor/service-notification/issues
@@ -19,16 +19,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # 0.5.0 ships the thesa-gated analytics pipeline (ServiceAnalyticsSpec,
-  # ThesaAnalyticsDataSource). Not on pub.dev yet -- develop against the
-  # local checkout via the gitignored pubspec_overrides.yaml.
-  antinvestor_ui_core: ^0.5.1
-  antinvestor_api_notification: ^1.53.0
-  antinvestor_api_common: ^1.52.0
-  connectrpc: ^1.0.0
+  antinvestor_ui_core: ^0.6.0
+  antinvestor_api_notification: ^2.0.0
+  antinvestor_api_common: ^2.0.0
+  connectrpc: ^2.0.0
   flutter_riverpod: ^3.3.1
   go_router: ^17.2.0
-  protobuf: ^4.2.0
+  protobuf: ^6.1.0
   csv: ^8.0.0
   riverpod_annotation: ^4.0.2
 
