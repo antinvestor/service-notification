@@ -1,8 +1,6 @@
 module github.com/antinvestor/service-notification
 
-go 1.26.0
-
-toolchain go1.26.9
+go 1.26.10
 
 require (
 	buf.build/gen/go/antinvestor/common/protocolbuffers/go v1.36.12-20260509050709-3f270876dbf3.2
@@ -23,7 +21,7 @@ require (
 	github.com/pitabwire/util v0.9.1
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.45.0
-	github.com/wneessen/go-mail v0.8.1
+	github.com/wneessen/go-mail v0.8.2
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/sdk/metric v1.47.0
 	golang.org/x/crypto v0.58.0
