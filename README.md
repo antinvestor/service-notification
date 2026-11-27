@@ -18,6 +18,21 @@ for ant investor
 | `apps/ussd` | USSD menu engine |
 | `client/templates` | Template registration contract for consumer services |
 
+### Email SMTP configuration
+
+`apps/integrations/emailsmtp` reads these environment variables:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SMTP_SERVER_HOST` | `smtp.postmarkapp.com` | SMTP server host |
+| `SMTP_SERVER_PORT` | `587` | SMTP server port |
+| `SMTP_SERVER_TLS_MODE` | `auto` | `starttls` (mandatory STARTTLS upgrade), `implicit` (TLS from the first byte, SMTPS) or `auto` (implicit on port 465, otherwise STARTTLS). Any other value fails at startup. Certificates are always verified. |
+| `SMTP_SERVER_ACCESS_KEY` | empty | SMTP username (AUTH PLAIN) |
+| `SMTP_SERVER_SECRET_KEY` | empty | SMTP password |
+
+Cloudflare Email Service only offers implicit TLS: `SMTP_SERVER_HOST=smtp.mx.cloudflare.net`,
+`SMTP_SERVER_PORT=465`, `SMTP_SERVER_ACCESS_KEY=api_token`, `SMTP_SERVER_SECRET_KEY=<API token>`.
+
 ## Channels and routing
 
 A notification is routed by the recipient contact type and the routes configured for

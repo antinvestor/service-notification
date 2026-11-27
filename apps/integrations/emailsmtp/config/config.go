@@ -22,8 +22,12 @@ type EmailSMTPConfig struct {
 	QueueEmailSMTPDequeueName string `envDefault:"natifications.emailsmtp.dequeue" env:"QUEUE_NOTIFICATION_EMAIL_DEQUEUE_NAME"`
 	QueueEmailSMTPDequeueURI  string `envDefault:"mem://natifications.email.de.queue" env:"QUEUE_NOTIFICATION_EMAIL_DEQUEUE_URI"`
 
-	SMTPServerHOST      string `envDefault:"smtp.postmarkapp.com" env:"SMTP_SERVER_HOST"`
-	SMTPServerPORT      int    `envDefault:"587" env:"SMTP_SERVER_PORT"`
+	SMTPServerHOST string `envDefault:"smtp.postmarkapp.com" env:"SMTP_SERVER_HOST"`
+	SMTPServerPORT int    `envDefault:"587" env:"SMTP_SERVER_PORT"`
+	// SMTPServerTLSMode selects the transport security: "starttls" (upgrade on connect, typical
+	// for port 587), "implicit" (TLS from the first byte, SMTPS, typical for port 465) or "auto"
+	// (implicit on port 465, otherwise STARTTLS).
+	SMTPServerTLSMode   string `envDefault:"auto" env:"SMTP_SERVER_TLS_MODE"`
 	SMTPServerAccessKey string `envDefault:"" env:"SMTP_SERVER_ACCESS_KEY"`
 	SMTPServerSecretKey string `envDefault:"" env:"SMTP_SERVER_SECRET_KEY"`
 }
