@@ -2,7 +2,10 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,29 +42,93 @@ type Client struct {
 	settingsCli settingsv1connect.SettingsServiceClient
 	connMap     sync.Map
 	connMu      sync.Mutex
+	tlsMode     TLSMode
+	rootCAs     *x509.CertPool
 }
 
-func NewClient(logger *util.LogEntry, cfg *config.EmailSMTPConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli settingsv1connect.SettingsServiceClient) (*Client, error) {
+// TLSMode is the resolved transport security used for the SMTP connection.
+type TLSMode string
 
-	return &Client{
+const (
+	// TLSModeSTARTTLS connects in plaintext and mandatorily upgrades via STARTTLS.
+	TLSModeSTARTTLS TLSMode = "starttls"
+	// TLSModeImplicit wraps the connection in TLS from the first byte (SMTPS).
+	TLSModeImplicit TLSMode = "implicit"
+
+	tlsModeAuto = "auto"
+
+	implicitTLSPort = 465
+)
+
+// resolveTLSMode maps the configured mode string and port to a concrete TLSMode.
+// An empty or "auto" mode selects implicit TLS on port 465 and STARTTLS otherwise.
+// Unknown values are an error rather than a silent fallback.
+func resolveTLSMode(mode string, port int) (TLSMode, error) {
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "", tlsModeAuto:
+		if port == implicitTLSPort {
+			return TLSModeImplicit, nil
+		}
+		return TLSModeSTARTTLS, nil
+	case string(TLSModeSTARTTLS):
+		return TLSModeSTARTTLS, nil
+	case string(TLSModeImplicit):
+		return TLSModeImplicit, nil
+	default:
+		return "", fmt.Errorf("invalid SMTP_SERVER_TLS_MODE %q: must be one of auto, starttls, implicit", mode)
+	}
+}
+
+// Option customises a Client.
+type Option func(*Client)
+
+// WithRootCAs sets the trusted root CAs used to verify the SMTP server certificate.
+// Intended for tests with self-signed certificates; production uses the system pool.
+func WithRootCAs(pool *x509.CertPool) Option {
+	return func(c *Client) { c.rootCAs = pool }
+}
+
+func NewClient(logger *util.LogEntry, cfg *config.EmailSMTPConfig, profileCli profilev1connect.ProfileServiceClient, settingsCli settingsv1connect.SettingsServiceClient, opts ...Option) (*Client, error) {
+	tlsMode, err := resolveTLSMode(cfg.SMTPServerTLSMode, cfg.SMTPServerPORT)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &Client{
+		tlsMode:     tlsMode,
 		cfg:         cfg,
 		logger:      logger,
 		profileCli:  profileCli,
 		settingsCli: settingsCli,
 		connMap:     sync.Map{},
-	}, nil
+	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c, nil
 }
 
 func (ms *Client) createMailClient() (*mail.Client, error) {
 	cfg := ms.cfg
-	return mail.NewClient(cfg.SMTPServerHOST,
+	opts := []mail.Option{
 		mail.WithPort(cfg.SMTPServerPORT),
 		mail.WithTLSPolicy(mail.TLSMandatory),
 		mail.WithSMTPAuth(mail.SMTPAuthPlain),
 		mail.WithUsername(cfg.SMTPServerAccessKey),
 		mail.WithPassword(cfg.SMTPServerSecretKey),
-		mail.WithTimeout(15*time.Second),
-	)
+		mail.WithTimeout(15 * time.Second),
+	}
+	if ms.tlsMode == TLSModeImplicit {
+		opts = append(opts, mail.WithSSL())
+	}
+	if ms.rootCAs != nil {
+		opts = append(opts, mail.WithTLSConfig(&tls.Config{
+			ServerName: cfg.SMTPServerHOST,
+			MinVersion: tls.VersionTLS12,
+			RootCAs:    ms.rootCAs,
+		}))
+	}
+	return mail.NewClient(cfg.SMTPServerHOST, opts...)
 }
 
 func (ms *Client) getConnectedClient(ctx context.Context, credentials map[string]string) (*connectedClient, error) {
